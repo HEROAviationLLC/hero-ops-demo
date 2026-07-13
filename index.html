@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0B0D">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HERO Ops">
+<meta name="format-detection" content="telephone=no">
+<title>HERO Ops — Live Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red:#C0202A; --red-bright:#E8323E; --red-dark:#8A1219;
+    --silver:#B8BEC8; --silver-light:#D8DDE6; --silver-dark:#7A8290;
+    --dark:#0A0B0D; --dark-2:#111318; --dark-3:#181B21; --dark-4:#1E2229; --dark-5:#252B34;
+    --text:#C8CDD6; --muted:#7A8290;
+    --good:#2FA84F; --warn:#E8B93B; --crit:#D03B3B;
+    --good-bg:rgba(47,168,79,.14); --warn-bg:rgba(232,185,59,.14); --crit-bg:rgba(208,59,59,.16);
+  }
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;color-scheme:dark}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  @supports (padding:env(safe-area-inset-left)){
+   body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+   footer{padding-bottom:calc(12px + env(safe-area-inset-bottom))}}
+  body{background:var(--dark);color:var(--text);font-family:'Barlow',system-ui,sans-serif;font-size:15px}
+  .cond{font-family:'Barlow Condensed','Barlow',sans-serif}
+  .demo-banner{background:var(--red);color:#fff;text-align:center;font-weight:700;font-size:11px;padding:4px 8px;letter-spacing:.14em;text-transform:uppercase}
+  header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 20px;border-bottom:1px solid rgba(192,32,42,.3);background:rgba(10,11,13,.97)}
+  .logo{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--silver-light);letter-spacing:2px}
+  .logo span{color:var(--red-bright)}
+  .logo small{display:block;font-size:9px;font-weight:600;color:var(--red);letter-spacing:3px;text-transform:uppercase}
+  .userbox{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--silver)}
+  .userbox b{color:var(--silver-light)}
+  .switch{background:none;border:1px solid rgba(184,190,200,.3);color:var(--silver);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:6px 12px;cursor:pointer}
+  .switch:hover{border-color:var(--red);color:var(--red-bright)}
+  nav{display:flex;gap:2px;overflow-x:auto;padding:8px 14px;border-bottom:1px solid var(--dark-4);background:var(--dark-2)}
+  nav button{background:none;border:none;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;padding:8px 14px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+  nav button.active{color:var(--red-bright);border-color:var(--red)}
+  main{padding:20px;max-width:1240px;margin:0 auto}
+  h1{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--silver-light);margin-bottom:4px}
+  h1 span{color:var(--red-bright)}
+  h2{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--silver-light);margin-bottom:10px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:18px;max-width:860px;line-height:1.6}
+  .panel{background:var(--dark-3);border:1px solid rgba(184,190,200,.07);padding:16px;margin-bottom:16px}
+  .panel.accent{border-left:3px solid var(--red)}
+  .grid{display:grid;gap:14px}
+  @media(min-width:700px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}}
+  .tile .lab{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+  .tile .val{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:800;color:var(--silver-light);margin-top:2px}
+  .tile .note{font-size:11px;color:var(--silver-dark);margin-top:2px}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--dark-5)}
+  td{padding:7px 8px;font-size:13px;border-bottom:1px solid rgba(37,43,52,.6);font-variant-numeric:tabular-nums}
+  .chip{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;font-size:11px;font-weight:700}
+  .c-good{background:var(--good-bg);color:#5BC97A}.c-warn{background:var(--warn-bg);color:var(--warn)}
+  .c-crit{background:var(--crit-bg);color:#F27B7B}.c-gray{background:rgba(122,130,144,.15);color:var(--muted)}
+  .c-red{background:rgba(192,32,42,.18);color:var(--red-bright)}
+  .btn{background:var(--red);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:none;padding:11px 24px;cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%)}
+  .btn:hover{background:var(--red-bright)} .btn:disabled{opacity:.4}
+  .btn2{background:none;border:1px solid rgba(184,190,200,.3);color:var(--silver);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:8px 14px;cursor:pointer}
+  .btn2:hover{border-color:var(--red);color:var(--red-bright)}
+  .btn2.on{border-color:var(--red);color:var(--red-bright);background:rgba(192,32,42,.1)}
+  select,input,textarea{background:var(--dark-4);border:1px solid rgba(184,190,200,.12);color:var(--text);padding:9px 12px;font-size:14px;font-family:'Barlow',sans-serif;width:100%}
+  @media (pointer:coarse){select,input,textarea{font-size:16px}}
+  select:focus,input:focus,textarea:focus{outline:none;border-color:var(--red)}
+  .lab{display:block;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px}
+  .optrow{display:grid;gap:6px}@media(min-width:640px){.optrow{grid-template-columns:1fr 1fr}}
+  .opt{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--dark-5);padding:8px 10px;font-size:13px;cursor:pointer}
+  .opt:hover{border-color:var(--silver-dark)}
+  .opt.sel{border-color:var(--red);background:rgba(192,32,42,.08)}
+  .opt .pts{color:var(--muted);font-size:11px}
+  .lock{font-size:12px;color:var(--muted);font-style:italic}
+  footer{text-align:center;color:var(--muted);font-size:11px;padding:24px;line-height:1.7}
+  /* sign-in */
+  .signin{min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:24px}
+  .signin-cards{display:grid;gap:14px;grid-template-columns:1fr;max-width:920px;width:100%}
+  @media(min-width:760px){.signin-cards{grid-template-columns:repeat(3,1fr)}}
+  .signin-card{background:var(--dark-3);border:1px solid rgba(184,190,200,.1);padding:22px;cursor:pointer;text-align:left;transition:border-color .2s, transform .2s}
+  .signin-card:hover{border-color:var(--red);transform:translateY(-3px)}
+  .signin-card .who{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;letter-spacing:1px;color:var(--silver-light);text-transform:uppercase}
+  .signin-card .what{font-size:12px;color:var(--red-bright);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin:2px 0 10px}
+  .signin-card p{font-size:13px;color:var(--muted);line-height:1.55}
+  /* readiness */
+  .scorebig{font-family:'Barlow Condensed',sans-serif;font-size:64px;font-weight:800;line-height:1}
+  .metric{background:var(--dark-4);padding:10px 12px}
+  .metric .k{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .metric .v{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:var(--silver-light)}
+  /* currency */
+  .curr-cell{cursor:default;text-align:center;font-size:12px;font-weight:600;padding:6px 8px}
+  .cc-g{background:var(--good-bg);color:#7ED99A}.cc-y{background:var(--warn-bg);color:#EDCB6E}.cc-r{background:var(--crit-bg);color:#F49A9A}
+  .curr-group td{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--silver-dark);background:var(--dark-2);padding:8px}
+  .matrix-wrap{overflow-x:auto}
+  .matrix-wrap table{min-width:900px}
+  .matrix-wrap th.person{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;font-size:11px;letter-spacing:1px;padding:10px 4px;text-align:left;color:var(--silver)}
+  #tooltip{position:fixed;z-index:99;background:var(--dark);border:1px solid var(--red);padding:10px 12px;font-size:12px;line-height:1.7;color:var(--text);display:none;pointer-events:none;max-width:280px;box-shadow:0 8px 30px rgba(0,0,0,.6)}
+  #tooltip b{color:var(--silver-light)}
+  .banner{padding:10px 12px;font-size:13px;font-weight:600;margin-top:10px}
+  .b-warn{background:var(--warn-bg);color:var(--warn)} .b-good{background:var(--good-bg);color:#5BC97A} .b-crit{background:var(--crit-bg);color:#F27B7B}
+  .meter{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;background:var(--dark-3)}
+  .privacy{border:1px dashed rgba(192,32,42,.5);padding:12px 14px;font-size:12px;color:var(--silver-dark);line-height:1.6;margin-bottom:16px}
+  .privacy b{color:var(--red-bright);text-transform:uppercase;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif}
+  .welcome-veil{position:fixed;inset:0;background:rgba(10,11,13,.88);backdrop-filter:blur(3px);z-index:200;display:none;align-items:center;justify-content:center;padding:18px}
+  .welcome-card{background:var(--dark-2);border:1px solid rgba(184,190,200,.2);border-top:3px solid var(--red);max-width:520px;width:100%;max-height:86vh;overflow-y:auto;padding:26px 26px 22px}
+  .welcome-card h3{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--silver-light)}
+  .welcome-card h3 span{color:var(--red-bright)}
+  .welcome-card .wstep{display:flex;gap:12px;margin-top:14px;font-size:13px;line-height:1.55}
+  .welcome-card .wnum{flex-shrink:0;width:26px;height:26px;border:1px solid var(--red-bright);color:var(--red-bright);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center}
+  .helpbtn{position:fixed;right:14px;bottom:52px;z-index:150;width:38px;height:38px;border-radius:50%;background:var(--dark-4);border:1px solid rgba(184,190,200,.35);color:var(--silver);font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;cursor:pointer}
+  @media print{.demo-banner,header,nav,.btn,.btn2,footer,#toastbox,select,input{display:none!important}body{background:#fff!important}.panel{border:1px solid #999!important;background:#fff!important}.panel *,h1,h2{color:#111!important}}
+  .sublab{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--silver-light);margin:16px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--dark-5)}
+  #toastbox{position:fixed;top:14px;right:14px;z-index:200;display:flex;flex-direction:column;gap:8px;max-width:360px}
+  .toast{background:var(--dark-2);border-left:4px solid #2FA84F;padding:12px 14px;font-size:13px;color:var(--text);box-shadow:0 10px 30px rgba(0,0,0,.6);animation:toastin .25s ease}
+  .toast.warn{border-color:var(--warn)} .toast.crit{border-color:#F27B7B} .toast.info{border-color:var(--accent,#38bdf8);border-color:#E8B93B}
+  .toast b{color:var(--silver-light)}
+  @keyframes toastin{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+  input.num{min-width:100px;width:100%;max-width:160px}
+  .crewcurr{border:1px solid var(--dark-5);background:var(--dark-2);padding:14px;margin-top:14px}
+  .currtab td{border-bottom:1px solid rgba(37,43,52,.4);padding:7px 8px;font-size:12.5px}
+  .tachtab th{text-align:left}.tachtab td{padding:8px}
+  .c-or{background:rgba(236,131,90,.16);color:#EC835A}
+  .b-crit{background:var(--crit-bg);color:#F27B7B}
+  .btn-good{background:var(--good-bg);color:#5BC97A;border:none;padding:6px 12px;font-weight:700;cursor:pointer;font-size:12px}
+  .btn-crit{background:var(--crit-bg);color:#F27B7B;border:none;padding:6px 12px;font-weight:700;cursor:pointer;font-size:12px}
+</style>
+</head>
+<body>
+<div class="demo-banner">HERO Ops · Live Demonstration · Fictional unit data + optional live Oura connection · © HERO Aviation, LLC</div>
+<div id="app"></div>
+<div id="tooltip"></div>
+<div id="toastbox"></div>
+<div class="welcome-veil" id="welcome" role="dialog" aria-label="How to use this demo">
+ <div class="welcome-card">
+  <h3>Welcome to <span>HERO Ops</span></h3>
+  <div style="font-size:12px;color:var(--muted);margin-top:4px">A live, fully interactive demo of the HERO Ops safety-management platform — seeded with a fictional operator (Canyon County Air Rescue). Nothing here is real data, and nothing you do is saved: refresh and it resets.</div>
+  <div class="wstep"><div class="wnum">1</div><div><b style="color:var(--silver-light)">Sign in as any crew member.</b> Pick <b style="color:var(--silver-light)">Joel Smith</b> (Chief Pilot / manager) or <b style="color:var(--silver-light)">K. Whitfield</b> (Safety Officer) to see every feature — including the risk matrix, Safety Health analytics, and personnel &amp; fleet management.</div></div>
+  <div class="wstep"><div class="wnum">2</div><div><b style="color:var(--silver-light)">Everything is clickable.</b> File a FRAT and watch it auto-score, log a flight, file a hazard report with photos, run a preflight, check anyone's currency, condition the hoist. The tabs across the top are the whole platform.</div></div>
+  <div class="wstep"><div class="wnum">3</div><div><b style="color:var(--silver-light)">On a phone?</b> Make it feel like a native app: in Safari tap <b style="color:var(--silver-light)">Share → Add to Home Screen</b>; in Chrome on Android tap <b style="color:var(--silver-light)">⋮ → Add to Home screen</b>. It launches full-screen from your home screen.</div></div>
+  <div style="margin-top:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><button class="btn" onclick="closeWelcome()">Start exploring</button><span style="font-size:11px;color:var(--muted)">Reopen this guide anytime with the ? button.</span></div>
+  <div style="font-size:10px;color:var(--muted);margin-top:14px;border-top:1px solid var(--dark-5);padding-top:8px">In production, each operator gets their own isolated deployment and database — your data never shares a system with anyone else's. © 2026 HERO Aviation, LLC.</div>
+ </div>
+</div>
+<button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
+<footer>HERO Ops — © 2026 HERO Aviation, LLC. All rights reserved. Operational Safety Systems.<br>
+Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
+
+<script>
+/* ================= USERS & PRIVACY MODEL =================
+   - Every person sees THEIR OWN granular biometric data only.
+   - Everyone sees the collective (average) crew score.
+   - Supervisors additionally see individual READINESS SCORES
+     (number + color only, never granular) for ON-DUTY crew.
+   - Currency is transparent to the whole unit (accountability).
+   In production these rules are enforced by the server, per role. */
+const HERO_LOGO="https://images.squarespace-cdn.com/content/v1/6a3df6e41d2e8f4a0d3ca8e5/4c05308f-4eb0-454d-afaa-817748400092/HERO+Aviation+Logo.png?format=500w";
+/* Fictional operator branding — every customer gets their own logo/colors at onboarding */
+function opBadge(sz){return `<svg viewBox="0 0 64 64" width="${sz}" height="${sz}" style="flex-shrink:0"><circle cx="32" cy="32" r="30" fill="#1E2229" stroke="#E8B93B" stroke-width="2.5"/><circle cx="32" cy="32" r="23" fill="none" stroke="rgba(232,185,59,.35)" stroke-width="1"/><path d="M32 15 L35.5 26 L47 26 L37.5 33 L41 44 L32 37 L23 44 L26.5 33 L17 26 L28.5 26 Z" fill="#E8B93B"/><rect x="13" y="30.5" width="38" height="3" rx="1.5" fill="#D8DDE6" transform="rotate(-18 32 32)"/></svg>`}
+const TODAY=new Date();
+function fmt(d){return (d.getMonth()+1)+"/"+d.getDate()+"/"+String(d.getFullYear()).slice(2)}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+
+const PEOPLE=[
+ {id:"joel",name:"J. SMITH",full:"Joel Smith",pos:"Chief Pilot / Founder",level:"V",role:"PILOT",onDuty:true,pilot:true,ifr:true,nvg:true,rtype:"pilot",dutyDay:3,prov:null,em:"joel@canyoncounty.demo",ph:"(210) 555-0101",addr:"14 Ridgeline Ct, Santa Clarita CA",so:false,mgr:true},
+ {id:"whit",name:"K. WHITFIELD",full:"K. Whitfield",pos:"Safety Officer",level:"IV",role:"SUPERVISOR",onDuty:true,pilot:false,ifr:false,nvg:true,rtype:"safety",dutyDay:1,prov:"home",em:"kwhit@canyoncounty.demo",ph:"(210) 555-0102",addr:"88 Mesa Dr, Palmdale CA",so:true,mgr:true},
+ {id:"cast",name:"M. CASTILLO",full:"M. Castillo",pos:"Rescuer / Paramedic",level:"III",role:"CREW",onDuty:true,pilot:false,ifr:false,nvg:true,rtype:"rescuer",dutyDay:5,prov:"same",em:"mcast@canyoncounty.demo",ph:"(210) 555-0103",addr:"402 Canyon View, Sylmar CA",so:false,mgr:false},
+ {id:"ram",name:"J. RAMIREZ",full:"J. Ramirez",pos:"Line Pilot",level:"IV",role:"PILOT",onDuty:true,pilot:true,ifr:true,nvg:false,rtype:"pilot",dutyDay:2,prov:"other",em:"jram@canyoncounty.demo",ph:"(210) 555-0104",addr:"77 Alameda St, Burbank CA",so:false,mgr:false},
+ {id:"ngu",name:"T. NGUYEN",full:"T. Nguyen",pos:"Line Pilot",level:"III",role:"PILOT",onDuty:false,pilot:true,ifr:false,nvg:true,rtype:"pilot"},
+ {id:"bak",name:"S. BAKER",full:"S. Baker",pos:"Pilot / CFI",level:"III",role:"PILOT",onDuty:false,pilot:true,ifr:true,nvg:true,rtype:"pilot"},
+ {id:"oka",name:"D. OKAFOR",full:"D. Okafor",pos:"Hoist Operator",level:"II",role:"CREW",onDuty:true,pilot:false,ifr:false,nvg:true,rtype:"hoist"},
+ {id:"lee",name:"R. LEE",full:"R. Lee",pos:"Rescuer",level:"II",role:"CREW",onDuty:false,pilot:false,ifr:false,nvg:false,rtype:"rescuer"}
+];
+
+/* ===== OPERATOR SERVICE DISTRICT (loaded at onboarding per operator) =====
+   Each sector carries its terrain category (auto FRAT points) and the METAR
+   station that represents its weather along the route. */
+const OPERATOR={
+ name:"Canyon County Air Rescue",baseIcao:"KVNY",baseName:"Main Base (KVNY — Van Nuys)",
+ lat:34.2098,lon:-118.4898,
+ sectors:[
+  {id:"nv",  name:"North Valley",                       terrain:"Urban valley · wires",            tPts:2, station:"KVNY", sim:{ceil:2500,vis:6}},
+  {id:"mtn", name:"Mountains / Angeles Forest",         terrain:"Mountainous · high DA",           tPts:5, station:"KPMD", sim:{ceil:1200,vis:10}},
+  {id:"mid", name:"Mid-City / East (Elysian Park)",     terrain:"Dense urban · wires · congested", tPts:3, station:"KCQT", sim:{ceil:900,vis:3}},
+  {id:"south",name:"South District (San Pedro Harbor)", terrain:"Coastal · overwater · cliffs",    tPts:3, station:"KLGB", sim:{ceil:700,vis:1.5}},
+  {id:"west",name:"West / Coastal",                     terrain:"Coastal · marine layer",          tPts:2, station:"KSMO", sim:{ceil:400,vis:0.75}}
+ ]};
+const TERRAIN_MANUAL=[["Flat terrain, low obstacles",0],["Rolling / wires in area",2],["Mountainous / high DA",5],["Hostile, no forced-landing areas",7]];
+
+/* ===== FLIGHT TYPES → complexity points + required currencies by crew role ===== */
+const FLIGHT_TYPES=[
+ {id:"hoist",name:"Hoist Rescue",cx:5,req:{pilot:["PIC-HOIST"],hoist:["HOIST OPERATOR"],rescuer:["RESCUER POSITION"]}},
+ {id:"fire",name:"Firefighting — Water Drops",cx:5,req:{pilot:["WATER DROPPER","HOVER PUMP"]}},
+ {id:"ems",name:"EMS / Medical",cx:3,req:{pilot:["PILOT-IN-COMMAND"]}},
+ {id:"recon",name:"Recon / Patrol",cx:2,req:{pilot:["PILOT-IN-COMMAND"]}},
+ {id:"vip",name:"VIP / Transport",cx:1,req:{pilot:["PILOT-IN-COMMAND"]}},
+ {id:"trainp",name:"Training — Pattern / Area",cx:2,req:{}}
+];
+const MIT_FATIGUE=[["Swap in rested crew member",4],["Limit mission duration",2],["Enhanced brief + workload sharing",1]];
+const MIT_CURR=[["Swap in current crew member",4],["Instructor / evaluator aboard for this task",3],["Restrict mission profile to current tasks only",2]];
+const MIT_WX=[["Delay until conditions improve",3],["File IFR / alternate route planned",2],["Updated wx brief within 1 hr of launch",1]];
+/* simulated readiness (Joel's replaced by live Oura when connected) */
+PEOPLE.forEach(p=>{if(p.em===undefined){p.em=p.id+"@canyoncounty.demo";p.ph="(210) 555-01"+(10+PEOPLE.indexOf(p));p.addr="—";p.so=false;p.mgr=false}});
+const READINESS={joel:{score:78,src:"simulated",hrv:52,sleep:81,rhr:58,temp:-0.1,recovery:74,stress:"normal"},
+ whit:{score:84},cast:{score:66},ram:{score:88},ngu:{score:47},bak:{score:73},oka:{score:91},lee:{score:58}};
+let joelTrend=[72,75,71,78,80,74,66,61,68,73,79,81,77,78];
+
+function chip(st){
+  if(st==="EXPIRED")return '<span class="chip c-crit">■ EXPIRED</span>';
+  if(st==="WARNING")return '<span class="chip c-warn">▲ WARNING</span>';
+  return '<span class="chip c-good">● CURRENT</span>';
+}
+function band(v){return v>=70?"g":(v>=50?"y":"r")}
+function bandChip(v){const b=band(v);return b==="g"?'<span class="chip c-good">● GREEN</span>':b==="y"?'<span class="chip c-warn">▲ YELLOW</span>':'<span class="chip c-crit">■ RED</span>'}
+function bandColor(v){const b=band(v);return b==="g"?"#5BC97A":b==="y"?"var(--warn)":"#F27B7B"}
+function crewAvg(){const s=PEOPLE.filter(p=>p.onDuty).map(p=>READINESS[p.id].score);return Math.round(s.reduce((a,b)=>a+b,0)/s.length)}
+
+/* ================= CURRENCY DATA ================= */
+const TASK_GROUPS=[
+ {g:"FLIGHT SPECIFIC",tasks:[["PILOT-IN-COMMAND",14],["PILOT-IN-COMMAND AW-139 (5 HRS)",30],["FORMATION FLIGHT",180],["MOUNTAIN PROFICIENCY",60],["NIGHT PROFICIENCY",27],["NIGHT VISION GOGGLES",27],["WATER DROPPER",90],["HOVER PUMP",180],["EXTERNAL LOAD",180],["OVER WATER",365],["INSTRUMENT FLIGHT RULES",90],["TOUCHDOWN AUTOROTATION (DAY)",365],["TOUCHDOWN AUTOROTATION (NIGHT)",365]]},
+ {g:"HOIST CREW",tasks:[["HOIST OPERATOR",90],["RESCUER POSITION",90],["SAFETY POSITION",90]]},
+ {g:"HOIST RESCUE (OPERATOR)",tasks:[["AW-139 DAY HOIST",90],["AW-139 NIGHT HOIST",90],["LAND CAPTURE RESCUE",180],["SWIFTWATER CAPTURE RESCUE",365],["U.S.C.G. BASKET (LAND OR WATER)",180],["TRAIL LINE OPERATION",180]]},
+ {g:"HOIST RESCUE (P.I.C.)",tasks:[["PIC-HOIST",27],["AW-139 DAY HOIST",90],["AW-139 NIGHT HOIST",90],["SWIFTWATER PACE",180],["STATIC AERIAL RESCUE PLATFORM W-TAGLINE",180]]}
+];
+/* deterministic pseudo-random "days since last completed" per person×task */
+function seededDays(pi,ti,threshold){
+  const h=((pi+3)*2654435761 ^ (ti+7)*40503)>>>0;
+  return Math.floor((h%1000)/1000*threshold*1.35);
+}
+/* status rule: red = expired · yellow = ≤20% of threshold remaining · green otherwise */
+function currCell(pi,ti,threshold){
+  const since=seededDays(pi,ti,threshold);
+  const remaining=threshold-since;
+  const last=addDays(TODAY,-since), expires=addDays(TODAY,remaining);
+  const cls=remaining<0?"cc-r":(remaining<=threshold*0.2?"cc-y":"cc-g");
+  return {since,remaining,last,expires,cls};
+}
+let flatTasks=[];TASK_GROUPS.forEach((grp)=>grp.tasks.forEach(t=>flatTasks.push({g:grp.g,name:t[0],th:t[1]})));
+
+/* ================= FRAT (same engine as production) ================= */
+/* External pressures stays pilot-selected (per Joel) */
+const EXT_OPTS=[["No external pressure",0],["Schedule / customer expectations",3],["Life-safety urgency (EMS/SAR)",4],["Multiple compounding pressures",6]];
+const MIT_EXT=[["Operational timeout / launch review",2],["Supervisor consulted",2]];
+const TH={med:10,high:20,sup:15};
+let PENDING_FRATS=[{id:57,pilot:"J. Ramirez",desc:"INC-26-117904 · Night NVG SAR standby launch, river corridor",score:17,risk:"MEDIUM"}];
+/* Filed FRAT details — used to prefill flight logs (incident + crew per aircraft) */
+let FRAT_LOG=[{id:57,inc:"INC-26-117904",ft:"hoist",acs:{"N139HR":{pic:"joel",sic:"ram",hoist:"oka",rescuer:"cast",stamp:"Smith 78 · Ramirez 88 · Okafor 91 · Castillo 66",avgS:81,scores:{joel:78,ram:88,oka:91,cast:66}}}}];
+/* FRAT draft state */
+let FR=null;
+function defaultTimeLocal(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
+function newFrat(){FR={dep:"MISSION",ft:null,inc:"",time:defaultTimeLocal(),dest:null,terrManual:null,
+ acIds:[],crews:{},pax:{},ext:null,extMit:null,wxMit:null,fatMit:{},curMit:{},wxData:{},wxStatus:"Simulated weather (tap “Pull live weather”)"}}
+newFrat();
+
+/* ================= AIRCRAFT / FLIGHTS / HAZARDS ================= */
+const AIRCRAFT=[
+ {n:"N139HR",cs:"HERO 1",mk:"Leonardo AW139",base:"Main Base",tach:1847.3,mtach:1902.1,to25:8.2,to100:12.7,landings:2314,hoist:412,hoistT:37,svc:"03/14/19",ret:false,squawks:null},
+ {n:"N429TX",cs:"HERO 2",mk:"Bell 429",base:"Main Base",tach:2210.6,mtach:2287.4,to25:4.2,to100:4.2,landings:3102,hoist:688,hoistT:44,svc:"08/02/16",ret:false,squawks:"Searchlight intermittent — deferred per MEL 33-4"},
+ {n:"N206HW",cs:"TRAINER",mk:"Bell 206L-4",base:"South Base",tach:6412.9,mtach:6412.9,to25:21.5,to100:38.0,landings:9877,hoist:0,hoistT:0,svc:"05/20/01",ret:false,squawks:null}
+];
+let FLIGHTS=[
+ {id:412,d:"07/11/26",ac:"N139HR",type:"SAR — Swiftwater rescue",dep:"MISSION",inc:"INC-26-117551",pic:"Joel Smith",crewIds:{pic:"joel",hoist:"oka",rescuer:"cast"},paxTotal:1,hrs:2.4,night:0.8,ldD:3,ldN:1,tachS:1844.9,tachE:1847.3,aar:true,hazNeeded:false,hazFiled:false,oos:false,stamp:"Smith 82 · Okafor 93 · Castillo 70",stampEnd:"Smith 74 · Okafor 86 · Castillo 61",avgS:82,avgE:74,cancelled:false},
+ {id:411,d:"07/10/26",ac:"N429TX",type:"EMS — Interfacility",dep:"MISSION",inc:"INC-26-116987",pic:"T. Nguyen",crewIds:{pic:"ngu",safety:"whit"},paxTotal:2,hrs:1.6,night:0,ldD:2,ldN:0,tachS:2209.0,tachE:2210.6,aar:true,hazNeeded:false,hazFiled:false,oos:false,stamp:"Nguyen 47 · Whitfield 84"},
+ {id:410,d:"07/09/26",ac:"N206HW",type:"Training — Pattern",dep:"TRAINING",inc:"",pic:"S. Baker",crewIds:{pic:"bak"},paxTotal:0,hrs:1.2,night:0,ldD:6,ldN:0,tachS:6411.7,tachE:6412.9,aar:false,hazNeeded:true,hazFiled:false,oos:false,stamp:"Baker 73"},
+ {id:409,d:"07/08/26",ac:"N139HR",type:"Fire — Bambi bucket",dep:"MISSION",inc:"INC-26-115442",pic:"Joel Smith",crewIds:{pic:"joel",sic:"ram"},paxTotal:0,hrs:3.1,night:0,ldD:4,ldN:0,tachS:1841.8,tachE:1844.9,aar:true,hazNeeded:false,hazFiled:false,oos:false,stamp:"Smith 78 · Ramirez 88"}
+];
+let HAZARDS=[
+ {id:89,d:"07/12/26",by:"D. Okafor",desc:"Loose deck fitting found near hoist mount during daily.",cat:"Equipment / Aircraft",sub:"Hoist system",P:null,S:null,status:"OPEN",m:6,dtc:null,opened:false,redacted:false,pub:"Equipment finding on daily inspection."},
+ {id:88,d:"07/09/26",by:"M. Castillo",desc:"Fuel truck parked inside rotor arc during hot refuel at pad 2.",cat:"Ground Operations",sub:"Rotor arc intrusion",P:4,S:"B",status:"CORRECTIVE ACTION",m:6,dtc:null,opened:true,redacted:false,pub:"Ground-vehicle proximity event during hot refuel; ramp procedure updated."},
+ {id:87,d:"07/05/26",by:"T. Nguyen",desc:"NVG binocular focus knob slipping in flight (SN 4471).",cat:"Equipment / Aircraft",sub:"NVG equipment",P:3,S:"C",status:"OPEN",m:6,dtc:null,opened:true,redacted:false,pub:"NVG equipment discrepancy; unit removed from service."},
+ {id:86,d:"06/28/26",by:"S. Baker",desc:"Pressure to accept marginal-weather flight from requesting agency.",cat:"External Pressure",sub:"Agency pressure to launch",P:3,S:"B",status:"CLOSED",m:5,dtc:11,opened:true,redacted:true,pub:"External-pressure event during launch decision; timeout procedure reinforced."}
+];
+/* Historical reports powering the Safety Health analytics (id,date,cat,sub,P,S,status,month,daysToClose) */
+[[85,"06/14/26","Equipment / Aircraft","Hoist system",3,"B","CLOSED",5,9],
+ [84,"06/02/26","Human Factors / Fatigue","Fatigue",4,"C","CLOSED",5,14],
+ [83,"05/22/26","Weather / Environment","Marine layer / low ceilings",3,"C","CLOSED",4,7],
+ [82,"05/18/26","Ground Operations","Ramp congestion",2,"C","CLOSED",4,12],
+ [81,"05/03/26","Maintenance","Deferred item aging",3,"B","CLOSED",4,21],
+ [80,"04/25/26","Airspace / ATC","Drone / UAS encounter",4,"B","CLOSED",3,6],
+ [79,"04/12/26","Human Factors / Fatigue","Task saturation",3,"C","CLOSED",3,10],
+ [78,"03/28/26","Weather / Environment","Winds / turbulence",2,"D","CLOSED",2,5],
+ [77,"03/09/26","Facility / Hangar","Housekeeping / FOD",2,"D","CLOSED",2,8],
+ [76,"02/20/26","Equipment / Aircraft","Radios / comms",3,"C","CLOSED",1,13],
+ [75,"02/06/26","Ground Operations","Hot refuel",3,"B","CLOSED",1,16],
+ [74,"01/17/26","Procedures / Training","Checklist error",2,"C","CLOSED",0,9],
+ [73,"01/08/26","FOD / Wildlife","Bird activity",3,"D","CLOSED",0,4]
+].forEach(r=>HAZARDS.push({id:r[0],d:r[1],by:"—",desc:r[3]+" event ("+r[2]+").",cat:r[2],sub:r[3],P:r[4],S:r[5],status:r[6],m:r[7],dtc:r[8],opened:true,redacted:false,pub:""}));
+/* ===== Aircraft detail demo data ===== */
+const PREFLIGHTS=[
+ {id:231,d:"07/12/26",ac:"N139HR",by:"J. Smith",ft:1847.3,mt:1902.1,aw:"AIRWORTHY"},
+ {id:230,d:"07/11/26",ac:"N429TX",by:"T. Nguyen",ft:2210.6,mt:2287.4,aw:"AIRWORTHY W/ SQUAWKS"},
+ {id:229,d:"07/11/26",ac:"N139HR",by:"J. Ramirez",ft:1845.1,mt:1899.8,aw:"AIRWORTHY"},
+ {id:228,d:"07/10/26",ac:"N206HW",by:"S. Baker",ft:6412.9,mt:6412.9,aw:"AIRWORTHY"},
+ {id:227,d:"07/10/26",ac:"N429TX",by:"J. Ramirez",ft:2208.9,mt:2285.5,aw:"AIRWORTHY W/ SQUAWKS"}
+];
+const MX={
+ "N139HR":[["100-hr inspection","tach",1860.0],["25-hr progressive check","tach",1855.5],["Hoist cable replacement","tach",1875.0],["Annual inspection","date","11/02/26"]],
+ "N429TX":[["100-hr inspection","tach",2214.8],["25-hr progressive check","tach",2214.8],["Searchlight repair (deferred)","date","07/20/26"],["ELT battery","date","09/14/26"]],
+ "N206HW":[["100-hr inspection","tach",6450.9],["Annual inspection","date","03/18/27"],["Skid shoe replacement","tach",6440.0]]
+};
+const SQUAWKS={
+ "N429TX":[{d:"07/08/26",txt:"Searchlight intermittent in flight",status:"DEFERRED — MEL 33-4"},{d:"07/05/26",txt:"Copilot door seal chafing",status:"OPEN"}],
+ "N139HR":[],"N206HW":[]
+};
+/* Generic type silhouettes (swap for real photos in production) */
+function acSvg(a,w){
+ const heavy=(a.mk||"").includes("AW139"),light=(a.mk||"").includes("206");
+ const gear=heavy?`<circle cx="52" cy="49" r="4" fill="#52514e"/><circle cx="92" cy="49" r="4" fill="#52514e"/>`
+  :`<line x1="40" y1="50" x2="104" y2="50" stroke="#7A8290" stroke-width="2.5"/><line x1="52" y1="42" x2="50" y2="50" stroke="#7A8290" stroke-width="2"/><line x1="92" y1="42" x2="94" y2="50" stroke="#7A8290" stroke-width="2"/>`;
+ return `<svg viewBox="0 0 160 58" style="width:${w}px;height:auto;display:block">
+  <line x1="8" y1="9" x2="124" y2="9" stroke="#7A8290" stroke-width="2"/>
+  <rect x="64" y="9" width="3" height="${heavy?9:11}" fill="#7A8290"/>
+  <path d="M34 ${heavy?26:29} Q38 ${heavy?17:21} 56 ${heavy?16:20} L88 ${heavy?16:20} Q${heavy?106:100} ${heavy?19:22} ${heavy?108:102} ${heavy?27:29} L142 ${heavy?23:25} L147 ${heavy?27:28} L${heavy?110:104} ${heavy?35:34} Q${heavy?106:100} ${heavy?43:41} 86 ${heavy?44:42} L52 ${heavy?43:41} Q38 ${heavy?41:39} 34 ${heavy?32:33} Z" fill="#B8BEC8"/>
+  <path d="M40 ${heavy?24:27} L70 ${heavy?24:27} L66 ${heavy?32:33} L40 ${heavy?31:32} Z" fill="#181B21" opacity=".75"/>
+  <rect x="34" y="${heavy?33:34}" width="${heavy?76:70}" height="3" fill="#C0202A"/>
+  <circle cx="147" cy="${heavy?18:20}" r="7" fill="none" stroke="#7A8290" stroke-width="1.5"/>
+  ${gear}</svg>`;
+}
+const ACIMG={
+ "N139HR":"https://commons.wikimedia.org/wiki/Special:FilePath/G-XXEE_Leonardo_AW139_Helicopter.jpg?width=640",
+ "N429TX":"https://commons.wikimedia.org/wiki/Special:FilePath/N10984_Bell_429_GlobalRanger_%287089850735%29.jpg?width=640",
+ "N206HW":"https://commons.wikimedia.org/wiki/Special:FilePath/Bell_206L-4_LongRanger_IV%2C_Minuteman_Aviation_AN0268410.jpg?width=640"};
+function acPhoto(a,w,h){
+ return `<div style="width:${w}px;max-width:100%;flex-shrink:0">
+  <img src="${ACIMG[a.n]}" alt="${a.mk}" loading="lazy" style="width:100%;height:${h}px;object-fit:cover;border:1px solid rgba(184,190,200,.15);display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+  <div style="display:none">${acSvg(a,w)}<div style="font-size:9px;color:var(--muted);text-align:center;margin-top:2px">Type photo loads when opened in a web browser</div></div></div>`;
+}
+function goAc(n){acView=n;tab="acft";render()}
+const ACTIVE=()=>AIRCRAFT.filter(a=>!a.ret);
+let acAdd=null, acRemove=null;
+function hoistBand(a){return a.hoistT>=50?{col:"#F27B7B",chip:"c-crit",msg:"CONDITION CABLE NOW — "+a.hoistT+" cycles since last conditioning (limit 50)"}:a.hoistT>=40?{col:"var(--warn)",chip:"c-warn",msg:"Conditioning due soon — "+a.hoistT+" cycles since last conditioning (yellow at 40, red at 50)"}:{col:"var(--silver-light)",chip:"c-good",msg:null}}
+function condHoist(n){const a=AIRCRAFT.find(x=>x.n===n);const was=a.hoistT;a.hoistT=0;
+ toast("<b>✓ Cable/hoist conditioned on "+a.n+".</b> Cycle counter reset ("+was+" → 0). Master life count stays at "+a.hoist+" and keeps counting.");render()}
+function acAddSet(k,v){acAdd[k]=v;render()}
+function acAddSubmit(){const m=$("acmsg");
+ if(!acAdd.n.trim()||!acAdd.mk.trim()){if(m){m.textContent="⛔ N-number and make/model are required.";m.style.color="#F27B7B"}return}
+ if(AIRCRAFT.some(x=>x.n.toUpperCase()===acAdd.n.trim().toUpperCase())){if(m){m.textContent="⛔ That N-number is already in the fleet.";m.style.color="#F27B7B"}return}
+ AIRCRAFT.push({n:acAdd.n.trim().toUpperCase(),cs:acAdd.cs.trim()||acAdd.n.trim().toUpperCase(),mk:acAdd.mk.trim(),base:acAdd.base.trim()||"Main Base",
+  tach:+acAdd.tach||0,mtach:+acAdd.mtach||+acAdd.tach||0,to25:25,to100:100,landings:0,hoist:0,hoistT:0,
+  svc:acAdd.svc?fmt(new Date(acAdd.svc+"T12:00")):fmt(TODAY),ret:false,squawks:null});
+ const nn=acAdd.n.trim().toUpperCase();acAdd=null;
+ toast("<b>✓ "+nn+" added to the fleet.</b> Inspection countdowns start from the tach times entered; it is now selectable on FRATs, flight logs and preflights.");render()}
+function acRetire(n){const a=AIRCRAFT.find(x=>x.n===n);a.ret=true;a.retDate=fmt(TODAY);acRemove=null;acView=null;
+ toast("<b>"+a.n+" retired from the fleet.</b> Its complete history is preserved under Retired Aircraft (view-only); it can no longer be selected for FRATs, flights or preflights.","warn");render()}
+const SEVN={A:5,B:4,C:3,D:2,E:1};
+function hazRisk(P,S){if(!P||!S)return "UNSCORED";const sc=P*SEVN[S];return sc>=15?"HIGH":(sc>=8?"MEDIUM":"LOW")}
+function hzScore(id,P,S){const h=HAZARDS.find(x=>x.id===id);h.P=P;h.S=S;toast("<b>✓ Risk assigned:</b> "+P+S+" — "+hazRisk(P,S));render()}
+function riskMatrix(h){/* clickable 5×5 per SMS §3.8 — Safety Officer only */
+ let out='<table style="border-collapse:collapse;margin-top:8px"><tr><td></td>'+[1,2,3,4,5].map(p=>`<td style="font-size:9px;color:var(--muted);text-align:center;padding:2px 4px">P${p}</td>`).join("")+"</tr>";
+ ["A","B","C","D","E"].forEach(S=>{out+=`<tr><td style="font-size:9px;color:var(--muted);padding:2px 4px">${S}</td>`+[1,2,3,4,5].map(P=>{
+  const sc=P*SEVN[S];const bg=sc>=15?"rgba(208,59,59,.45)":sc>=8?"rgba(232,185,59,.4)":"rgba(47,168,79,.35)";
+  const sel=h.P===P&&h.S===S;
+  return `<td onclick="hzScore(${h.id},${P},'${S}')" style="cursor:pointer;width:26px;height:22px;text-align:center;font-size:9px;font-weight:700;background:${bg};border:${sel?"2px solid #fff":"1px solid rgba(10,11,13,.6)"};color:var(--silver-light)">${P}${S}</td>`}).join("")+"</tr>"});
+ return out+"</table>"}
+function riskColor(r){return r==="HIGH"?"c-crit":(r==="MEDIUM"?"c-warn":"c-good")}
+
+/* ================= STATE ================= */
+let user=null, tab="dash", currView="mine", currPerson="joel", ouraStatus="", acView=null;
+let CURRF={name:"",task:"",status:"",duty:""};
+const $=id=>document.getElementById(id);
+/* ===== Toasts + offline-first sync (production: service worker + IndexedDB queue) ===== */
+function toast(msg,tone){const box=$("toastbox");if(!box)return;
+ const t=document.createElement("div");t.className="toast"+(tone?" "+tone:"");t.innerHTML=msg;
+ box.appendChild(t);setTimeout(()=>{t.style.opacity="0";t.style.transition="opacity .4s";setTimeout(()=>t.remove(),400)},5200)}
+function netOnline(){return navigator.onLine!==false}
+function pendingCount(){return FLIGHTS.filter(f=>f.sync==="PENDING").length+HAZARDS.filter(h=>h.sync==="PENDING").length}
+function openWelcome(){const w=document.getElementById("welcome");if(w)w.style.display="flex"}
+function closeWelcome(){const w=document.getElementById("welcome");if(w)w.style.display="none";
+ try{localStorage.setItem("heroDemoWelcomed","1")}catch(e){}}
+try{if(!localStorage.getItem("heroDemoWelcomed"))openWelcome()}catch(e){openWelcome()}
+window.addEventListener("offline",()=>{toast("<b>No connection.</b> The app keeps working — anything you file is stored on this device and will sync automatically.","warn");render()});
+window.addEventListener("online",()=>{const n=pendingCount();
+ FLIGHTS.forEach(f=>{if(f.sync==="PENDING")f.sync="SYNCED"});
+ HAZARDS.forEach(h=>{if(h.sync==="PENDING")h.sync="SYNCED"});
+ if(n)toast("<b>Connection restored</b> — "+n+" report"+(n>1?"s":"")+" stored on this device synced to base.");render()});
+
+/* ================= OURA LIVE CONNECT =================
+   Paste a personal access token (cloud.ouraring.com → Personal Access Tokens).
+   Data goes straight from YOUR browser to Oura — nowhere else. */
+async function connectOura(){
+  const token=$("oura-token").value.trim();
+  if(!token){ouraStatus="Enter your Oura personal access token first.";render();return}
+  ouraStatus="Connecting to Oura…";render();
+  const end=TODAY.toISOString().slice(0,10);
+  const start=addDays(TODAY,-14).toISOString().slice(0,10);
+  const H={headers:{Authorization:"Bearer "+token}};
+  try{
+    const rd=await fetch(`https://api.ouraring.com/v2/usercollection/daily_readiness?start_date=${start}&end_date=${end}`,H);
+    if(!rd.ok)throw new Error("Oura replied "+rd.status+(rd.status===401?" — check the token":""));
+    const rdj=await rd.json();
+    if(!rdj.data||!rdj.data.length)throw new Error("No readiness data returned for the last 14 days.");
+    let stressToday=null;
+    try{const st=await fetch(`https://api.ouraring.com/v2/usercollection/daily_stress?start_date=${end}&end_date=${end}`,H);
+        if(st.ok){const stj=await st.json();stressToday=stj.data?.[0]?.day_summary??null}}catch(e){}
+    const latest=rdj.data[rdj.data.length-1];
+    const c=latest.contributors||{};
+    let score=latest.score??0;
+    /* HERO adjustment: stress pulls down, full recovery boosts back up */
+    let adj=0;
+    if(stressToday==="stressful")adj=-8; else if(stressToday==="restored")adj=+4;
+    const hero=Math.max(0,Math.min(100,score+adj));
+    READINESS.joel={score:hero,src:"LIVE — Oura ("+latest.day+")",ouraRaw:score,adj,
+      hrv:c.hrv_balance??"—",sleep:c.previous_night??"—",rhr:c.resting_heart_rate??"—",
+      temp:c.body_temperature??"—",recovery:c.recovery_index??"—",stress:stressToday??"n/a"};
+    joelTrend=rdj.data.slice(-14).map(d=>d.score??0);
+    ouraStatus="✓ Connected. Showing your real Oura data (latest: "+latest.day+").";
+  }catch(e){
+    ouraStatus="⚠ Could not reach Oura: "+e.message+" — showing simulated data. (Tokens: cloud.ouraring.com → Personal Access Tokens.)";
+  }
+  render();
+}
+
+/* ================= TOOLTIP ================= */
+function showTip(ev,html){const t=$("tooltip");t.innerHTML=html;t.style.display="block";
+  const x=Math.min(ev.clientX+14,window.innerWidth-300),y=Math.min(ev.clientY+14,window.innerHeight-150);
+  t.style.left=x+"px";t.style.top=y+"px"}
+function hideTip(){$("tooltip").style.display="none"}
+document.addEventListener("touchstart",e=>{if(!e.target.closest(".curr-cell"))hideTip()},{passive:true});
+function cellTip(ev,person,task,th,c){
+  showTip(ev,`<b>${task}</b><br>Crew member: <b>${person}</b><br>Query date: ${fmt(TODAY)}<br>Last completed / reset: <b>${fmt(c.last)}</b><br>Days passed: ${c.since} of ${th}<br>${c.remaining<0?`<b style="color:#F27B7B">Expired ${Math.abs(c.remaining)} days ago</b>`:`Days remaining: <b>${c.remaining}</b>`}<br>Expires: ${fmt(c.expires)} · Warning window: last 20%`)}
+
+/* ================= SIGN-IN ================= */
+function signinView(){
+  return `<div class="signin">
+    <div style="text-align:center">
+      <img src="${HERO_LOGO}" alt="HERO Aviation" style="height:110px;object-fit:contain;margin-bottom:6px;filter:drop-shadow(0 0 24px rgba(192,32,42,.35))" onerror="this.style.display='none'">
+      <div class="logo" style="font-size:34px">HERO <span>OPS</span><small>Operational Safety Systems</small></div>
+      <div style="display:inline-flex;align-items:center;gap:10px;margin-top:16px;border:1px solid rgba(232,185,59,.4);padding:8px 16px">${opBadge(34)}<div style="text-align:left"><div class="cond" style="font-size:15px;font-weight:800;letter-spacing:1px;color:#E8B93B">CANYON COUNTY AIR RESCUE</div><div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase">Operator workspace · fictional demo customer</div></div></div>
+      <p style="color:var(--muted);font-size:14px;margin-top:12px">Choose who you are — the app enforces what each role may see.</p>
+    </div>
+    <div class="signin-cards">
+      <button class="signin-card" onclick="signIn('joel')"><div class="who">Joel Smith</div><div class="what">Pilot · Chief Pilot / Founder</div><p>Sees his own full biometric readiness (live Oura), the collective crew score, and unit-wide currency. Cannot see anyone else's personal biometric detail.</p></button>
+      <button class="signin-card" onclick="signIn('whit')"><div class="who">K. Whitfield</div><div class="what">Supervisor · Safety Officer</div><p>Sees readiness SCORES for on-duty crew (never their granular biometrics), approves FRATs, manages hazard redaction.</p></button>
+      <button class="signin-card" onclick="signIn('cast')"><div class="who">M. Castillo</div><div class="what">Crew · Rescuer / Paramedic</div><p>Sees own data and the collective score only. Full unit currency visibility — everyone keeps everyone accountable.</p></button>
+    </div>
+  </div>`;
+}
+function signIn(id){user=PEOPLE.find(p=>p.id===id);tab="dash";currPerson=id;render()}
+function signOut(){user=null;render()}
+/* Duty status: one tap by the crew member at shift start/end.
+   Drives the Oura sync engine (30-min live polling on duty, daily off duty),
+   supervisor visibility, and the collective on-duty average.
+   Provenance ("coming from...") is confirmed at each 07:00 shift change —
+   in production a push notification prompts on-duty members to answer. */
+const PROV={home:"came from home",other:"worked at other location yesterday",same:"worked on helicopter yesterday"};
+function provChip(p){if(!p.onDuty)return"";
+  const d=`DAY ${p.dutyDay}${p.dutyDay>1?" CONSECUTIVE":""}`;
+  const tone=p.dutyDay>=4?"c-crit":p.dutyDay>=3||p.prov==="other"?"c-warn":"c-good";
+  return `<span class="chip ${tone}" style="font-size:9px">${d}${p.prov?" · "+PROV[p.prov].toUpperCase():" · UNCONFIRMED"}</span>`}
+function toggleDuty(){user.onDuty=!user.onDuty;
+  if(user.onDuty){user.dutyDay=(user.dutyDay||0)+1;user.prov=null}else{user.prov=null;user.dutyDay=user.dutyDay}
+  render()}
+function setProv(v){user.prov=v;render()}
+function checkinBanner(){
+  if(!user.onDuty||user.prov)return"";
+  return `<div class="panel" style="border:1px solid var(--warn);background:rgba(232,185,59,.06)">
+    <b class="cond" style="color:var(--warn);letter-spacing:1px;font-size:13px">⏰ 07:00 SHIFT-CHANGE CHECK-IN — DUTY STATUS (DAY ${user.dutyDay}${user.dutyDay>1?" CONSECUTIVE":""})</b>
+    <div style="font-size:13px;color:var(--muted);margin:6px 0 10px">Where are you coming from? This feeds the fatigue picture alongside your ring data. In the live app this arrives as a push notification at shift change.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn2" onclick="setProv('home')">Came from home</button>
+      <button class="btn2" onclick="setProv('other')">Worked at other location yesterday</button>
+      <button class="btn2" onclick="setProv('same')">Worked on helicopter yesterday</button>
+    </div></div>`}
+
+/* ================= PAGES ================= */
+const TABS=[["dash","Dashboard"],["ready","Readiness"],["ppl","Personnel"],["acft","Aircraft"],["curr","Currency"],["frat","FRAT"],["flights","Flight Log"],["haz","Hazards"],["safety","Safety Mgmt"]];
+
+function shell(content){
+  return `<header>
+    <div style="display:flex;align-items:center;gap:12px">${opBadge(38)}<div class="logo">HERO <span>OPS</span><small style="color:#E8B93B">Canyon County Air Rescue</small></div></div>
+    <div class="userbox"><span>Signed in: <b>${user.full}</b> · ${user.role==="SUPERVISOR"?"Supervisor":user.role==="PILOT"?"Pilot":"Crew"}</span>
+    <button class="switch" style="border-color:${user.onDuty?'rgba(47,168,79,.6)':'rgba(184,190,200,.3)'};color:${user.onDuty?'#5BC97A':'var(--muted)'}" onclick="toggleDuty()" title="Tap to change duty status">${user.onDuty?'● ON DUTY':'○ OFF DUTY'}</button>
+    <span class="chip ${netOnline()?'c-good':'c-warn'}" style="font-size:9px">${netOnline()?'● SYNCED':'○ OFFLINE'+(pendingCount()?' · '+pendingCount()+' PENDING':'')}</span>
+    <button class="switch" onclick="signOut()">Switch user</button></div>
+  </header>
+  <nav>${TABS.map(([k,l])=>`<button class="${tab===k?'active':''}" onclick="go('${k}')">${l}</button>`).join("")}</nav>
+  <main>${checkinBanner()}${content}</main>`;
+}
+function go(t){tab=t;render()}
+
+function pgDash(){
+  const avg=crewAvg();
+  const alertCount=(()=>{let n=0;PEOPLE.forEach((p,pi)=>{if(!p.onDuty)return;flatTasks.forEach((t,ti)=>{const c=currCell(pi,ti,t.th);if(c.remaining<0)n++})});return n})();
+  const onDuty=PEOPLE.filter(p=>p.onDuty);
+  return `<h1>Operations <span>Dashboard</span></h1><div class="sub">Everything on this screen is role-aware — and every tile is a door: tap it to go to the full page behind the number.</div>
+  <div class="grid g4">
+    <div class="panel tile accent" style="cursor:pointer" onclick="go('ready')"><div class="lab">Collective crew readiness (on duty)</div><div class="val" style="color:${bandColor(avg)}">${avg}</div><div class="note">green ≥ 70 · yellow 50–69.9 · red < 50 →</div></div>
+    <div class="panel tile" style="cursor:pointer" onclick="acView=null;go('acft')"><div class="lab">Fleet available</div><div class="val">3 / 3</div><div class="note">1 with deferred squawk (MEL) →</div></div>
+    <div class="panel tile" style="cursor:pointer" onclick="go('frat')"><div class="lab">FRATs pending approval</div><div class="val">${PENDING_FRATS.length}</div><div class="note">supervisor review required ≥ ${TH.sup} →</div></div>
+    <div class="panel tile" style="cursor:pointer" onclick="CURRF={name:'',task:'',status:'EXPIRED',duty:'on'};currView='list';go('curr')"><div class="lab">Expired currencies (on-duty crew)</div><div class="val" style="color:${alertCount?'#F27B7B':'#5BC97A'}">${alertCount}</div><div class="note">red items = not authorized to exercise →</div></div>
+  </div>
+  ${user.role==="SUPERVISOR"?`<div class="panel accent"><h2>On-duty crew readiness (supervisor view)</h2>
+    <table><tbody>${onDuty.map(p=>`<tr><td style="color:var(--silver-light);font-weight:600">${p.full}</td><td>${p.pos}</td><td style="font-family:'Barlow Condensed';font-size:20px;font-weight:800;color:${bandColor(READINESS[p.id].score)}">${READINESS[p.id].score}</td><td>${bandChip(READINESS[p.id].score)}</td><td>${provChip(p)}</td></tr>`).join("")}</tbody></table>
+    <div class="lock" style="margin-top:8px">Scores only — individual biometric detail is never visible to supervisors. Duty-day count and provenance ARE visible: they're the fatigue-exposure picture. ${PEOPLE.length-onDuty.length} off-duty crew hidden.</div></div>`:""}
+  <div class="grid g3">${ACTIVE().map(a=>`
+    <div class="panel" style="cursor:pointer" onclick="goAc('${a.n}')"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b class="cond" style="color:var(--silver-light);font-size:18px;letter-spacing:1px">${a.n}</b> <span style="color:var(--red-bright);font-size:12px;font-weight:700">${a.cs}</span></div>${acPhoto(a,120,64)}</div>
+    <div style="font-size:12px;color:var(--muted)">${a.mk} · ${a.base}</div>
+    <div class="grid g4" style="margin-top:10px;text-align:center">
+      <div><div class="lab" style="margin:0">Flt tach</div><b style="color:var(--silver-light)">${a.tach.toFixed(1)}</b></div>
+      <div><div class="lab" style="margin:0">Mx tach</div><b style="color:var(--silver-light)">${a.mtach.toFixed(1)}</b></div>
+      <div><div class="lab" style="margin:0">To 25 hr</div><b style="color:${a.to25<=5?'#F27B7B':a.to25<=10?'var(--warn)':'var(--silver-light)'}">${a.to25}h</b></div>
+      <div><div class="lab" style="margin:0">To 100 hr</div><b style="color:${a.to100<=5?'#F27B7B':a.to100<=10?'var(--warn)':'var(--silver-light)'}">${a.to100}h</b></div>
+    </div>${a.squawks?`<div class="banner b-warn" style="font-size:11px">⚠ ${a.squawks}</div>`:""}</div>`).join("")}
+  </div>
+  <div class="panel"><h2>Recent flights</h2><table><thead><tr><th>ID</th><th>Date</th><th>Aircraft</th><th>Mission</th><th>PIC</th><th>Hrs</th><th>AAR</th></tr></thead>
+  <tbody>${FLIGHTS.map(f=>`<tr><td>#${f.id}</td><td>${f.d}</td><td>${f.ac}</td><td>${f.type}</td><td>${f.pic}</td><td>${f.hrs.toFixed(1)}</td><td>${f.aar?'<span class="chip c-good">✓ Complete</span>':'<span class="chip c-crit">■ Required</span>'}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
+function trendSvg(){
+  const w=460,h=90,pad=6,min=30,max=100;
+  const pts=joelTrend.map((v,i)=>[pad+i*(w-2*pad)/(joelTrend.length-1),h-pad-(v-min)*(h-2*pad)/(max-min)]);
+  const yline=v=>h-pad-(v-min)*(h-2*pad)/(max-min);
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto">
+   <line x1="${pad}" y1="${yline(70)}" x2="${w-pad}" y2="${yline(70)}" stroke="#252B34" stroke-dasharray="3 4"/>
+   <line x1="${pad}" y1="${yline(50)}" x2="${w-pad}" y2="${yline(50)}" stroke="#252B34" stroke-dasharray="3 4"/>
+   <text x="${pad}" y="${yline(70)-3}" fill="#7A8290" font-size="9">70 — green</text>
+   <text x="${pad}" y="${yline(50)-3}" fill="#7A8290" font-size="9">50 — yellow</text>
+   <polyline fill="none" stroke="#C0202A" stroke-width="2" stroke-linejoin="round" points="${pts.map(p=>p.join(",")).join(" ")}"/>
+   <circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="4" fill="#E8323E"/>
+  </svg>`;
+}
+
+function pgReady(){
+  const me=READINESS[user.id]; const avg=crewAvg();
+  const isSup=user.role==="SUPERVISOR";
+  const mine = user.id==="joel" ? READINESS.joel : me;
+  let personal="";
+  if(user.id==="joel"){
+    personal=`<div class="panel accent"><div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;justify-content:space-between">
+      <div><div class="lab" style="margin:0">Joel Smith — HERO Readiness Score</div>
+        <div class="scorebig" style="color:${bandColor(mine.score)}">${mine.score}</div>
+        ${bandChip(mine.score)} <span style="font-size:11px;color:var(--muted)">source: ${mine.src}</span>
+        ${mine.adj?`<div style="font-size:12px;margin-top:6px;color:${mine.adj<0?'var(--warn)':'#5BC97A'}">Oura readiness ${mine.ouraRaw} ${mine.adj<0?'− '+Math.abs(mine.adj)+' (stressful day detected)':'+ '+mine.adj+' (restored day detected)'}</div>`:""}
+      </div>
+      <div style="flex:1;min-width:280px"><div class="lab" style="margin:0 0 4px">14-day trend</div>${trendSvg()}</div></div>
+      <div class="grid g4" style="margin-top:14px">
+        <div class="metric"><div class="k">HRV balance</div><div class="v">${mine.hrv}</div></div>
+        <div class="metric"><div class="k">Sleep (prev night)</div><div class="v">${mine.sleep}</div></div>
+        <div class="metric"><div class="k">Resting HR</div><div class="v">${mine.rhr}</div></div>
+        <div class="metric"><div class="k">Recovery index</div><div class="v">${mine.recovery}</div></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px">Today's stress state: <b style="color:var(--silver-light)">${mine.stress}</b> — stressful days pull the HERO score down; restored days boost it back up.</div>
+    </div>
+    <div class="panel"><h2>Connect your Oura ring — live</h2>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Paste a personal access token from <b style="color:var(--silver)">cloud.ouraring.com → Personal Access Tokens</b>. The request goes directly from this browser to Oura; the token is kept in memory only and is never stored or sent anywhere else.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><input id="oura-token" type="password" placeholder="Oura personal access token" style="flex:1;min-width:240px">
+      <button class="btn" onclick="connectOura()">Connect & pull my data</button></div>
+      ${ouraStatus?`<div class="banner ${ouraStatus.startsWith("✓")?"b-good":"b-warn"}">${ouraStatus}</div>`:""}
+    </div>`;
+  } else {
+    personal=`<div class="panel accent"><div class="lab" style="margin:0">${user.full} — HERO Readiness Score (your data)</div>
+      <div class="scorebig" style="color:${bandColor(me.score)}">${me.score}</div>${bandChip(me.score)}
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">Granular biometrics are visible only to you when you connect a ring.</div></div>`;
+  }
+  return `<h1>Biometric <span>Readiness</span></h1>
+  <div class="privacy"><b>Privacy model:</b> you see your own full biometric detail. Everyone sees the collective score. Supervisors see individual <i>scores only</i> for on-duty crew — never anyone's granular data. Enforced server-side in production.<br>
+  <b>Sync engine:</b> your duty status (toggle in the header) sets your Oura polling cadence — <b style="color:var(--silver-light)">every 30 minutes while ON DUTY</b> for live readiness, <b style="color:var(--silver-light)">once daily while OFF DUTY</b> (after your sleep data posts). You are currently ${user.onDuty?'<b style="color:#5BC97A">ON DUTY — live 30-min sync</b>':'<b style="color:var(--muted)">OFF DUTY — daily sync</b>'}. Going on duty triggers an immediate pull.</div>
+  ${personal}
+  <div class="grid g2">
+    <div class="panel"><div class="lab" style="margin:0">Collective crew readiness (on duty)</div>
+      <div class="scorebig" style="color:${bandColor(avg)}">${avg}</div>${bandChip(avg)}
+      <div style="font-size:12px;color:var(--muted);margin-top:6px">Average of ${PEOPLE.filter(p=>p.onDuty).length} on-duty crew — this is all a crew member sees of others.</div></div>
+    ${isSup?`<div class="panel accent"><h2>On-duty individuals (supervisor only)</h2>
+      <table><tbody>${PEOPLE.filter(p=>p.onDuty).map(p=>`<tr><td style="color:var(--silver-light)">${p.full}</td><td>${p.pos}</td><td style="font-family:'Barlow Condensed';font-size:20px;font-weight:800;color:${bandColor(READINESS[p.id].score)}">${READINESS[p.id].score}</td><td>${bandChip(READINESS[p.id].score)}</td></tr>`).join("")}</tbody></table>
+      <div class="lock" style="margin-top:6px">Scores only. Off-duty crew are not shown.</div></div>`
+    :`<div class="panel"><h2>What you can't see</h2><div style="font-size:13px;color:var(--muted);line-height:1.7">Other crew members' individual scores and biometric detail are hidden from your role. Sign in as K. Whitfield (Supervisor) to see the on-duty score board — and notice even supervisors never get granular data.</div></div>`}
+  </div>`;
+}
+
+/* ===== PREFLIGHT — schema + choices from Joel's Airtable Preflight Records ===== */
+const PF_CHECK=["Preflight","Postflight","Turnaround"];
+const PF_STATUS=["🟢 Up","🟡 Down for Maintenance","🔴 Out of Service","❌ Retired"];
+const PF_AW=["Airworthy","Airworthy with Limitations","Grounded"];
+const PF_FUEL=["Full","3/4","1/2","1/4","Requires Fuel"];
+const PF_ASSIGN=["Alert","Water","Crew","HLCO","VIP","Law Enforcement (SWAT, Bomb Squad, FBI)","Backup Alert"];
+let PF=null;
+function pfStart(n){const a=AIRCRAFT.find(x=>x.n===n);
+ const mxT=(MX[n]||[]).filter(m=>m[1]==="tach");
+ PF={ac:n,check:"Preflight",ft:a.tach.toFixed(1),mt:a.mtach.toFixed(1),
+  status:"🟢 Up",aw:"Airworthy",fuel:"Full",
+  carried:(SQUAWKS[n]||[]).map(s=>s.txt+" ("+s.status+")").join("\n"),
+  newSq:"",cas:"",hoistCy:0,hoistFt:0,
+  m1d:mxT[0]?mxT[0][0]:"",m1t:mxT[0]?mxT[0][2]:"",
+  m2d:mxT[1]?mxT[1][0]:"",m2t:mxT[1]?mxT[1][2]:"",
+  m3d:mxT[2]?mxT[2][0]:"",m3t:mxT[2]?mxT[2][2]:"",
+  calDue:"",preBrief:false,fratDone:false,assign:"Alert",notes:""};
+ render()}
+function pfSet(k,v){PF[k]=v;render()}
+function pfSubmit(){
+ const a=AIRCRAFT.find(x=>x.n===PF.ac);const m=$("pfmsg");
+ if(!(+PF.ft>0&&+PF.mt>0)){if(m){m.textContent="⛔ Enter both tach readings.";m.style.color="#F27B7B"}return}
+ PREFLIGHTS.unshift({id:Math.max(...PREFLIGHTS.map(p=>p.id))+1,d:fmt(TODAY),ac:PF.ac,by:user.full,ft:+PF.ft,mt:+PF.mt,aw:PF.aw.toUpperCase()});
+ a.tach=Math.max(a.tach,+PF.ft);a.mtach=Math.max(a.mtach,+PF.mt);
+ if(PF.hoistCy>0){a.hoist+=PF.hoistCy;a.hoistT+=PF.hoistCy}
+ if(PF.m1t)a.to25=Math.round((+PF.m1t-a.mtach)*10)/10;
+ if(PF.m3t)a.to100=Math.round((+PF.m3t-a.mtach)*10)/10;
+ if(PF.newSq.trim()){SQUAWKS[PF.ac]=SQUAWKS[PF.ac]||[];SQUAWKS[PF.ac].unshift({d:fmt(TODAY),txt:PF.newSq.trim(),status:"OPEN"});a.squawks=PF.newSq.trim()}
+ const grounded=PF.aw!=="Airworthy"||PF.status!=="🟢 Up";
+ const acN=PF.ac;PF=null;acView=acN;
+ toast(netOnline()
+  ?("<b>✓ "+ (grounded?"Check filed — <span style=\'color:#F27B7B\'>aircraft flagged "+"</span>":"Preflight filed successfully.")+"</b> Tach totals updated"+(grounded?"; maintenance and the Safety Officer notified.":", inspection countdowns recomputed."))
+  :"<b>✓ Preflight saved on this device.</b> It will sync to base when service returns.",grounded?"warn":netOnline()?"":"warn");
+ render()}
+function pfForm(){
+ const a=AIRCRAFT.find(x=>x.n===PF.ac);
+ const s=sunTimes(TODAY,OPERATOR.lat,OPERATOR.lon);
+ const sunStr=s.sunrise&&s.sunset?("Sunrise "+s.sunrise.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+" · Sunset "+s.sunset.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})):"";
+ const sel=(k,opts)=>`<select onchange="pfSet('${k}',this.value)">${opts.map(o=>`<option ${PF[k]===o?'selected':''}>${o}</option>`).join("")}</select>`;
+ return `<button class="btn2" onclick="PF=null;render()">← Cancel</button>
+ <div class="panel accent" style="margin-top:12px"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;align-items:center">
+  <div><h1 style="margin:0">${PF.check} <span>Check</span> — ${a.n}</h1>
+  <div style="font-size:12px;color:var(--muted)">${a.mk} · ${fmt(TODAY)} · by ${user.full} · ${sunStr} (auto-attached)</div></div>${acPhoto(a,170,90)}</div></div>
+ <div class="panel accent"><h2>1 · Check type & tach readings</h2>
+  <div class="grid g3">
+   <div><label class="lab">Check type</label>${sel("check",PF_CHECK)}</div>
+   <div><label class="lab">Flight tach reading <span style="color:var(--muted)">(current ${a.tach.toFixed(1)})</span></label><input class="num" type="number" step="0.1" value="${PF.ft}" onchange="pfSet('ft',this.value)"></div>
+   <div><label class="lab">Maintenance tach reading <span style="color:var(--muted)">(current ${a.mtach.toFixed(1)})</span></label><input class="num" type="number" step="0.1" value="${PF.mt}" onchange="pfSet('mt',this.value)"></div>
+  </div></div>
+ <div class="panel accent"><h2>2 · Aircraft condition</h2>
+  <div class="grid g3">
+   <div><label class="lab">Aircraft status</label>${sel("status",PF_STATUS)}</div>
+   <div><label class="lab">Airworthiness</label>${sel("aw",PF_AW)}</div>
+   <div><label class="lab">Fuel level</label>${sel("fuel",PF_FUEL)}</div>
+  </div>
+  ${PF.aw!=="Airworthy"||PF.status!=="🟢 Up"?'<div class="banner b-crit" style="font-size:12px">⚠ Submitting will flag this aircraft — maintenance and the Safety Officer are notified automatically.</div>':""}
+  <div class="grid g3" style="margin-top:10px">
+   <div><label class="lab">Open squawks carried over <span style="color:#5BC97A">(prefilled)</span></label><textarea rows="3" onchange="pfSet('carried',this.value)">${PF.carried}</textarea></div>
+   <div><label class="lab">New squawks</label><textarea rows="3" placeholder="Anything new found on this check…" onchange="pfSet('newSq',this.value)">${PF.newSq}</textarea></div>
+   <div><label class="lab">CAS messages</label><textarea rows="3" placeholder="Crew alerting system messages…" onchange="pfSet('cas',this.value)">${PF.cas}</textarea></div>
+  </div>
+  <div class="grid g4" style="margin-top:10px">
+   <div><label class="lab">Hoist cycles this check</label><input class="num" type="number" min="0" value="${PF.hoistCy}" onchange="pfSet('hoistCy',+this.value)"></div>
+   <div><label class="lab">Hoist feet this check</label><input class="num" type="number" min="0" value="${PF.hoistFt}" onchange="pfSet('hoistFt',+this.value)"></div>
+  </div></div>
+ <div class="panel accent"><h2>3 · Upcoming maintenance <span style="font-size:11px;color:#5BC97A;font-weight:400">· prefilled from the maintenance schedule</span></h2>
+  <div class="grid g3">
+   ${[1,2,3].map(n=>`<div><label class="lab">${n===1?"1st":n===2?"2nd":"3rd"} maintenance item</label>
+    <input placeholder="Description" value="${PF["m"+n+"d"]}" onchange="pfSet('m${n}d',this.value)" style="margin-bottom:6px">
+    <input class="num" type="number" step="0.1" placeholder="Due at tach" value="${PF["m"+n+"t"]}" onchange="pfSet('m${n}t',this.value)"></div>`).join("")}
+  </div>
+  <div style="max-width:280px;margin-top:10px"><label class="lab">Calendar inspection due date</label><input type="date" value="${PF.calDue}" onchange="pfSet('calDue',this.value)"></div></div>
+ <div class="panel accent"><h2>4 · Readiness & assignment</h2>
+  <div class="grid g3">
+   <label class="opt ${PF.preBrief?'sel':''}" style="cursor:pointer"><span>Pre-brief completed</span><input type="checkbox" style="width:auto" ${PF.preBrief?'checked':''} onchange="pfSet('preBrief',this.checked)"></label>
+   <label class="opt ${PF.fratDone?'sel':''}" style="cursor:pointer"><span>FRAT completed</span><input type="checkbox" style="width:auto" ${PF.fratDone?'checked':''} onchange="pfSet('fratDone',this.checked)"></label>
+   <div><label class="lab">Assignment type</label>${sel("assign",PF_ASSIGN)}</div>
+  </div>
+  <label class="lab">Notes</label><textarea rows="2" onchange="pfSet('notes',this.value)">${PF.notes}</textarea>
+  <div style="margin-top:12px"><button class="btn" onclick="pfSubmit()">Submit ${PF.check.toLowerCase()} check</button> <span id="pfmsg" style="font-size:13px;margin-left:8px"></span></div></div>`;
+}
+function pgAircraft(){
+ if(PF)return pfForm();
+  if(acView){const a=AIRCRAFT.find(x=>x.n===acView);return pgAcDetail(a)}
+  const mgr=isMgr(user);
+  const addForm=acAdd?`<div class="panel accent"><h2>Add aircraft to the fleet <span style="font-size:10px;color:#5BC97A;font-weight:400">· manager only</span></h2>
+   <div class="grid g3">
+    <div><label class="lab">N-number</label><input value="${acAdd.n}" placeholder="N123AB" onchange="acAddSet('n',this.value)"></div>
+    <div><label class="lab">Call sign</label><input value="${acAdd.cs}" placeholder="HERO 3" onchange="acAddSet('cs',this.value)"></div>
+    <div><label class="lab">Make & model</label><input value="${acAdd.mk}" placeholder="e.g. Airbus H145" onchange="acAddSet('mk',this.value)"></div>
+    <div><label class="lab">Base</label><input value="${acAdd.base}" placeholder="Main Base" onchange="acAddSet('base',this.value)"></div>
+    <div><label class="lab">Flight tach at onboarding</label><input class="num" type="number" step="0.1" value="${acAdd.tach}" onchange="acAddSet('tach',this.value)"></div>
+    <div><label class="lab">Maintenance tach at onboarding</label><input class="num" type="number" step="0.1" value="${acAdd.mtach}" onchange="acAddSet('mtach',this.value)"></div>
+    <div><label class="lab">Date placed into service</label><input type="date" value="${acAdd.svc}" onchange="acAddSet('svc',this.value)"></div>
+   </div>
+   <div style="margin-top:12px"><button class="btn" onclick="acAddSubmit()">Add aircraft</button> <button class="btn2" onclick="acAdd=null;render()">Cancel</button> <span id="acmsg" style="font-size:13px;margin-left:8px"></span></div></div>`:"";
+  const retired=AIRCRAFT.filter(a=>a.ret);
+  return `<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:baseline"><h1>Fleet <span>Status</span></h1>
+   ${mgr&&!acAdd?`<button class="btn" onclick="acAdd={n:'',cs:'',mk:'',base:'',tach:'',mtach:'',svc:''};render()">＋ Add aircraft</button>`:mgr?"":'<span class="lock">Add / remove aircraft is a manager function</span>'}</div>
+  <div class="sub">Tap any aircraft for its complete record — preflights, flights, maintenance schedule, squawks and deferred items.</div>
+  ${addForm}
+  <div class="grid g3">${ACTIVE().map(a=>`
+    <div class="panel" style="cursor:pointer" onclick="goAc('${a.n}')">
+      <div style="padding:2px 0 8px">${acPhoto(a,400,160)}</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><b class="cond" style="color:var(--silver-light);font-size:19px;letter-spacing:1px">${a.n}</b><span style="color:var(--red-bright);font-size:12px;font-weight:700">${a.cs}</span></div>
+      <div style="font-size:12px;color:var(--muted)">${a.mk} · ${a.base}</div>
+      <div class="grid g4" style="margin-top:8px;text-align:center">
+        <div><div class="lab" style="margin:0">Flt tach</div><b style="color:var(--silver-light)">${a.tach.toFixed(1)}</b></div>
+        <div><div class="lab" style="margin:0">Mx tach</div><b style="color:var(--silver-light)">${a.mtach.toFixed(1)}</b></div>
+        <div><div class="lab" style="margin:0">To 100 hr</div><b style="color:${a.to100<=5?'#F27B7B':a.to100<=10?'var(--warn)':'var(--silver-light)'}">${a.to100}h</b></div>
+        <div><div class="lab" style="margin:0">Squawks</div><b style="color:${(SQUAWKS[a.n]||[]).length?'var(--warn)':'#5BC97A'}">${(SQUAWKS[a.n]||[]).length}</b></div>
+      </div>
+      ${a.hoistT>=40?`<div class="banner ${a.hoistT>=50?'b-crit':'b-warn'}" style="font-size:11px;margin-top:8px;padding:6px 10px">${a.hoistT>=50?'⛔':'⚠'} Hoist: ${a.hoistT} cycles since conditioning${a.hoistT>=50?' — condition before further hoist ops':' — conditioning due before 50'}</div>`:""}</div>`).join("")}</div>
+  ${retired.length?`<div class="panel" style="margin-top:14px;border-left:3px solid var(--muted)"><h2>Retired aircraft <span style="font-size:10px;color:var(--muted);font-weight:400">· removed from service — records preserved, view only</span></h2>
+   ${retired.map(a=>`<div onclick="goAc('${a.n}')" style="cursor:pointer;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;align-items:center;padding:9px 4px;border-bottom:1px solid rgba(37,43,52,.6);opacity:.75">
+    <div><b class="cond" style="color:var(--silver);font-size:15px;letter-spacing:1px">${a.n}</b> <span style="font-size:11px;color:var(--muted)">· ${a.mk} · in service ${a.svc} — retired ${a.retDate||""}</span></div>
+    <span><span class="chip c-gray" style="font-size:9px">RETIRED</span> <span style="font-size:11px;color:var(--muted)">${a.tach.toFixed(1)} hrs · ${a.landings.toLocaleString()} landings</span></span></div>`).join("")}</div>`:""}`;
+}
+function pgAcDetail(a){
+  const sq=SQUAWKS[a.n]||[], mx=MX[a.n]||[];
+  const fls=FLIGHTS.filter(f=>f.ac===a.n), pfs=PREFLIGHTS.filter(p=>p.ac===a.n);
+  const mgr=isMgr(user);
+  const confirmBox=acRemove===a.n?`<div class="banner b-crit" style="margin-top:10px"><b>⚠ Retire ${a.n} from the fleet?</b><br>
+   <span style="font-size:12px">This removes it from FRATs, flight logs and preflights. All ${fls.length} logged flights, ${pfs.length} preflights, maintenance history and squawks are preserved and stay visible under <b>Retired Aircraft</b> (view-only). This action is recorded and can only be reversed by HERO Ops support.</span>
+   <div style="margin-top:8px"><button class="btn" onclick="acRetire('${a.n}')">Yes — retire this aircraft</button> <button class="btn2" onclick="acRemove=null;render()">Cancel</button></div></div>`:"";
+  return `<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><button class="btn2" onclick="acView=null;render()">← All aircraft</button>
+   ${a.ret?'<span class="chip c-gray">RETIRED — VIEW ONLY</span>':`<span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="pfStart('${a.n}')">📋 File preflight / daily check</button>${mgr?`<button class="btn2" onclick="acRemove='${a.n}';render()">Retire / remove…</button>`:""}</span>`}</div>
+  ${confirmBox}
+  <div class="panel accent" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <div><h1 style="margin:0">${a.n} <span>${a.cs}</span></h1><div style="font-size:13px;color:var(--muted)">${a.mk} · ${a.base} · placed into service ${a.svc}${a.ret?" · retired "+(a.retDate||""):""}</div></div>
+    ${acPhoto(a,280,150)}</div><div style="font-size:9px;color:var(--muted);text-align:right;margin-top:4px">Generic type photo — Wikimedia Commons · replaced with your fleet's photos at onboarding</div></div>
+  <div class="grid g4">
+    <div class="panel tile"><div class="lab">Flight tach</div><div class="val">${a.tach.toFixed(1)}</div></div>
+    <div class="panel tile"><div class="lab">Maintenance tach</div><div class="val">${a.mtach.toFixed(1)}</div></div>
+    <div class="panel tile"><div class="lab">Hours to 25 hr</div><div class="val" style="color:${a.to25<=5?'#F27B7B':a.to25<=10?'var(--warn)':'var(--silver-light)'}">${a.to25}</div></div>
+    <div class="panel tile"><div class="lab">Hours to 100 hr</div><div class="val" style="color:${a.to100<=5?'#F27B7B':a.to100<=10?'var(--warn)':'var(--silver-light)'}">${a.to100}</div></div>
+    <div class="panel tile"><div class="lab">Landings / Hoist life cycles</div><div class="val" style="font-size:22px">${a.landings.toLocaleString()} / ${a.hoist}</div></div>
+    <div class="panel tile" style="${a.hoistT>=50?'border-left:3px solid #F27B7B':a.hoistT>=40?'border-left:3px solid var(--warn)':''}"><div class="lab">Hoist cycles since conditioning</div><div class="val" style="font-size:22px;color:${hoistBand(a).col}">${a.hoistT}<span style="font-size:12px;color:var(--muted)"> / 50</span></div>
+     ${a.ret?"":`<button class="btn2" style="margin-top:6px;font-size:10px;padding:4px 10px" onclick="condHoist('${a.n}')">Condition cable/hoist</button>`}</div>
+  </div>
+  ${hoistBand(a).msg?`<div class="banner ${a.hoistT>=50?'b-crit':'b-warn'}" style="font-size:12px">${a.hoistT>=50?'⛔':'⚠'} <b>Hoist cable conditioning:</b> ${hoistBand(a).msg}. Conditioning resets this counter — the master life count (${a.hoist}) keeps going.</div>`:""}
+  <div class="grid g2">
+    <div class="panel ${sq.length?'':''}" style="${sq.length?'border-left:3px solid var(--warn)':''}"><h2>Open & deferred squawks</h2>
+      ${sq.length?sq.map(s=>`<div style="border-bottom:1px solid rgba(37,43,52,.6);padding:6px 0"><div style="font-size:13px;color:var(--silver-light)">${s.txt}</div><div style="font-size:11px;color:var(--muted)">${s.d} · <span class="chip ${s.status.startsWith('DEFERRED')?'c-warn':'c-crit'}" style="font-size:9px">${s.status}</span></div></div>`).join(""):'<div style="font-size:13px;color:#5BC97A">✓ No open squawks — full-up aircraft.</div>'}</div>
+    <div class="panel"><h2>Maintenance schedule</h2>
+      <table><thead><tr><th>Item</th><th>Due</th><th>Remaining</th></tr></thead><tbody>
+      ${mx.map(([item,kind,due])=>{
+        let dueTxt,remTxt,col="var(--text)";
+        if(kind==="tach"){const rem=due-a.tach;dueTxt="Tach "+due.toFixed(1);remTxt=rem.toFixed(1)+" hrs";col=rem<=5?"#F27B7B":rem<=10?"var(--warn)":"var(--text)"}
+        else{const[mm,dd,yy]=due.split("/").map(Number);const dt=new Date(2000+yy,mm-1,dd);const days=Math.ceil((dt-TODAY)/86400000);
+          dueTxt=due;remTxt=days<0?Math.abs(days)+" days OVERDUE":days+" days";col=days<0?"#F27B7B":days<=30?"var(--warn)":"var(--text)"}
+        return `<tr><td>${item}</td><td>${dueTxt}</td><td style="color:${col};font-weight:600">${remTxt}</td></tr>`}).join("")}
+      </tbody></table></div>
+  </div>
+  <div class="grid g2">
+    <div class="panel"><h2>Recent preflights</h2>
+      <table><thead><tr><th>ID</th><th>Date</th><th>By</th><th>Tach F/M</th><th>Airworthiness</th></tr></thead><tbody>
+      ${pfs.length?pfs.map(p=>`<tr><td>#${p.id}</td><td>${p.d}</td><td>${p.by}</td><td>${p.ft.toFixed(1)} / ${p.mt.toFixed(1)}</td><td><span class="chip ${p.aw==='AIRWORTHY'?'c-good':'c-warn'}" style="font-size:9px">${p.aw}</span></td></tr>`).join(""):'<tr><td colspan="5" style="color:var(--muted)">None on file.</td></tr>'}</tbody></table></div>
+    <div class="panel"><h2>Logged flights</h2>
+      <table><thead><tr><th>ID</th><th>Date</th><th>Mission</th><th>PIC</th><th>Hrs</th><th>AAR</th></tr></thead><tbody>
+      ${fls.length?fls.map(f=>`<tr><td>#${f.id}</td><td>${f.d}</td><td>${f.type}</td><td>${f.pic}</td><td>${f.hrs.toFixed(1)}</td><td>${f.aar?'<span class="chip c-good" style="font-size:9px">✓</span>':'<span class="chip c-crit" style="font-size:9px">■</span>'}</td></tr>`).join(""):'<tr><td colspan="6" style="color:var(--muted)">None on file.</td></tr>'}</tbody></table></div>
+  </div>`;
+}
+function pgCurr(){
+  const pi=PEOPLE.findIndex(p=>p.id===currPerson);
+  const header=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+    <button class="btn2 ${currView==='mine'?'on':''}" onclick="currView='mine';render()">Individual report</button>
+    <button class="btn2 ${currView==='matrix'?'on':''}" onclick="currView='matrix';render()">Unit matrix</button>
+    <button class="btn2 ${currView==='list'?'on':''}" onclick="currView='list';render()">Filtered list</button>
+    ${currView==='mine'?`<select style="width:auto" onchange="currPerson=this.value;render()">${PEOPLE.map(p=>`<option value="${p.id}" ${p.id===currPerson?'selected':''}>${p.full} — ${p.pos}</option>`).join("")}</select>`:""}
+  </div>`;
+  if(currView==='list'){
+    let rows=[];
+    PEOPLE.forEach((p,ppi)=>flatTasks.forEach((t,ti)=>{
+      const c=currCell(ppi,ti,t.th);
+      const status=c.remaining<0?"EXPIRED":(c.remaining<=t.th*0.2?"WARNING":"CURRENT");
+      rows.push({p,t,c,status});
+    }));
+    rows=rows.filter(r=>(!CURRF.name||r.p.full.toLowerCase().includes(CURRF.name.toLowerCase()))&&(!CURRF.task||r.t.name.toLowerCase().includes(CURRF.task.toLowerCase())||r.t.g.toLowerCase().includes(CURRF.task.toLowerCase()))&&(!CURRF.status||r.status===CURRF.status)&&(!CURRF.duty||(CURRF.duty==='on'?r.p.onDuty:!r.p.onDuty)));
+    rows.sort((a,b)=>a.c.remaining-b.c.remaining);
+    return `<h1>Currency <span>Status</span></h1>
+    <div class="sub">Filtered view — combine name, discipline/task, status, and duty filters. The dashboard's expired tile lands here pre-filtered to on-duty expired items.</div>
+    ${header}
+    <div class="panel"><div class="grid g4" style="margin-bottom:12px">
+      <div><label class="lab">Name</label><input value="${CURRF.name}" placeholder="Filter by name…" onchange="CURRF.name=this.value;render()"></div>
+      <div><label class="lab">Discipline / task</label><input value="${CURRF.task}" placeholder="e.g. hoist, NVG…" onchange="CURRF.task=this.value;render()"></div>
+      <div><label class="lab">Status</label><select onchange="CURRF.status=this.value;render()"><option value="">All</option>${["EXPIRED","WARNING","CURRENT"].map(s=>`<option ${CURRF.status===s?'selected':''}>${s}</option>`).join("")}</select></div>
+      <div><label class="lab">Duty</label><select onchange="CURRF.duty=this.value;render()"><option value="">Everyone</option><option value="on" ${CURRF.duty==='on'?'selected':''}>On duty only</option><option value="off" ${CURRF.duty==='off'?'selected':''}>Off duty only</option></select></div></div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${rows.length} item${rows.length===1?"":"s"} match</div>
+      <table><thead><tr><th>Crew member</th><th>Duty</th><th>Group</th><th>Task</th><th>Last completed</th><th>Days</th><th>Status</th></tr></thead><tbody>
+      ${rows.slice(0,60).map(r=>`<tr><td style="color:var(--silver-light);font-weight:600">${r.p.full}</td><td>${r.p.onDuty?'<span class="chip c-good" style="font-size:9px">ON</span>':'<span class="chip c-gray" style="font-size:9px">OFF</span>'}</td><td style="font-size:11px;color:var(--muted)">${r.t.g}</td><td>${r.t.name}</td><td>${fmt(r.c.last)}</td><td>${r.c.remaining<0?`<b style="color:#F27B7B">${Math.abs(r.c.remaining)}d overdue</b>`:r.c.remaining+"d left"}</td><td>${chip(r.status)}</td></tr>`).join("")}
+      ${rows.length>60?`<tr><td colspan="7" style="color:var(--muted)">…${rows.length-60} more — narrow the filters.</td></tr>`:""}
+      </tbody></table></div>`;
+  }
+  const personRows=TASK_GROUPS.map(grp=>{
+    const rows=grp.tasks.map(t=>{
+      const ti=flatTasks.findIndex(f=>f.name===t[0]&&f.g===grp.g);
+      const c=currCell(pi,ti,t[1]);
+      return `<tr><td style="padding-left:24px">${t[0]}</td><td style="text-align:center">${t[1]}</td>
+        <td class="curr-cell ${c.cls}" onmousemove='cellTip(event,${JSON.stringify(PEOPLE[pi].full)},${JSON.stringify(t[0])},${t[1]},{since:${c.since},remaining:${c.remaining},last:new Date(${c.last.getTime()}),expires:new Date(${c.expires.getTime()})})' onmouseleave="hideTip()">${fmt(c.expires)}</td></tr>`;
+    }).join("");
+    return `<tr class="curr-group"><td colspan="3">${grp.g}</td></tr>${rows}`;
+  }).join("");
+  const matrix=`<div class="matrix-wrap panel"><table>
+    <thead><tr><th style="min-width:260px">UNIT CURRENCY MATRIX</th><th style="text-align:center">Days</th>${PEOPLE.map(p=>`<th class="person">${p.name}<span style="color:var(--muted)"> · ${p.level}</span></th>`).join("")}</tr></thead>
+    <tbody>${TASK_GROUPS.map(grp=>`<tr class="curr-group"><td colspan="${PEOPLE.length+2}">${grp.g}</td></tr>`+
+      grp.tasks.map(t=>{const ti=flatTasks.findIndex(f=>f.name===t[0]&&f.g===grp.g);
+        return `<tr><td style="padding-left:20px">${t[0]}</td><td style="text-align:center">${t[1]}</td>${PEOPLE.map((p,ppi)=>{const c=currCell(ppi,ti,t[1]);
+          return `<td class="curr-cell ${c.cls}" onmousemove='cellTip(event,${JSON.stringify(p.full)},${JSON.stringify(t[0])},${t[1]},{since:${c.since},remaining:${c.remaining},last:new Date(${c.last.getTime()}),expires:new Date(${c.expires.getTime()})})' onmouseleave="hideTip()">${fmt(c.expires)}</td>`}).join("")}</tr>`}).join("")).join("")}
+    </tbody></table></div>`;
+  return `<h1>Currency <span>Status</span></h1>
+  <div class="sub">Full transparency across the unit — anyone can check anyone's currency. <b style="color:var(--silver)">Hover any date cell</b> for last tracked, days passed, and days remaining. Green = current · yellow = final 20% of the window · red = expired (not authorized to exercise that privilege).</div>
+  ${header}
+  ${currView==='mine'
+    ?`<div class="panel"><h2 style="text-align:center;color:var(--red-bright)">Currency Status Report — ${PEOPLE[pi].full}</h2>
+      <table><thead><tr><th></th><th style="text-align:center">Threshold (days)</th><th style="text-align:center">Status / Expires</th></tr></thead><tbody>${personRows}</tbody></table>
+      <div style="font-size:12px;color:var(--muted);margin-top:12px;font-style:italic">NOTE: Items in yellow seek attention. Items in RED require immediate attention — crew members are not authorized to respond on deployments and exercise the privileges of any expired item in RED.</div></div>`
+    :matrix}`;
+}
+
+/* ============ FRAT v3 — AUTO-SCORING ENGINE ============ */
+function getWx(station){
+  if(FR.wxData[station])return FR.wxData[station];
+  const sec=OPERATOR.sectors.find(s=>s.station===station);
+  return {ceil:sec?sec.sim.ceil:2500,vis:sec?sec.sim.vis:6,live:false};
+}
+/* Weather tiers (Joel's spec):
+   ≥1000' & ≥3SM → VFR, +0 · ≥800' & ≥2SM → +5 · 500–800' or 1–2SM → +8, needs 2 IFR-current pilots
+   <500' or <1SM → NO-GO */
+function wxTier(w){
+  if(w.ceil<500||w.vis<1)return{pts:0,nogo:true,label:"NO-GO",cls:"c-crit",desc:"Below minimums (<500' or <1 SM)"};
+  if(w.ceil>=1000&&w.vis>=3)return{pts:0,nogo:false,label:"VFR — GO",cls:"c-good",desc:"≥1000' & ≥3 SM"};
+  if(w.ceil>=800&&w.vis>=2)return{pts:5,nogo:false,label:"MARGINAL +5",cls:"c-warn",desc:"≥800' & ≥2 SM"};
+  return{pts:8,nogo:false,ifr2:true,label:"LOW IMC +8",cls:"c-or",desc:"500–800' or 1–2 SM — requires 2 IFR-current pilots"};
+}
+async function pullWx(){
+  const st=[OPERATOR.baseIcao];
+  const dest=OPERATOR.sectors.find(s=>s.id===FR.dest);
+  if(dest&&!st.includes(dest.station))st.push(dest.station);
+  FR.wxStatus="Contacting aviationweather.gov…";render();
+  try{
+    const r=await fetch("https://aviationweather.gov/api/data/metar?ids="+st.join(",")+"&format=json");
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    const j=await r.json();
+    (j||[]).forEach(m=>{
+      let ceil=9999;(m.clouds||[]).forEach(c=>{if(["BKN","OVC","VV"].includes(c.cover)&&c.base&&c.base<ceil)ceil=c.base});
+      let vis=parseFloat(String(m.visib??"10").replace("+",""));if(isNaN(vis))vis=10;
+      FR.wxData[m.icaoId]={ceil,vis,live:true,raw:m.rawOb||""};
+    });
+    FR.wxStatus="✓ Live METARs loaded at "+new Date().toLocaleTimeString();
+  }catch(e){FR.wxStatus="⚠ Live weather unreachable ("+e.message+") — using simulated conditions.";}
+  render();
+}
+/* Sunrise/sunset at the operator's base (NOAA approximation) */
+function sunTimes(d,lat,lon){
+  const rad=Math.PI/180;
+  const start=new Date(Date.UTC(d.getFullYear(),0,0));
+  const n=Math.floor((d-start)/864e5);
+  const lngHour=lon/15;
+  function calc(rise){
+    const t=n+(((rise?6:18)-lngHour)/24);
+    const M=(0.9856*t)-3.289;
+    let L=M+(1.916*Math.sin(M*rad))+(0.020*Math.sin(2*M*rad))+282.634;L=((L%360)+360)%360;
+    let RA=Math.atan(0.91764*Math.tan(L*rad))/rad;RA=((RA%360)+360)%360;
+    RA+=(Math.floor(L/90)*90-Math.floor(RA/90)*90);RA/=15;
+    const sinDec=0.39782*Math.sin(L*rad),cosDec=Math.cos(Math.asin(sinDec));
+    const cosH=(Math.cos(90.833*rad)-(sinDec*Math.sin(lat*rad)))/(cosDec*Math.cos(lat*rad));
+    if(cosH>1||cosH<-1)return null;
+    let H=rise?360-Math.acos(cosH)/rad:Math.acos(cosH)/rad;H/=15;
+    const T=H+RA-(0.06571*t)-6.622;
+    let UT=((T-lngHour)%24+24)%24;
+    const res=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+    res.setUTCMinutes(Math.round(UT*60));
+    return res;
+  }
+  const st={sunrise:calc(true),sunset:calc(false)};
+  if(st.sunrise&&st.sunset&&st.sunset<=st.sunrise)st.sunset=new Date(st.sunset.getTime()+86400000);
+  return st;
+}
+/* Is instant t in daylight? Checks today's and yesterday's window (windows cross UTC midnight). */
+function isDayAt(t){
+ for(const off of [0,-86400000]){
+  const s=sunTimes(new Date(t.getTime()+off),OPERATOR.lat,OPERATOR.lon);
+  if(s.sunrise&&s.sunset&&t>=s.sunrise&&t<=s.sunset)return true;
+ }
+ return false;
+}
+function nightPhase(){
+  const t=new Date(FR.time);const m=30*60000;
+  const s=sunTimes(t,OPERATOR.lat,OPERATOR.lon);
+  const dm=isDayAt(new Date(t.getTime()-m)),dp=isDayAt(new Date(t.getTime()+m));
+  if(dm&&dp)return{phase:"DAY",s};
+  if(!dm&&!dp&&!isDayAt(t))return{phase:"NIGHT",s};
+  return{phase:"TWILIGHT",s};
+}
+function crewOf(acId){const c=FR.crews[acId]||{};
+  return["pic","sic","hoist","rescuer"].map(k=>c[k]).filter(Boolean).map(id=>PEOPLE.find(p=>p.id===id))}
+function currChecks(ft,people){const out=[];
+  people.forEach(p=>{(ft.req[p.rtype]||[]).forEach(name=>{
+    const ti=flatTasks.findIndex(f=>f.name===name);if(ti<0)return;
+    const pi=PEOPLE.findIndex(x=>x.id===p.id);
+    const c=currCell(pi,ti,flatTasks[ti].th);
+    out.push({who:p.full,task:name,ok:c.remaining>=0,rem:c.remaining})})});
+  return out}
+function acStatusPts(a){let pts=0,notes=[];
+  if(a.squawks){pts+=4;notes.push("Open/deferred squawks (+4)")}
+  if(a.to25<=5||a.to100<=5){pts+=5;notes.push("Within 5 hrs of an inspection (+5)")}
+  if(!notes.length)notes.push("Full-up — no findings (+0)");
+  return{pts,notes}}
+function scoreFrat2(){
+  const ft=FLIGHT_TYPES.find(f=>f.id===FR.ft)||null;
+  const destSec=OPERATOR.sectors.find(s=>s.id===FR.dest)||null;
+  const depW=getWx(OPERATOR.baseIcao);
+  const dstW=(FR.dest&&FR.dest!=="outside"&&destSec)?getWx(destSec.station):null;
+  const tiers=[{w:depW,t:wxTier(depW),where:OPERATOR.baseIcao}];
+  if(dstW)tiers.push({w:dstW,t:wxTier(dstW),where:destSec.station});
+  const worstT=tiers.reduce((a,b)=>(b.t.nogo||b.t.pts>a.t.pts)?b:a,tiers[0]);
+  const wx=worstT.t, nogo=tiers.some(x=>x.t.nogo);
+  let terr=0,terrLabel="Select a destination";
+  if(FR.dest==="outside"){terr=FR.terrManual!=null?TERRAIN_MANUAL[FR.terrManual][1]:0;
+    terrLabel=FR.terrManual!=null?TERRAIN_MANUAL[FR.terrManual][0]+" (pilot-selected)":"Outside district — select terrain"}
+  else if(destSec){terr=destSec.tPts;terrLabel=destSec.terrain+" (auto)"}
+  const np=nightPhase();
+  const ext=FR.ext!=null?EXT_OPTS[FR.ext][1]:0;
+  const extCredit=Math.min(FR.extMit!=null?MIT_EXT[FR.extMit][1]:0,ext);
+  const wxCredit=Math.min(FR.wxMit!=null?MIT_WX[FR.wxMit][1]:0,wx.pts);
+  const cx=ft?ft.cx:0;
+  const perAc=FR.acIds.map(id=>{
+    const a=AIRCRAFT.find(x=>x.n===id);
+    const crew=crewOf(id), pilots=crew.filter(p=>p.pilot);
+    const scores=crew.map(p=>READINESS[p.id].score);
+    const yel=scores.filter(v=>v<70&&v>=50).length, red=scores.filter(v=>v<50).length;
+    let fat=0,fatHint=crew.length?"All crew green (≥70) — +0":"Select crew";
+    if(red){fat=8;fatHint="⚠ "+red+" of "+crew.length+" crew on this aircraft is RED (<50) — +8"}
+    else if(yel){fat=3;fatHint="⚠ "+yel+" of "+crew.length+" crew on this aircraft is YELLOW (50–69.9) — +3"}
+    const fatCredit=Math.min(FR.fatMit[id]!=null?MIT_FATIGUE[FR.fatMit[id]][1]:0,fat);
+    const checks=ft?currChecks(ft,crew):[];
+    const lapsed=checks.filter(c=>!c.ok);
+    const cur=lapsed.length?(FR.dep==="MISSION"?4:2):0;
+    const curCredit=Math.min(FR.curMit[id]!=null?MIT_CURR[FR.curMit[id]][1]:0,cur);
+    let night=0,nightNote="Day flight — +0",nvgLapsed=[];
+    if(np.phase==="TWILIGHT"){night=2;nightNote="Twilight departure/return — +2"}
+    if(np.phase==="NIGHT"){
+      const allNvg=pilots.length>0&&pilots.every(p=>p.nvg);
+      nvgLapsed=pilots.filter(p=>!p.nvg);
+      night=allNvg?4:7;
+      nightNote=allNvg?"Night — all pilots NVG current — +4":"Night — pilot(s) NOT NVG current — +7"}
+    const st=acStatusPts(a);
+    const ifr2Fail=!!wx.ifr2&&pilots.filter(p=>p.ifr).length<2;
+    const ifr2Pen=ifr2Fail?5:0;
+    const total=Math.max(0,(wx.pts-wxCredit)+terr+night+cx+(ext-extCredit)+(fat-fatCredit)+(cur-curCredit)+st.pts+ifr2Pen);
+    return{a,crew,pilots,fat,fatHint,fatCredit,checks,lapsed,cur,curCredit,night,nightNote,nvgLapsed,st,ifr2Fail,ifr2Pen,total,
+      risk:total>=TH.high?"HIGH":total>=TH.med?"MEDIUM":"LOW"};
+  });
+  const worst=perAc.length?Math.max(...perAc.map(p=>p.total)):0;
+  const avg=perAc.length?Math.round(perAc.reduce((s,p)=>s+p.total,0)/perAc.length):0;
+  return{ft,destSec,depW,dstW,tiers,wx,nogo,terr,terrLabel,np,ext,extCredit,wxCredit,cx,perAc,worst,avg,
+    sup:perAc.some(p=>p.total>=TH.sup)};
+}
+/* ---- FRAT interaction ---- */
+function frSet(k,v){FR[k]=v;render()}
+function frDep(v){FR.dep=v;render()}
+function frToggleAc(n){const i=FR.acIds.indexOf(n);
+  if(i>=0){FR.acIds.splice(i,1);delete FR.crews[n]}else{FR.acIds.push(n);FR.crews[n]={}}render()}
+function frCrew(ac,slot,v){FR.crews[ac]=FR.crews[ac]||{};FR.crews[ac][slot]=v||null;render()}
+function frMit(kind,ac,v){if(kind==="fat")FR.fatMit[ac]=v===""?null:+v;if(kind==="cur")FR.curMit[ac]=v===""?null:+v;
+  if(kind==="wx")FR.wxMit=v===""?null:+v;if(kind==="ext")FR.extMit=v===""?null:+v;render()}
+function crewSelect(ac,slot,label,filter){
+  const c=(FR.crews[ac]||{})[slot]||"";
+  const taken=Object.entries(FR.crews[ac]||{}).filter(([k,v])=>k!==slot&&v&&["pic","sic","hoist","rescuer","safety"].includes(k)).map(([k,v])=>v);
+  const opts=PEOPLE.filter(p=>filter(p)&&(!taken.includes(p.id)||p.id===c)).map(p=>{
+    const r=READINESS[p.id].score;
+    return `<option value="${p.id}" ${c===p.id?'selected':''}>${p.full} — ${r} ${band(r)==="g"?"GREEN":band(r)==="y"?"YELLOW":"RED"}${p.ifr?' · IFR':''}${p.nvg?' · NVG':''}</option>`}).join("");
+  return `<div><label class="lab">${label}</label><select onchange="frCrew('${ac}','${slot}',this.value)"><option value="">—</option>${opts}</select></div>`;
+}
+function wxCard(where,w,t){
+  return `<div class="panel" style="margin:0;flex:1;min-width:220px"><div class="lab" style="margin:0">${where} ${w.live?'<span class="chip c-good" style="font-size:9px">LIVE</span>':'<span class="chip c-gray" style="font-size:9px">SIM</span>'}</div>
+  <div style="font-size:14px;color:var(--silver-light);margin:4px 0"><b>${w.ceil>=9999?"No ceiling":"Ceiling "+w.ceil+"'"}</b> · Vis ${w.vis} SM</div>
+  <span class="chip ${t.cls}">${t.label}</span><div style="font-size:10px;color:var(--muted);margin-top:4px">${t.desc}</div>
+  ${w.raw?`<div style="font-size:9px;color:var(--muted);margin-top:4px;font-family:monospace">${w.raw}</div>`:""}</div>`;
+}
+function pgFrat(){
+  const isSup=user.role==="SUPERVISOR";
+  const sc=scoreFrat2();
+  const timeStr=sc.np.s&&sc.np.s.sunrise?("SR "+sc.np.s.sunrise.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+" · SS "+sc.np.s.sunset.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})):"";
+  const ready=FR.ft&&FR.dest&&FR.acIds.length>0;
+  return `<h1>Flight Risk <span>Assessment</span></h1>
+  <div class="sub">Nearly everything below scores itself — live weather by sector, crew readiness from the rings, currency from the flight logs, aircraft status from maintenance. The pilot picks the mission, the machine surfaces the risk. Filed by: <b style="color:var(--silver-light)">${user.full}</b> for the unit walking out the door.</div>
+
+  <div class="panel accent"><h2>1 · Deployment & flight type</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn2 ${FR.dep==='MISSION'?'on':''}" onclick="frDep('MISSION')">Mission / Deployment</button>
+      <button class="btn2 ${FR.dep==='TRAINING'?'on':''}" onclick="frDep('TRAINING')">Training</button>
+    </div>
+    <div class="grid g2">
+      <div><label class="lab">Flight type</label>
+        <select onchange="frSet('ft',this.value||null)"><option value="">Select…</option>
+        ${FLIGHT_TYPES.map(f=>`<option value="${f.id}" ${FR.ft===f.id?'selected':''}>${f.name} (complexity +${f.cx})</option>`).join("")}</select></div>
+      <div><label class="lab">Departure time (base local) ${timeStr?`· ${timeStr}`:""}</label>
+        <input type="datetime-local" value="${FR.time}" onchange="frSet('time',this.value)">
+        <div style="font-size:11px;margin-top:4px;color:${sc.np.phase==='DAY'?'#5BC97A':sc.np.phase==='TWILIGHT'?'var(--warn)':'#F27B7B'}">Auto: ${sc.np.phase} at ${OPERATOR.baseIcao}</div></div>
+      ${FR.dep==="MISSION"?`<div><label class="lab">Incident / CAD number</label>
+        <input value="${FR.inc}" placeholder="e.g. INC-26-118342" onchange="frSet('inc',this.value)">
+        <div style="font-size:11px;margin-top:4px;color:var(--muted)">Ties this FRAT to the flight log — and to any hazard report — as one event thread.</div></div>`:""}
+    </div>
+  </div>
+
+  <div class="panel accent"><h2>2 · Route & live weather</h2>
+    <div class="grid g2">
+      <div><label class="lab">Departing</label><div style="font-size:14px;color:var(--silver-light);padding:9px 0">${OPERATOR.baseName}</div></div>
+      <div><label class="lab">Destination / incident sector</label>
+        <select onchange="frSet('dest',this.value||null)"><option value="">Select sector…</option>
+        ${OPERATOR.sectors.map(s=>`<option value="${s.id}" ${FR.dest===s.id?'selected':''}>${s.name} (${s.station})</option>`).join("")}
+        <option value="outside" ${FR.dest==='outside'?'selected':''}>Outside service district (special flight)</option></select></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+      ${wxCard(OPERATOR.baseIcao+" (departure)",sc.depW,wxTier(sc.depW))}
+      ${sc.dstW?wxCard(sc.destSec.station+" (destination)",sc.dstW,wxTier(sc.dstW)):""}
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
+      <button class="btn2" onclick="pullWx()">Pull live weather</button>
+      <span style="font-size:12px;color:var(--muted)">${FR.wxStatus}</span>
+    </div>
+    ${sc.nogo?`<div class="banner b-crit">⛔ WEATHER NO-GO — ceilings below 500' or visibility below 1 SM on this route. This FRAT cannot be submitted.</div>`:""}
+    ${!sc.nogo&&sc.wx.pts>0?`<div class="banner ${sc.wx.ifr2?'b-crit':'b-warn'}" style="background:${sc.wx.ifr2?'rgba(236,131,90,.14)':''};color:${sc.wx.ifr2?'#EC835A':''}">Route weather adds +${sc.wx.pts}${sc.wx.ifr2?" — REQUIRES 2 IFR-CURRENT PILOTS per aircraft":""}</div>
+    <label class="lab">Weather mitigation (credit back)</label><select style="max-width:380px" onchange="frMit('wx',null,this.value)"><option value="">No mitigation</option>${MIT_WX.map((m,i)=>`<option value="${i}" ${FR.wxMit===i?'selected':''}>${m[0]} (−${m[1]})</option>`).join("")}</select>`:""}
+    <div style="margin-top:10px;font-size:12px;color:var(--muted)">Terrain (auto from sector): <b style="color:var(--silver-light)">${sc.terrLabel}</b> ${FR.dest&&FR.dest!=="outside"?`— +${sc.terr}`:""}</div>
+    ${FR.dest==="outside"?`<label class="lab">Terrain at destination (outside district — pilot selects)</label>
+      <select style="max-width:380px" onchange="frSet('terrManual',this.value===''?null:+this.value)"><option value="">Select…</option>
+      ${TERRAIN_MANUAL.map((t,i)=>`<option value="${i}" ${FR.terrManual===i?'selected':''}>${t[0]} (+${t[1]})</option>`).join("")}</select>`:""}
+  </div>
+
+  <div class="panel accent"><h2>3 · Aircraft & crews ${FR.acIds.length>1?`<span class="chip c-red">${FR.acIds.length}-SHIP DEPLOYMENT</span>`:""}</h2>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Select one aircraft — or several for a multi-ship deployment (e.g., Fire 1 / Fire 2 / Fire 3 to a brush fire). Each aircraft gets its own crew and its own score.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      ${ACTIVE().map(a=>`<button class="btn2 ${FR.acIds.includes(a.n)?'on':''}" onclick="frToggleAc('${a.n}')">${a.n} · ${a.cs}</button>`).join("")}
+    </div>
+    ${FR.acIds.map(id=>{
+      const pa=sc.perAc.find(p=>p.a.n===id);const a=pa.a;
+      return `<div class="panel" style="border-left:3px solid var(--red)">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;align-items:baseline">
+        <b class="cond" style="color:var(--silver-light);font-size:16px;letter-spacing:1px">${a.n} · ${a.cs}</b>
+        <span class="chip ${pa.risk==='HIGH'?'c-crit':pa.risk==='MEDIUM'?'c-warn':'c-good'}">${sc.nogo?"NO-GO":"Score "+pa.total+" · "+pa.risk}</span></div>
+      <div style="font-size:11px;color:var(--muted);margin:2px 0 8px">Aircraft status (auto): ${pa.st.notes.join(" · ")}</div>
+      <div class="grid g2">
+        ${crewSelect(id,"pic","PIC (pilot)",p=>p.pilot)}
+        ${crewSelect(id,"sic","SIC (pilot)",p=>p.pilot)}
+        ${crewSelect(id,"hoist","Hoist operator",p=>p.rtype==="hoist"||p.rtype==="safety")}
+        ${crewSelect(id,"rescuer","Rescuer",p=>p.rtype==="rescuer"||p.rtype==="safety")}
+        <div><label class="lab">Passengers (0–12)</label>
+          <select onchange="FR.pax['${id}']=+this.value;render()">${Array.from({length:13},(_,n)=>`<option value="${n}" ${(FR.pax[id]||0)===n?'selected':''}>${n}</option>`).join("")}</select>
+          ${(FR.pax[id]||0)>0?`<div style="font-size:11px;color:var(--muted);margin-top:4px">${FR.pax[id]} passenger${FR.pax[id]>1?"s":""} aboard — logged on the FRAT record</div>`:""}</div>
+      </div>
+      <div class="banner ${pa.fat===0?'b-good':pa.fat===3?'b-warn':'b-crit'}" style="font-size:12px">Crew readiness (auto from rings): ${pa.fatHint}</div>
+      ${(()=>{const md=pa.crew.filter(p=>p.dutyDay>=3||p.prov==="other");return md.length?`<div style="font-size:11px;color:var(--warn);margin-top:4px">Duty exposure: ${md.map(p=>`${p.full} — Day ${p.dutyDay}${p.prov?", "+PROV[p.prov]:""}`).join(" · ")}</div>`:""})()}
+      ${pa.fat>0?`<label class="lab">Fatigue mitigation</label><select style="max-width:380px" onchange="frMit('fat','${id}',this.value)"><option value="">No mitigation</option>${MIT_FATIGUE.map((m,i)=>`<option value="${i}" ${FR.fatMit[id]===i?'selected':''}>${m[0]} (−${m[1]})</option>`).join("")}</select>`:""}
+      ${sc.ft?(pa.lapsed.length?`<div class="banner b-warn" style="font-size:12px">⚠ Currency for ${sc.ft.name}: ${pa.lapsed.map(l=>`${l.who} — ${l.task} (${Math.abs(l.rem)}d overdue)`).join(" · ")} — +${pa.cur} unless mitigated</div>
+        <label class="lab">Currency mitigation</label><select style="max-width:380px" onchange="frMit('cur','${id}',this.value)"><option value="">No mitigation</option>${MIT_CURR.map((m,i)=>`<option value="${i}" ${FR.curMit[id]===i?'selected':''}>${m[0]} (−${m[1]})</option>`).join("")}</select>`
+        :(pa.crew.length?`<div class="banner b-good" style="font-size:12px">✓ Crew current for ${sc.ft.name} — green light</div>`:""))
+      :""}
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">${pa.nightNote}${pa.nvgLapsed.length?" — "+pa.nvgLapsed.map(p=>p.full).join(", ")+" NVG lapsed":""}${pa.ifr2Fail?' · <b style="color:#EC835A">2 IFR-current pilots required by weather — not met (+5)</b>':""}</div>
+      </div>`}).join("")}
+  </div>
+
+  <div class="panel accent"><h2>4 · External pressures (pilot judgment — unchanged)</h2>
+    <div class="optrow">${EXT_OPTS.map((o,i)=>`<div class="opt ${FR.ext===i?'sel':''}" onclick="frSet('ext',${FR.ext===i?null:i})"><span>${o[0]}</span><span class="pts">+${o[1]}</span></div>`).join("")}</div>
+    ${sc.ext>0?`<label class="lab">Mitigation</label><select style="max-width:380px" onchange="frMit('ext',null,this.value)"><option value="">No mitigation</option>${MIT_EXT.map((m,i)=>`<option value="${i}" ${FR.extMit===i?'selected':''}>${m[0]} (−${m[1]})</option>`).join("")}</select>`:""}
+  </div>
+
+  <div class="panel meter accent"><div style="display:flex;gap:20px;flex-wrap:wrap">
+    ${sc.perAc.map(pa=>`<div><div class="lab" style="margin:0">${pa.a.n}</div>
+      <div class="scorebig" style="font-size:38px;color:${sc.nogo?'#F27B7B':pa.risk==='HIGH'?'#F27B7B':pa.risk==='MEDIUM'?'var(--warn)':'#5BC97A'}">${sc.nogo?"NO-GO":pa.total}</div></div>`).join("")}
+    ${sc.perAc.length>1?`<div style="border-left:1px solid var(--dark-5);padding-left:20px"><div class="lab" style="margin:0">Collective (worst / avg)</div>
+      <div class="scorebig" style="font-size:38px;color:${sc.nogo?'#F27B7B':sc.worst>=TH.high?'#F27B7B':sc.worst>=TH.med?'var(--warn)':'#5BC97A'}">${sc.nogo?"NO-GO":sc.worst+" / "+sc.avg}</div></div>`:""}
+    ${sc.perAc.length===0?`<div style="font-size:13px;color:var(--muted);align-self:center">Select flight type, destination, and at least one aircraft.</div>`:""}
+    </div>
+    <div style="text-align:right;font-size:11px;color:var(--muted)">Medium ≥ ${TH.med} · High ≥ ${TH.high}<br>
+    ${sc.nogo?'<b style="color:#F27B7B">⛔ Weather NO-GO — cannot submit</b>':sc.sup?'<b style="color:var(--warn)">⚠ Supervisor approval required (any aircraft ≥ '+TH.sup+')</b>':'<b style="color:#5BC97A">✓ No supervisor review needed</b>'}</div>
+  </div>
+  <div class="panel"><button class="btn" ${sc.nogo||!ready?"disabled":""} onclick="submitFrat()">Submit FRAT — filed by ${user.full}</button>
+  <span id="fratmsg" style="font-size:13px;margin-left:10px"></span></div>
+
+  <div class="panel"><h2>Approval queue ${!isSup?'<span class="lock">(decisions require a supervisor)</span>':""}</h2>
+  ${PENDING_FRATS.length?`<table><tbody>${PENDING_FRATS.map(p=>`<tr><td>#${p.id}</td><td>${p.pilot}</td><td>${p.desc}</td><td><span class="chip ${riskColor(p.risk)}">${p.risk} · ${p.score}</span></td>
+  <td>${isSup?`<button class="btn-good" onclick="decide(${p.id},1)">Approve</button> <button class="btn-crit" onclick="decide(${p.id},0)">Reject</button>`:'<span class="lock">🔒 locked for your role</span>'}</td></tr>`).join("")}</tbody></table>`:'<div style="color:var(--muted);font-size:13px">Queue is empty.</div>'}</div>`;
+}
+function submitFrat(){const sc=scoreFrat2();
+  if(sc.nogo)return;
+  const desc=(FR.inc?FR.inc+" · ":"")+(sc.ft?sc.ft.name:"Flight")+" → "+(FR.dest==="outside"?"outside district":(sc.destSec?sc.destSec.name:""))+(FR.acIds.length>1?" · "+FR.acIds.length+" aircraft":"");
+  const newId=58+FRAT_LOG.length;
+  FRAT_LOG.unshift({id:newId,inc:FR.inc||"",ft:FR.ft||"",acs:Object.fromEntries(FR.acIds.map(id=>{
+    const cr=crewOf(id);const scores=cr.map(p=>READINESS[p.id].score);
+    const stamp=cr.map(p=>p.full.split(" ").slice(-1)[0]+" "+READINESS[p.id].score).join(" · ");
+    const avg=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):null;
+    return [id,{...FR.crews[id],stamp,avgS:avg,scores:Object.fromEntries(cr.map(p=>[p.id,READINESS[p.id].score]))}]}))});
+  if(sc.sup)PENDING_FRATS.push({id:newId,pilot:user.full+" (filing pilot)",desc,score:sc.worst,risk:sc.worst>=TH.high?"HIGH":sc.worst>=TH.med?"MEDIUM":"LOW"});
+  const wasSup=sc.sup;
+  toast("<b>✓ FRAT submitted successfully.</b> "+(sc.sup?"Routed to the supervisor approval queue.":"Released to fly — logged to the audit trail."));
+  newFrat();render();
+  setTimeout(()=>{const m=$("fratmsg");if(m){m.textContent=wasSup?"Submitted — routed to the supervisor queue with per-aircraft scores.":"Submitted — released to fly. Logged with per-aircraft audit trail.";m.style.color=wasSup?"var(--warn)":"#5BC97A"}},0)}
+function decide(id,ok){PENDING_FRATS=PENDING_FRATS.filter(p=>p.id!==id);render();
+  setTimeout(()=>{const m=$("fratmsg");if(m){m.textContent=ok?"FRAT approved — filing pilot notified.":"FRAT rejected with notes — filing pilot notified.";m.style.color=ok?"#5BC97A":"#F27B7B"}},0)}
+
+/* ============ FLIGHT LOG v3 — aircraft-first, FRAT prefill, clean layout ============ */
+const FLIGHT_ACTS=[
+ ["FLIGHT PROFICIENCY",["External Load","Pilot Dual Proficiency","Pilot Check Ride","Basic Proficiency"]],
+ ["BRUSH / GRASS FUNCTION",["Water Dropper","Helco — Reconnaissance","Crew Transport","Helispot","Hover Pump","Prescribed Burn"]],
+ ["MEDICAL TRANSPORTS",["Inter-Facility","Air Ambulance Drill","Trauma Transport","Multi-Casualty","Patient Care","Over Water"]],
+ ["PHYSICAL RESCUE",["Hoist","Transfer of Care — Ground Units","Helco — Recon"]],
+ ["DEPARTMENT FUNCTION",["Survey","Photo","Night Sun","Formation Flight","Miscellaneous"]],
+ ["STRUCTURE FIRE",["Water Drops","Highrise T.F. Transport","Highrise R.I.C."]],
+ ["FIRE MAPPING",["Brush Fire","Hazardous Materials","Earthquake"]]
+];
+/* Only the action groups relevant to the selected flight type are shown */
+const FT_ACTS={hoist:["PHYSICAL RESCUE","MEDICAL TRANSPORTS"],fire:["BRUSH / GRASS FUNCTION","STRUCTURE FIRE","FIRE MAPPING"],
+ ems:["MEDICAL TRANSPORTS"],recon:["DEPARTMENT FUNCTION","FIRE MAPPING"],vip:["DEPARTMENT FUNCTION"],trainp:["FLIGHT PROFICIENCY","DEPARTMENT FUNCTION"]};
+const SEAT_TASKS={
+ pic:["PILOT-IN-COMMAND","PIC-HOIST","NIGHT PROFICIENCY","NIGHT VISION GOGGLES","WATER DROPPER","INSTRUMENT FLIGHT RULES","MOUNTAIN PROFICIENCY","TOUCHDOWN AUTOROTATION (DAY)"],
+ sic:["PILOT-IN-COMMAND","NIGHT PROFICIENCY","NIGHT VISION GOGGLES","INSTRUMENT FLIGHT RULES"],
+ hoist:["HOIST OPERATOR","AW-139 DAY HOIST","AW-139 NIGHT HOIST","TRAIL LINE OPERATION"],
+ rescuer:["RESCUER POSITION","LAND CAPTURE RESCUE","SWIFTWATER CAPTURE RESCUE"],
+ safety:["SAFETY POSITION"]};
+const SEATS=[["pic","PIC"],["sic","SIC / Copilot"],["hoist","Hoist Operator"],["rescuer","Rescuer"],["safety","Safety Member"]];
+let FL=null;
+function newFlight(){FL={dep:"MISSION",inc:"",ac:null,ft:"",fratSel:"",prefillNote:"",timeOut:defaultTimeLocal(),timeIn:defaultTimeLocal(),
+ tachS:"",tachE:"",mtachS:"",mtachE:"",crew:{},acts:{},curr:{},
+ c:{ldD:0,ldN:0,hook:0,drops:0,hoistCy:0,hoistLen:0,cond:false,e1:0,e2:0,nvg:0,ifr:0,mtn:0},
+ pax:{fd:0,ess:0,civ:0,trauma:0,med:0,nonmed:0},
+ pen:{rotor:0,hover:0,oei:0,s33:0,s45:0,gw:false,eft:0},
+ brief:{pre:false,post:false,obj:false,succ:false},what:"",lessons:"",hazNeeded:false,cancelled:false}}
+function flAc(n){
+ FL.ac=n;const a=AIRCRAFT.find(x=>x.n===n);
+ FL.tachS=a.tach;FL.mtachS=a.mtach;FL.tachE=a.tach.toFixed(1);FL.mtachE=a.mtach.toFixed(1);FL.prefillNote="";
+ const fr=FRAT_LOG.find(f=>f.acs&&f.acs[n]);
+ if(fr){FL.fratSel=fr.id;FL.inc=fr.inc||"";FL.ft=fr.ft||FL.ft;
+  FL.crew={};const seen=new Set();
+  ["pic","sic","hoist","rescuer","safety"].forEach(sl=>{const pid=fr.acs[n][sl];
+   if(pid&&!seen.has(pid)){FL.crew[sl]=pid;seen.add(pid)}});
+  FL.prefillNote="Prefilled from FRAT #"+fr.id+(fr.inc?" ("+fr.inc+")":"")+" — crew and incident are editable if anything changed since the FRAT was filed.";}
+ render()}
+function flSet(k,v){FL[k]=v;render()}
+function flFrat(v){FL.fratSel=v;
+ const fr=FRAT_LOG.find(f=>f.id==v);
+ if(fr){FL.inc=fr.inc||FL.inc;FL.ft=fr.ft||FL.ft;
+  if(FL.ac&&fr.acs&&fr.acs[FL.ac]){FL.crew={};const seen=new Set();
+   ["pic","sic","hoist","rescuer","safety"].forEach(sl=>{const pid=fr.acs[FL.ac][sl];
+    if(pid&&!seen.has(pid)){FL.crew[sl]=pid;seen.add(pid)}});
+   FL.prefillNote="Prefilled from FRAT #"+fr.id+(fr.inc?" ("+fr.inc+")":"")+" — crew and incident are editable if anything changed since the FRAT was filed."}}
+ render()}
+function flC(k,v){FL.c[k]=v;render()}
+function flPen(k,v){FL.pen[k]=v;render()}
+function flPax(k,v){FL.pax[k]=+v;render()}
+function flBrief(k,v){FL.brief[k]=v;render()}
+function flSeat(slot,v){FL.crew[slot]=v||null;render()}
+function flAct(name){FL.acts[name]=!FL.acts[name];render()}
+function flCurr(pid,task){const k=pid+"|"+task;FL.curr[k]=!FL.curr[k];render()}
+function flSplit(){
+ const out=new Date(FL.timeOut),inn=new Date(FL.timeIn);
+ if(!(inn>out))return{day:0,night:0,hasDay:true,hasNight:true,bad:true};
+ let day=0,night=0;const cap=Math.min(inn.getTime(),out.getTime()+24*3600e3);
+ for(let t=out.getTime();t<cap;t+=60000){
+   if(isDayAt(new Date(t)))day++;else night++;
+ }
+ return{day:+(day/60).toFixed(1),night:+(night/60).toFixed(1),hasDay:day>0,hasNight:night>0,bad:false};
+}
+function flSeated(){return SEATS.map(([slot])=>FL.crew[slot]?{slot,p:PEOPLE.find(x=>x.id===FL.crew[slot])}:null).filter(Boolean)}
+function numCell(label,val,fn,step){return `<div><label class="lab">${label}</label><input class="num" type="number" min="0" ${step?'step="'+step+'"':''} value="${val}" onchange="${fn}"></div>`}
+function pgFlights(){
+ if(!FL)newFlight();
+ const a=FL.ac?AIRCRAFT.find(x=>x.n===FL.ac):null;
+ const sp=flSplit();
+ const s=sunTimes(new Date(FL.timeOut),OPERATOR.lat,OPERATOR.lon);
+ const sunStr=s.sunrise&&s.sunset?("Sunrise "+s.sunrise.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+" · Sunset "+s.sunset.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})):"";
+ const seated=flSeated();
+ let effDay=sp.hasDay,effNight=sp.hasNight;
+ if(sp.bad){effDay=isDayAt(new Date(FL.timeOut));effNight=!effDay;}
+ const tachTot=(FL.tachE&&FL.tachS!=="")?(+FL.tachE-+FL.tachS):null;
+ const mtachTot=(FL.mtachE&&FL.mtachS!=="")?(+FL.mtachE-+FL.mtachS):null;
+ const oosWarn=a&&FL.tachE&&+FL.tachE<a.tach;
+ const usedIds=slot=>Object.entries(FL.crew).filter(([k,v])=>k!==slot&&v).map(([k,v])=>v);
+ const actGroups=FL.ft?FLIGHT_ACTS.filter(([g])=>(FT_ACTS[FL.ft]||[]).includes(g)):[];
+ return `<h1>Flight <span>Log</span></h1>
+ <div class="sub">Pick the aircraft first — the log pulls the latest FRAT for it and prefills the incident number and crew (all editable). Out-of-sequence flights file in proper tach order without touching aircraft totals or anyone else's log.</div>
+
+ <div class="panel accent"><h2>1 · Aircraft &amp; classification</h2>
+  <div class="grid g3">
+   <div><label class="lab">Aircraft</label><select onchange="flAc(this.value)"><option value="">Select aircraft…</option>${ACTIVE().map(x=>`<option value="${x.n}" ${FL.ac===x.n?'selected':''}>${x.n} · ${x.cs}</option>`).join("")}</select></div>
+   <div><label class="lab">Flight type</label><select onchange="flSet('ft',this.value)"><option value="">Select…</option>${FLIGHT_TYPES.map(f=>`<option value="${f.id}" ${FL.ft===f.id?'selected':''}>${f.name}</option>`).join("")}</select></div>
+   <div><label class="lab">Linked FRAT</label><select onchange="flFrat(this.value)"><option value="">— none —</option>${FRAT_LOG.map(f=>`<option value="${f.id}" ${FL.fratSel==f.id?'selected':''}>FRAT #${f.id}${f.inc?" · "+f.inc:""}</option>`).join("")}</select></div>
+  </div>
+  ${FL.prefillNote?`<div class="banner b-good" style="font-size:12px">✓ ${FL.prefillNote}</div>`:""}
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:flex-end">
+   <button class="btn2 ${FL.dep==='MISSION'?'on':''}" onclick="flSet('dep','MISSION')">Mission / Deployment</button>
+   <button class="btn2 ${FL.dep==='TRAINING'?'on':''}" onclick="flSet('dep','TRAINING')">Training</button>
+   ${FL.dep==='MISSION'?`<div style="flex:1;min-width:240px"><label class="lab">Incident / CAD number (optional — VIP &amp; ferry have none)</label><input value="${FL.inc}" placeholder="INC-26-…" onchange="flSet('inc',this.value)"></div>`:""}
+  </div></div>
+
+ ${a?`<div class="panel accent"><h2>2 · Times &amp; tach ${sunStr?`<span style="font-size:11px;color:var(--muted);font-weight:400">· ${sunStr}</span>`:""}</h2>
+  <div class="grid g2">
+   <div><label class="lab">Time out</label><input type="datetime-local" value="${FL.timeOut}" onchange="flSet('timeOut',this.value)"></div>
+   <div><label class="lab">Time in</label><input type="datetime-local" value="${FL.timeIn}" onchange="flSet('timeIn',this.value)"></div>
+  </div>
+  ${sp.bad?'<div class="banner b-warn" style="font-size:12px">Set time in after time out to compute the day/night split.</div>':`<div class="banner ${sp.hasNight?'b-warn':'b-good'}" style="font-size:12px">Auto day/night split: <b>${sp.day} day</b> · <b>${sp.night} night</b></div>`}
+  <table class="tachtab" style="margin-top:12px"><thead><tr><th></th><th>Current (aircraft)</th><th>Start</th><th>End</th><th>Total</th></tr></thead><tbody>
+   <tr><td class="lab" style="display:table-cell">Flight tach</td><td class="cond" style="font-size:18px;color:var(--silver-light)">${a.tach.toFixed(1)}</td>
+    <td><input class="num" type="number" step="0.1" value="${FL.tachS}" onchange="flSet('tachS',this.value)"></td>
+    <td><input class="num" type="number" step="0.1" value="${FL.tachE}" onchange="flSet('tachE',this.value)"></td>
+    <td class="cond" style="font-size:18px;color:${tachTot>0?'#5BC97A':'var(--muted)'}">${tachTot!=null?tachTot.toFixed(1):"—"}</td></tr>
+   <tr><td class="lab" style="display:table-cell">Maintenance tach</td><td class="cond" style="font-size:18px;color:var(--silver-light)">${a.mtach.toFixed(1)}</td>
+    <td><input class="num" type="number" step="0.1" value="${FL.mtachS}" onchange="flSet('mtachS',this.value)"></td>
+    <td><input class="num" type="number" step="0.1" value="${FL.mtachE}" onchange="flSet('mtachE',this.value)"></td>
+    <td class="cond" style="font-size:18px;color:${mtachTot>0?'#5BC97A':'var(--muted)'}">${mtachTot!=null?mtachTot.toFixed(1):"—"}</td></tr>
+  </tbody></table>
+  ${oosWarn?`<div class="banner b-warn" style="font-size:12px">⏪ These tach times are behind the aircraft's current reading — this files as an <b>out-of-sequence (backfill) entry</b>: inserted in tach order, aircraft totals and other pilots' logs untouched.</div>`:""}
+  <label class="opt ${FL.cancelled?'sel':''}" style="cursor:pointer;margin-top:12px;max-width:420px"><span><b style="color:${FL.cancelled?'#F27B7B':'var(--text)'}">CANCELLED</b> — incident/flight cancelled before or during launch</span><input type="checkbox" style="width:auto" ${FL.cancelled?'checked':''} onchange="flSet('cancelled',this.checked)"></label>
+ </div>`:""}
+
+ <div class="panel accent"><h2>3 · Crew &amp; readiness stamp</h2>
+  <div class="grid g3">${SEATS.map(([slot,label])=>{
+    const sel=FL.crew[slot]||"";const taken=usedIds(slot);
+    const roleF=slot==="pic"||slot==="sic"?(p=>p.pilot):slot==="hoist"?(p=>p.rtype==="hoist"||p.rtype==="safety"):slot==="rescuer"?(p=>p.rtype==="rescuer"):(p=>true);
+    return `<div><label class="lab">${label}</label><select onchange="flSeat('${slot}',this.value)"><option value="">—</option>${PEOPLE.filter(p=>roleF(p)&&(!taken.includes(p.id)||p.id===sel)).map(p=>`<option value="${p.id}" ${sel===p.id?'selected':''}>${p.full} — ${READINESS[p.id].score}</option>`).join("")}</select></div>`}).join("")}
+  </div>
+  ${seated.length?(()=>{
+    const frx=FRAT_LOG.find(f=>f.id==FL.fratSel&&f.acs&&f.acs[FL.ac]);
+    const wearNow=Math.round((sp.day+sp.night)*2+sp.night*2+(FL.c.hoistCy>0?2:0));
+    const rows=seated.map(x=>{const dep=(frx&&frx.acs[FL.ac].scores&&frx.acs[FL.ac].scores[x.p.id]!=null)?frx.acs[FL.ac].scores[x.p.id]:READINESS[x.p.id].score;
+      const now=Math.max(0,READINESS[x.p.id].score-wearNow);const d=now-dep;
+      return `<b>${x.p.full}</b> <span style="color:${bandColor(dep)}">${dep}</span> → <span style="color:${bandColor(now)}">${now}</span>${d?` <span style="font-size:10px;color:${d<0?'var(--warn)':'#5BC97A'}">(${d>0?"+":""}${d})</span>`:""}`});
+    const depAvg=Math.round(seated.reduce((a,x)=>a+((frx&&frx.acs[FL.ac].scores&&frx.acs[FL.ac].scores[x.p.id]!=null)?frx.acs[FL.ac].scores[x.p.id]:READINESS[x.p.id].score),0)/seated.length);
+    const nowAvg=Math.round(seated.reduce((a,x)=>a+Math.max(0,READINESS[x.p.id].score-wearNow),0)/seated.length);
+    return `<div class="banner b-good" style="font-size:12px;margin-top:12px">Crew readiness — departure → at log filing (locked at submission): ${rows.join(" &nbsp;·&nbsp; ")}<br><b>Crew average: ${depAvg} → ${nowAvg}</b>${nowAvg<depAvg?' <span style="font-size:10px;color:var(--warn)">— flight load reflected</span>':''}</div>`})():""}
+ </div>
+
+ ${seated.length?`<div class="panel accent"><h2>4 · Currencies satisfied — per crew member ${!effNight?'<span style="font-size:11px;color:var(--muted);font-weight:400">· night currencies hidden — day flight</span>':!effDay?'<span style="font-size:11px;color:var(--muted);font-weight:400">· day-specific currencies hidden — night flight</span>':""}</h2>
+  ${seated.map(x=>`<div class="crewcurr">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+      <b class="cond" style="color:var(--silver-light);font-size:15px;letter-spacing:1px">${x.p.full}</b>
+      <span style="font-size:11px;color:var(--red-bright);font-weight:600;text-transform:uppercase">${SEATS.find(s=>s[0]===x.slot)[1]}</span></div>
+    <table class="currtab"><tbody>${(()=>{const tasks=SEAT_TASKS[x.slot].filter(t=>{const n=t.includes("NIGHT");const d=t.includes("DAY")&&!n;if(n&&!effNight)return false;if(d&&!effDay)return false;return true});let rows="";
+      for(let i=0;i<tasks.length;i+=2){
+        rows+="<tr>"+[tasks[i],tasks[i+1]].map(t=>t?`<td style="width:50%"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" style="width:auto" ${FL.curr[x.p.id+"|"+t]?'checked':''} onchange="flCurr('${x.p.id}','${t}')"><span>${t}</span></label></td>`:"<td></td>").join("")+"</tr>";}
+      return rows})()}</tbody></table></div>`).join("")}
+ </div>`:""}
+
+ <div class="panel"><h2>5 · Flight actions ${FL.ft?'<span style="font-size:11px;color:var(--muted);font-weight:400">· showing only actions for '+(FLIGHT_TYPES.find(f=>f.id===FL.ft)||{}).name+'</span>':""}</h2>
+  ${FL.ft?actGroups.map(([g,items])=>`<div class="sublab">${g}</div>
+   <div class="optrow" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">${items.map(i=>`<div class="opt ${FL.acts[i]?'sel':''}" onclick="flAct('${i}')"><span>${i}</span><span class="pts">${FL.acts[i]?"✓":""}</span></div>`).join("")}</div>`).join("")
+  :'<div style="font-size:13px;color:var(--muted)">Select a flight type in section 1 — only the actions that apply to that flight will appear here.</div>'}
+ </div>
+
+ <div class="panel"><h2>6 · Counts &amp; hours</h2>
+  <div class="sublab">Landings</div>
+  <div class="grid g4">
+   ${effDay?numCell("Day landings",FL.c.ldD,"flC('ldD',+this.value)"):""}
+   ${effNight?numCell("Night landings",FL.c.ldN,"flC('ldN',+this.value)"):""}
+  </div>
+  <div class="sublab">Mission counts</div>
+  <div class="grid g4">
+   ${numCell("Cargo hook cycles",FL.c.hook,"flC('hook',+this.value)")}
+   ${numCell("Water drops",FL.c.drops,"flC('drops',+this.value)")}
+   ${numCell("Hoist cycles",FL.c.hoistCy,"flC('hoistCy',+this.value)")}
+   ${numCell("Hoist max length (ft)",FL.c.hoistLen,"flC('hoistLen',+this.value)")}
+   ${numCell("Engine #1 starts",FL.c.e1,"flC('e1',+this.value)")}
+   ${numCell("Engine #2 starts",FL.c.e2,"flC('e2',+this.value)")}
+   <div><label class="lab">Hoist conditioned</label><select onchange="flC('cond',this.value==='1')"><option value="0">No</option><option value="1" ${FL.c.cond?'selected':''}>Yes</option></select></div>
+  </div>
+  <div class="sublab">Special hours</div>
+  <div class="grid g4">
+   ${numCell("NVG hours",FL.c.nvg,"flC('nvg',+this.value)","0.1")}
+   ${numCell("IFR hours",FL.c.ifr,"flC('ifr',+this.value)","0.1")}
+   ${numCell("Mountain hours",FL.c.mtn,"flC('mtn',+this.value)","0.1")}
+  </div>
+  <div class="sublab">Passengers</div>
+  <div class="grid g3">
+   ${numCell("FD members",FL.pax.fd,"flPax('fd',this.value)")}
+   ${numCell("Essential crew",FL.pax.ess,"flPax('ess',this.value)")}
+   ${numCell("Civilians",FL.pax.civ,"flPax('civ',this.value)")}
+  </div>
+  <div class="sublab">Patients</div>
+  <div class="grid g3">
+   ${numCell("Trauma",FL.pax.trauma,"flPax('trauma',this.value)")}
+   ${numCell("Medical",FL.pax.med,"flPax('med',this.value)")}
+   ${numCell("Non-medical",FL.pax.nonmed,"flPax('nonmed',this.value)")}
+  </div></div>
+
+ <div class="panel"><h2>7 · Aircraft penalties <span style="font-size:11px;color:var(--muted);font-weight:400">· maintenance tracking</span></h2>
+  <div class="grid g4">
+   ${numCell("Rotor brake applications",FL.pen.rotor,"flPen('rotor',+this.value)")}
+   ${numCell("Hover fills",FL.pen.hover,"flPen('hover',+this.value)")}
+   ${numCell("OEI training time",FL.pen.oei,"flPen('oei',+this.value)","0.1")}
+   ${numCell("33–45kt start/stop",FL.pen.s33,"flPen('s33',+this.value)")}
+   ${numCell("&gt;45kt start/stop",FL.pen.s45,"flPen('s45',+this.value)")}
+   <div style="grid-column:span 2"><label class="lab">Gross weight &gt; 6400 kg at any time?</label><select onchange="flPen('gw',this.value==='1')"><option value="0">No</option><option value="1" ${FL.pen.gw?'selected':''}>Yes — entire flight time required</option></select></div>
+   ${FL.pen.gw?numCell("Entire flight time",FL.pen.eft,"flPen('eft',+this.value)","0.1"):""}
+  </div></div>
+
+ <div class="panel"><h2>8 · After Action Report</h2>
+  <div class="grid g4" style="margin-bottom:10px">
+   ${[["pre","Pre-brief completed"],["post","Post-brief completed"],["obj","Objectives accomplished"],["succ","Successes discussed"]].map(([k,l])=>`<label class="opt ${FL.brief[k]?'sel':''}" style="cursor:pointer"><span>${l}</span><input type="checkbox" style="width:auto" ${FL.brief[k]?'checked':''} onchange="flBrief('${k}',this.checked)"></label>`).join("")}
+  </div>
+  <label class="lab">Debrief — what happened</label><textarea rows="2" onchange="flSet('what',this.value)">${FL.what}</textarea>
+  <label class="lab">Opportunities for improvement / lessons</label><textarea rows="2" onchange="flSet('lessons',this.value)">${FL.lessons}</textarea>
+  <div class="banner ${FL.hazNeeded?'b-warn':'b-good'}" style="display:flex;align-items:center;gap:10px;font-size:13px">
+   <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" style="width:auto" ${FL.hazNeeded?'checked':''} onchange="flSet('hazNeeded',this.checked)"> Hazard / safety report needed for this flight</label>
+   ${FL.hazNeeded?'<span style="font-size:11px">You can still submit — the flight carries a warning until the report is filed on the Hazards page.</span>':''}
+  </div>
+  <div style="margin-top:12px"><button class="btn" ${!FL.ac||sp.bad?'disabled':''} onclick="submitFlight()">Submit flight log</button> <span id="flmsg" style="font-size:13px;margin-left:8px"></span></div>
+ </div>
+
+ <div class="panel"><h2>Flight history</h2>
+  <table><thead><tr><th>ID</th><th>Date</th><th>Aircraft</th><th>Type</th><th>Mission</th><th>PIC</th><th>D/N hrs</th><th>Ldg D/N</th><th>Tach</th><th>Safety</th></tr></thead><tbody>
+  ${FLIGHTS.map(f=>`<tr><td>#${f.id}${f.oos?' <span class="chip c-blue" style="font-size:8px">OOS</span>':''}${f.sync==="PENDING"?' <span class="chip c-warn" style="font-size:8px">⟳ SYNC PENDING</span>':''}${f.cancelled?' <span class="chip c-crit" style="font-size:8px">CANCELLED</span>':''}</td><td>${f.d}</td><td>${f.ac}</td><td style="font-size:11px">${f.dep==="MISSION"?(f.inc||"MISSION — no incident #"):"TRAINING"}</td><td style="font-size:12px">${f.type}</td><td>${f.pic}</td><td>${(f.hrs-f.night).toFixed(1)} / ${f.night.toFixed(1)}</td><td>${f.ldD??"—"} / ${f.ldN??"—"}</td><td style="font-size:11px">${f.tachS?.toFixed?f.tachS.toFixed(1):f.tachS}→${f.tachE?.toFixed?f.tachE.toFixed(1):f.tachE}</td>
+  <td>${f.hazNeeded?(f.hazFiled?'<span class="chip c-good" style="font-size:9px">✓ HAZARD/SAFETY REPORT FILED</span>':'<span class="chip c-crit" style="font-size:9px">⚠ REPORT REQUIRED — NOT FILED</span>'):'<span class="chip c-gray" style="font-size:9px">—</span>'}</td></tr>
+  <tr><td></td><td colspan="9" style="font-size:10px;color:var(--muted);padding-top:0">Readiness — start${f.avgS!=null?" (avg "+f.avgS+")":""}: ${f.stamp||"—"}${f.stampEnd?" · end (avg "+f.avgE+"): "+f.stampEnd+" · Δ "+(f.avgE-f.avgS):""}${f.currLog?" · Currencies stamped: "+f.currLog:""}</td></tr>`).join("")}
+  </tbody></table></div>`;
+}
+function submitFlight(){
+ const a=AIRCRAFT.find(x=>x.n===FL.ac);if(!a)return;
+ const m=$("flmsg");
+ const s=+FL.tachS,e=+FL.tachE;
+ if(!(e>s)){if(m){m.textContent="⛔ End tach must be greater than start tach.";m.style.color="#F27B7B"}return}
+ const overlap=FLIGHTS.some(f=>f.ac===FL.ac&&f.tachS!=null&&!(e<=f.tachS||s>=f.tachE));
+ if(overlap){if(m){m.textContent="⛔ Tach range overlaps an existing logged flight on "+FL.ac+" — check start/end times.";m.style.color="#F27B7B"}return}
+ const oos=FLIGHTS.some(f=>f.ac===FL.ac&&f.tachS!=null&&f.tachS>=e);
+ const sp=flSplit();
+ const seated=flSeated();
+ const fr=FRAT_LOG.find(f=>f.id==FL.fratSel&&f.acs&&f.acs[FL.ac]);
+ const startScores=seated.map(x=>READINESS[x.p.id].score);
+ const avgS=fr&&fr.acs[FL.ac].avgS!=null?fr.acs[FL.ac].avgS:(startScores.length?Math.round(startScores.reduce((a,b)=>a+b,0)/startScores.length):null);
+ const stampStart=fr&&fr.acs[FL.ac].stamp?fr.acs[FL.ac].stamp:seated.map(x=>x.p.full.split(" ").slice(-1)[0]+" "+READINESS[x.p.id].score).join(" · ");
+ const wear=Math.round((sp.day+sp.night)*2+sp.night*2+(FL.c.hoistCy>0?2:0));
+ const endScores=seated.map(x=>Math.max(0,READINESS[x.p.id].score-wear));
+ const avgE=endScores.length?Math.round(endScores.reduce((a,b)=>a+b,0)/endScores.length):null;
+ const stampEnd=seated.map((x,i)=>x.p.full.split(" ").slice(-1)[0]+" "+endScores[i]).join(" · ");
+ const stamp=stampStart;
+ const currList=Object.keys(FL.curr).filter(k=>FL.curr[k]);
+ const picP=FL.crew.pic?PEOPLE.find(p=>p.id===FL.crew.pic):null;
+ const ftName=(FLIGHT_TYPES.find(f=>f.id===FL.ft)||{}).name;
+ FLIGHTS.push({id:Math.max(...FLIGHTS.map(f=>f.id))+1,d:fmt(new Date(FL.timeOut)),ac:FL.ac,
+  type:ftName||Object.keys(FL.acts).filter(k=>FL.acts[k])[0]||(FL.dep==="TRAINING"?"Training":"Mission"),dep:FL.dep,inc:FL.inc,
+  pic:picP?picP.full:user.full,hrs:sp.day+sp.night,night:sp.night,
+  ldD:(sp.hasDay||sp.bad)?FL.c.ldD:null,ldN:(sp.hasNight||sp.bad)?FL.c.ldN:null,
+  tachS:s,tachE:e,aar:!!(FL.brief.post&&FL.what.trim()),hazNeeded:FL.hazNeeded,hazFiled:false,oos,sync:netOnline()?"SYNCED":"PENDING",
+  stamp,stampEnd,avgS,avgE,cancelled:FL.cancelled,crewIds:{...FL.crew},paxTotal:(FL.pax.fd+FL.pax.ess+FL.pax.civ+FL.pax.trauma+FL.pax.med+FL.pax.nonmed),currLog:currList.length?currList.length+" item(s) across "+new Set(currList.map(k=>k.split("|")[0])).size+" crew":""});
+ FLIGHTS.sort((x,y)=>(y.tachS??0)-(x.tachS??0));
+ a.tach=Math.max(a.tach,e);
+ if(FL.mtachE)a.mtach=Math.max(a.mtach,+FL.mtachE);
+ if(FL.c.hoistCy>0){a.hoist+=FL.c.hoistCy;a.hoistT+=FL.c.hoistCy}
+ if(FL.c.cond)a.hoistT=0;
+ if(a.hoistT>=40)toast("<b>"+(a.hoistT>=50?"⛔ Hoist at "+a.hoistT+" cycles — condition the cable before further hoist ops.":"⚠ Hoist at "+a.hoistT+" cycles since conditioning — plan conditioning before 50.")+"</b>",a.hoistT>=50?"crit":"warn");
+ const wasOos=oos,wasHaz=FL.hazNeeded;
+ newFlight();render();
+ toast(netOnline()
+  ?"<b>✓ Flight log filed successfully.</b> "+(wasOos?"Filed out-of-sequence — inserted in tach order; totals untouched.":"Tach totals updated and currencies stamped.")+(wasHaz?" ⚠ Hazard report still required.":"")
+  :"<b>✓ Flight log saved on this device.</b> No connection — it will sync to base automatically when service returns.",netOnline()?"":"warn");
+ setTimeout(()=>{const n=$("flmsg");if(n){n.textContent=(wasOos?"✓ Filed OUT-OF-SEQUENCE — inserted in tach order; aircraft totals and other pilots' logs untouched.":"✓ Flight logged — tach totals updated, currencies stamped for each selected crew member.")+(wasHaz?" ⚠ Hazard report still required — file it on the Hazards page.":"");n.style.color="#5BC97A"}},0);
+}
+
+/* Root-cause drill-down: each category exposes specific sub-causes for trending */
+const HAZ_SUB={
+"Ground Operations":["Hot refuel","Rotor arc intrusion","Towing / repositioning","Ramp congestion","Fuel spill","Ground guide error"],
+"Equipment / Aircraft":["Avionics","Engine / drivetrain","Hoist system","NVG equipment","Radios / comms","Medical equipment","Airframe / structure"],
+"Weather / Environment":["Marine layer / low ceilings","Winds / turbulence","Density altitude","Lightning / storms","Visibility / smoke"],
+"Airspace / ATC":["TFR conflict","Near midair / traffic","ATC communication","Drone / UAS encounter"],
+"Procedures / Training":["SOP deviation","Checklist error","Training gap","Briefing quality","Currency lapse"],
+"External Pressure":["Agency pressure to launch","Media attention","Schedule compression","Multi-agency coordination"],
+"Facility / Hangar":["Spill / leak","Housekeeping / FOD","Doors / equipment","Lighting","Security"],
+"FOD / Wildlife":["Bird activity","FOD on pad","Wildlife on LZ"],
+"Maintenance":["Deferred item aging","Documentation error","Parts availability","Tooling"],
+"Human Factors / Fatigue":["Fatigue","Communication breakdown","Task saturation","Complacency","Crew conflict"]};
+const OPS_HAZ={
+"Hoist Operations":["Capture rescue","ARP (aerial rescue platform)","Hot seat swap","Connection sequence","Cable / hook management","Load management","Equipment malfunction / failure","Crew coordination","Patient packaging"],
+"Firefighting":["Water drop sequence","Hover fill / snorkel","Dip site hazard","LZ / helispot hazard","Ground crew communication","Equipment malfunction / failure","Smoke / visibility"],
+"EMS / Medical":["Patient loading","Hot load / unload","Scene LZ hazard","Medical equipment","Interfacility transfer","Crew coordination"],
+"Recon / Patrol":["Low-level obstruction","Wire environment","Night sun operations","Sensor / camera distraction"],
+"VIP / Transport":["Passenger briefing","Loading / unloading","Weight & balance","Ground handling"],
+"Training Flight":["Autorotation","Instructor handoff","Simulated emergency","Syllabus deviation","Currency task execution"]};
+const OP_CAT="Operational (Hoist, Firefighting, etc.)";
+function hzCatChange(cat){
+ const s=document.getElementById("hz-sub"),opRow=document.getElementById("hz-oprow"),op=document.getElementById("hz-op");
+ if(!s)return;
+ if(!cat){if(opRow)opRow.style.display="none";s.innerHTML='<option value="">— select category first —</option>';return}
+ if(cat===OP_CAT){
+  if(opRow)opRow.style.display="block";
+  const ops=Object.keys(OPS_HAZ);
+  if(op){op.innerHTML=ops.map(o=>`<option>${o}</option>`).join("");hzOpChange(ops[0])}
+ }else{
+  if(opRow)opRow.style.display="none";
+  s.innerHTML=(HAZ_SUB[cat]||[]).map(o=>`<option>${o}</option>`).join("")+"<option>Other (describe below)</option>";
+ }}
+function hzOpChange(op){const s=document.getElementById("hz-sub");if(!s)return;
+ s.innerHTML=(OPS_HAZ[op]||[]).map(o=>`<option>${o}</option>`).join("")+"<option>Other (describe below)</option>"}
+const HAZ_CATS=["Ground Operations","Equipment / Aircraft","Weather / Environment","Airspace / ATC","Procedures / Training","External Pressure","Facility / Hangar","FOD / Wildlife","Maintenance","Human Factors / Fatigue"];
+function opFromType(t){t=(t||"").toLowerCase();
+ if(/hoist|sar|rescue/.test(t))return"Hoist Operations";
+ if(/fire|water drop|bambi/.test(t))return"Firefighting";
+ if(/ems|medical|interfacility|inter-facility/.test(t))return"EMS / Medical";
+ if(/recon|patrol|survey/.test(t))return"Recon / Patrol";
+ if(/vip|transport|ferry/.test(t))return"VIP / Transport";
+ if(/train|pattern/.test(t))return"Training Flight";
+ return null}
+function hzLinkInfo(v){const el=document.getElementById("hz-auto");if(!el)return;
+ const g=id=>document.getElementById(id);
+ if(v&&v.startsWith("#")){const f=FLIGHTS.find(x=>"#"+x.id===v);
+  if(f){el.innerHTML=`<div style="border:1px solid rgba(47,168,79,.4);padding:8px 10px;margin-top:6px;line-height:1.7">
+   <b style="color:#5BC97A">✓ Autofilled from flight #${f.id} — every field below is prefilled and editable</b><br>
+   Aircraft: <b>${f.ac}</b> · Type: <b>${f.type}</b> · ${f.dep==="MISSION"?(f.inc?"Incident: <b>"+f.inc+"</b>":"Mission — no incident #"):"Training"}<br>
+   PIC: <b>${f.pic}</b> · D/N hours: ${(f.hrs-f.night).toFixed(1)} / ${f.night.toFixed(1)} · Landings: ${f.ldD??"—"}/${f.ldN??"—"}<br>
+   Crew readiness — departure: ${f.stamp||"—"}${f.stampEnd?"<br>Crew readiness — at log: "+f.stampEnd+" (avg "+f.avgS+" → "+f.avgE+")":""}</div>`;
+   /* category + operation from the flight type */
+   const op=opFromType(f.type);
+   if(op&&g("hz-cat")){g("hz-cat").value=OP_CAT;hzCatChange(OP_CAT);
+    if(g("hz-op")){g("hz-op").value=op;hzOpChange(op)}}
+   /* crew, pilot, passengers from the flight's seat map */
+   const nameOf=id=>{const p=PEOPLE.find(x=>x.id===id);return p?p.full:null};
+   const setSel=(elId,name)=>{const s=g(elId);if(!s)return;s.value="";if(name)[...s.options].forEach(o=>{if(o.textContent===name)s.value=o.value||o.textContent})};
+   const c=f.crewIds||{};
+   setSel("hz-pic",nameOf(c.pic)||f.pic);
+   setSel("hz-sic",nameOf(c.sic));
+   setSel("hz-crew",nameOf(c.hoist)||nameOf(c.rescuer)||nameOf(c.safety));
+   if(g("hz-pax")&&f.paxTotal!=null)g("hz-pax").value=String(Math.min(12,f.paxTotal));
+   hzSeatSync();
+  }else el.innerHTML=""}
+ else{/* standalone / incident-number: reset the whole form to defaults */
+  el.innerHTML="";
+  ["hz-pic","hz-sic","hz-crew","hz-loc","hz-desc"].forEach(id=>{if(g(id))g(id).value=""});
+  if(g("hz-pax"))g("hz-pax").value="0";
+  if(g("hz-cat")){g("hz-cat").value="";hzCatChange("")}
+  hzSeatSync();
+ }}
+let HZ_MEDIA=[];
+function hzAddMedia(inp){[...inp.files].forEach(f=>{
+ const isVid=f.type.startsWith("video");
+ HZ_MEDIA.push({name:f.name,vid:isVid,url:(!isVid&&window.URL&&f.type.startsWith("image"))?URL.createObjectURL(f):null,size:f.size});});
+ inp.value="";hzMediaPaint();
+ toast("<b>✓ "+HZ_MEDIA.length+" file"+(HZ_MEDIA.length>1?"s":"")+" attached to this hazard report.</b> Photos and video upload with the report when you submit.")}
+function hzDelMedia(i){HZ_MEDIA.splice(i,1);hzMediaPaint()}
+function hzMediaPaint(){const el=document.getElementById("hz-media");if(!el)return;
+ el.innerHTML=HZ_MEDIA.length?HZ_MEDIA.map((f,i)=>`<span style="display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(184,190,200,.25);padding:4px 8px;margin:3px 4px 0 0;font-size:11px;background:rgba(37,43,52,.4)">
+  ${f.url?`<img src="${f.url}" style="height:34px;width:48px;object-fit:cover">`:(f.vid?"🎥":"📷")} ${f.name} <span style="color:var(--muted)">${(f.size/1024/1024).toFixed(1)}MB</span>
+  <b style="cursor:pointer;color:#F27B7B" onclick="hzDelMedia(${i})">✕</b></span>`).join(""):'<span style="font-size:11px;color:var(--muted)">No files attached yet.</span>'}
+function hzSeatSync(){const ids=["hz-pic","hz-sic","hz-crew"];const g=id=>document.getElementById(id);
+ const vals=ids.map(id=>g(id)?g(id).value:"");
+ ids.forEach((id,i)=>{const s=g(id);if(!s)return;[...s.options].forEach(o=>{
+  o.disabled=!!(o.textContent&&o.textContent!=="—"&&vals.some((v,j)=>j!==i&&v&&v===o.textContent))})})}
+function fileHazard(){
+  const v=id=>document.getElementById(id)?document.getElementById(id).value:"";
+  const desc=v("hz-desc").trim();
+  const m=document.getElementById("hzmsg");
+  if(!v("hz-cat")){if(m){m.textContent="⛔ Select a category before submitting.";m.style.color="#F27B7B"}return}
+  if(!desc){if(m){m.textContent="⛔ A description is required.";m.style.color="#F27B7B"}return}
+  const seatVals=["hz-pic","hz-sic","hz-crew"].map(v).filter(Boolean);
+  if(new Set(seatVals).size!==seatVals.length){if(m){m.textContent="⛔ The same person is selected in more than one seat — one seat per person.";m.style.color="#F27B7B"}return}
+  const link=v("hz-link");
+  HAZARDS.unshift({id:Math.max(...HAZARDS.map(h=>h.id))+1,d:fmt(TODAY),by:user.full,
+    desc:desc+(v("hz-loc")?" — Location: "+v("hz-loc"):"")+(link?" — Linked to "+(link==="INC"?"incident (number pending)":link):" — Standalone (non-flight)")+(v("hz-pic")?" — Pilot: "+v("hz-pic"):"")+(+v("hz-pax")>0?" — "+v("hz-pax")+" pax aboard":""),
+    cat:v("hz-cat"),op:(document.getElementById("hz-oprow")&&document.getElementById("hz-oprow").style.display!=="none")?v("hz-op"):null,
+    sub:((document.getElementById("hz-oprow")&&document.getElementById("hz-oprow").style.display!=="none")?v("hz-op")+" — ":"")+v("hz-sub"),
+    P:null,S:null,status:"OPEN",m:TODAY.getMonth(),dtc:null,opened:false,committee:false,sag:false,redacted:false,
+    fl:(link&&link.startsWith("#"))?(x=>x?{type:x.type,inc:x.inc,pic:x.pic,stamp:x.stamp}:null)(FLIGHTS.find(x=>"#"+x.id===link)):null,
+    media:HZ_MEDIA.slice(),
+    pub:"De-identified summary pending Safety Officer review."});
+  HZ_MEDIA=[];
+  if(link&&link.startsWith("#")){const lf=FLIGHTS.find(x=>"#"+x.id===link);if(lf){lf.hazNeeded=true;lf.hazFiled=true}}
+  HAZARDS[0].sync=netOnline()?"SYNCED":"PENDING";
+  toast(netOnline()?"<b>✓ Hazard report filed successfully.</b> The Safety Officer has been notified."+(link&&link.startsWith("#")?" Flight "+link+" now shows Report Filed.":""):"<b>✓ Hazard report saved on this device.</b> It will sync and notify the Safety Officer when service returns.",netOnline()?"":"warn");
+  render();
+  setTimeout(()=>{const n=document.getElementById("hzmsg");if(n){n.textContent="✓ Hazard report filed — the Safety Officer has been notified"+(link&&link.startsWith("#")?", and flight "+link+" now shows Hazard/Safety Report Filed.":".");n.style.color="#5BC97A"}},0);
+}
+function pgHaz(){
+  const isSup=user.role==="SUPERVISOR";
+  const hazForm=`<div class="panel accent"><h2>File a hazard report</h2>
+    <div class="grid g2">
+      <div><label class="lab">Ties to</label><select id="hz-link" onchange="hzLinkInfo(this.value)"><option value="">Standalone — facility / ground (not flight related)</option>${FLIGHTS.map(f=>`<option value="#${f.id}">Flight #${f.id} — ${f.d} ${f.ac} ${f.type}</option>`).join("")}<option value="INC">Enter incident number…</option></select><div id="hz-auto" style="font-size:11px;color:#5BC97A;margin-top:4px"></div></div>
+      <div><label class="lab">Category (for trending)</label><select id="hz-cat" onchange="hzCatChange(this.value)"><option value="">— select —</option><option>${OP_CAT}</option>${HAZ_CATS.map(c=>`<option>${c}</option>`).join("")}</select>
+       <div id="hz-oprow" style="margin-top:8px;display:none"><label class="lab">Operation</label><select id="hz-op" onchange="hzOpChange(this.value)">${Object.keys(OPS_HAZ).map(o=>`<option>${o}</option>`).join("")}</select></div></div>
+      <div><label class="lab">Location</label><input id="hz-loc" placeholder="e.g. Hangar 2 hallway, KVNY pad 2, grid…"></div>
+      <div><label class="lab">Specific hazard (drill-down for trending)</label><select id="hz-sub"><option value="">— select category first —</option></select></div>
+      <div><label class="lab">Pilot (if flight related)</label><select id="hz-pic" onchange="hzSeatSync()"><option value="">—</option>${PEOPLE.filter(p=>p.pilot).map(p=>`<option>${p.full}</option>`).join("")}</select></div>
+      <div><label class="lab">SIC</label><select id="hz-sic" onchange="hzSeatSync()"><option value="">—</option>${PEOPLE.filter(p=>p.pilot).map(p=>`<option>${p.full}</option>`).join("")}</select></div>
+      <div><label class="lab">Crew involved</label><select id="hz-crew" onchange="hzSeatSync()"><option value="">—</option>${PEOPLE.filter(p=>!p.pilot).map(p=>`<option>${p.full}</option>`).join("")}</select></div>
+      <div><label class="lab">Passengers aboard</label><select id="hz-pax">${Array.from({length:13},(_,n)=>`<option>${n}</option>`).join("")}</select></div>
+    </div>
+    <label class="lab">Description of hazard</label><textarea id="hz-desc" rows="3" placeholder="What did you see? e.g. Puddle of oil in the hallway leading to the hangar…"></textarea>
+    <div style="margin-top:10px"><label class="lab">Photos / video of the hazard</label>
+     <label class="btn2" style="cursor:pointer;display:inline-block">📎 Attach photos or video<input type="file" accept="image/*,video/*" multiple style="display:none" onchange="hzAddMedia(this)"></label>
+     <div id="hz-media" style="margin-top:6px"><span style="font-size:11px;color:var(--muted)">No files attached yet.</span></div>
+     <div style="font-size:10px;color:var(--muted);margin-top:4px">On a phone this offers the camera or your photo library. Files upload with the report and are visible to the Safety Officer on the full report.</div></div>
+    <div style="margin-top:10px"><button class="btn" onclick="fileHazard()">Submit hazard report</button> <span id="hzmsg" style="font-size:13px;margin-left:8px"></span></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">Probability × severity is assigned by the <b style="color:var(--silver)">Safety Officer only</b> using the clickable risk matrix on each report (SMS §3.8). Reports are anonymous-capable and feed the live Safety Health dashboard.</div></div>`;
+  if(hzView!=null){
+   const h=HAZARDS.find(x=>x.id===hzView);
+   if(h){const r=hazRisk(h.P,h.S),red=h.redacted&&!isSup;
+   return `<button class="btn2" onclick="hzView=null;render()">← All hazard reports</button>
+   <div class="panel accent" style="margin-top:12px">
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:baseline">
+     <h1 style="margin:0">Report <span>#${h.id}</span></h1>
+     <span>${h.P&&h.S?`<span class="chip c-red">${h.P}${h.S}</span>`:'<span class="chip c-gray">UNSCORED</span>'} <span class="chip ${r==="UNSCORED"?"c-gray":riskColor(r)}">${r}</span> <span class="chip ${h.status==="CLOSED"?"c-gray":"c-warn"}">${h.status}</span></span></div>
+    <div class="grid g3" style="margin-top:10px">
+     <div><div class="lab" style="margin:0">Category</div><div style="color:var(--silver-light)">${h.cat}</div></div>
+     <div><div class="lab" style="margin:0">Specific cause</div><div style="color:var(--silver-light)">${h.sub||"—"}</div></div>
+     <div><div class="lab" style="margin:0">Reported</div><div style="color:var(--silver-light)">${h.d} · ${red?"(protected)":h.by}</div></div>
+    </div>
+    <div class="sublab">Description</div>
+    <div style="font-size:13px;line-height:1.6">${red?h.pub:h.desc}</div>
+    ${h.fl?`<div class="banner b-good" style="font-size:12px;margin-top:10px">From flight: ${h.fl.type}${h.fl.inc?" · "+h.fl.inc:""} · PIC ${h.fl.pic} · crew readiness at flight: ${h.fl.stamp||"—"}</div>`:""}
+    ${h.media&&h.media.length?`<div class="sublab">Attached media (${h.media.length})</div><div>${h.media.map(f=>`<span style="display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(184,190,200,.25);padding:4px 8px;margin:3px 6px 0 0;font-size:11px;background:rgba(37,43,52,.4)">${f.url?`<img src="${f.url}" style="height:60px;width:84px;object-fit:cover">`:(f.vid?"🎥":"📷")} ${f.name}</span>`).join("")}</div>`:""}
+   </div>
+   ${isSup?`<div class="panel"><h2>Risk assignment — Safety Officer</h2>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+     <div>${riskMatrix(h)}<div style="font-size:10px;color:var(--muted);margin-top:4px">Click a cell — probability × severity per SMS §3.8.</div></div>
+     <div style="flex:1;min-width:260px">
+      <label class="opt ${h.committee?'sel':''}" style="cursor:pointer;margin-bottom:8px"><span><b>Safety Committee required</b><br><span style="font-size:11px;color:var(--muted)">Internal group convenes on this report — push notifies SUPERVISORS</span></span><input type="checkbox" style="width:auto" ${h.committee?'checked':''} onchange="hzFlag(${h.id},'committee',this.checked)"></label>
+      <label class="opt ${h.sag?'sel':''}" style="cursor:pointer;margin-bottom:8px"><span><b>Safety Action Group required</b><br><span style="font-size:11px;color:var(--muted)">Beyond in-house — external agencies/manufacturer involved — push notifies UPPER MANAGEMENT + SUPERVISORS</span></span><input type="checkbox" style="width:auto" ${h.sag?'checked':''} onchange="hzFlag(${h.id},'sag',this.checked)"></label>
+      <button class="btn2" onclick="toggleRedact(${h.id})">${h.redacted?"Un-redact":"Redact (just culture)"}</button>
+     </div></div></div>`
+   :`<div class="panel"><div class="lock">Risk assignment, committee/action-group escalation, and redaction are Safety Officer functions.</div></div>`}`}
+  }
+  const sorted=[...HAZARDS].sort((a,b)=>{if(!!a.opened!==!!b.opened)return a.opened?1:-1;return parseD(b.d)-parseD(a.d)});
+  const unopened=sorted.filter(h=>!h.opened).length;
+  return `<h1>Hazard <span>Reporting</span></h1><div class="sub">File below; tap any report summary to open the full detail — risk is assigned there. ${isSup&&unopened?`<b style="color:var(--warn)">${unopened} new report${unopened>1?"s":""} awaiting review (highlighted, pinned to top).</b>`:""} Opened reports sort by date, newest first.</div>
+  ${hazForm}
+  ${sorted.map(h=>{const r=hazRisk(h.P,h.S),red=h.redacted&&!isSup;
+   return `<div class="panel" onclick="openHz(${h.id})" style="cursor:pointer;padding:11px 14px;margin-bottom:8px;${!h.opened?'border:1px solid var(--warn);background:rgba(232,185,59,.05)':''}">
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;align-items:center">
+     <div>${!h.opened?'<span class="chip c-warn" style="font-size:9px">● NEW</span> ':''}<b class="cond" style="color:var(--silver-light);letter-spacing:1px">#${h.id} · ${h.cat.toUpperCase()}</b> <span style="color:var(--muted);font-size:11px">· ${h.sub||""} · ${h.d}${red?"":" · "+h.by}</span></div>
+     <span>${h.committee?'<span class="chip c-blue" style="font-size:8px">COMMITTEE</span> ':''}${h.sag?'<span class="chip c-crit" style="font-size:8px">ACTION GROUP</span> ':''}${h.P&&h.S?`<span class="chip c-red" style="font-size:9px">${h.P}${h.S}</span>`:'<span class="chip c-gray" style="font-size:9px">UNSCORED</span>'} <span class="chip ${r==="UNSCORED"?"c-gray":riskColor(r)}" style="font-size:9px">${r}</span> <span class="chip ${h.status==="CLOSED"?"c-gray":"c-warn"}" style="font-size:9px">${h.status}</span></span>
+    </div></div>`}).join("")}`;
+}
+function toggleRedact(id){const h=HAZARDS.find(x=>x.id===id);h.redacted=!h.redacted;render()}
+
+/* ============ SAFETY MGMT: corrective actions · meetings · documents ============ */
+let safView="ca";
+let CACTIONS=[
+ {id:12,desc:"Adopt ramp cone procedure for hot refuels",haz:88,to:"D. Okafor",due:"07/25/26",status:"IN PROGRESS"},
+ {id:11,desc:"Remove NVG SN 4471 from service; send for repair",haz:87,to:"K. Whitfield",due:"07/15/26",status:"OPEN"},
+ {id:10,desc:"Brief requesting agencies on launch-timeout policy",haz:86,to:"K. Whitfield",due:"06/30/26",status:"COMPLETED"}];
+let MEETINGS=[
+ {id:3,date:"07/18/26 · 09:00",topic:"Quarterly Safety Stand-Down — Q3",fac:"K. Whitfield",status:"UPCOMING",rsvp:["whit","joel"],rec:null,minutes:null},
+ {id:2,date:"06/12/26 · 09:00",topic:"Hot-refuel procedures + hazard #88 review",fac:"K. Whitfield",status:"COMPLETED",att:["joel","whit","cast","oka","ram"],rec:"recording-2026-06-12.mp4",minutes:"AUTO-MINUTES · Reviewed hot-refuel proximity event (HZ-88). Ramp cone procedure adopted effective immediately. Action items: D. Okafor — cone placement SOP (due 07/25); J. Ramirez — fuel vendor brief. Attendance 5 of 8 (recording sent to absentees). Next stand-down 07/18."},
+ {id:1,date:"05/09/26 · 09:00",topic:"NVG currency review + marine layer ops",fac:"K. Whitfield",status:"COMPLETED",att:["joel","whit","ngu","bak","lee","oka"],rec:"recording-2026-05-09.mp4",minutes:"AUTO-MINUTES · NVG currency gaps identified for 2 pilots; training slots assigned. Marine-layer go/no-go thresholds reaffirmed per SMS §4.2. Attendance 6 of 8."}];
+let DOCS=[
+ {name:"General Operating Manual (GOM)",ver:"Rev 4",eff:"03/01/26",by:"K. Whitfield",ack:{}},
+ {name:"SMS Manual",ver:"Rev 7",eff:"05/15/26",by:"K. Whitfield",ack:{joel:1,whit:1,cast:1,ram:1,oka:1}},
+ {name:"Emergency Response Plan",ver:"Rev 2",eff:"11/20/25",by:"K. Whitfield",ack:{joel:1,whit:1}},
+ {name:"Standard Operating Procedures",ver:"Rev 11",eff:"06/28/26",by:"K. Whitfield",ack:{whit:1}}];
+function caAdvance(id){const c=CACTIONS.find(x=>x.id===id);c.status=c.status==="OPEN"?"IN PROGRESS":"COMPLETED";render()}
+function mtgRsvp(id){const m=MEETINGS.find(x=>x.id===id);if(!m.rsvp.includes(user.id))m.rsvp.push(user.id);render()}
+function docAck(i){DOCS[i].ack[user.id]=1;render()}
+function docUpload(i){const inp=document.getElementById("docrev-"+i);const v=inp?inp.value.trim():"";if(!v)return;
+ DOCS[i].ver=v;DOCS[i].eff=fmt(TODAY);DOCS[i].by=user.full;DOCS[i].ack={};
+ toast("<b>✓ "+DOCS[i].name+"</b> updated to "+v+" — prior revision archived, crew notified.");render();
+ setTimeout(()=>{const n=document.getElementById("safmsg");if(n){n.textContent="✓ "+DOCS[i].name+" updated to "+v+" — crew read-acknowledgments reset and a notification went to all personnel.";n.style.color="#5BC97A"}},0)}
+function mtgSchedule(){
+ const t=document.getElementById("mtg-topic"),w=document.getElementById("mtg-when");
+ if(!t||!t.value.trim()||!w.value)return;
+ MEETINGS.unshift({id:Math.max(...MEETINGS.map(m=>m.id))+1,date:fmt(new Date(w.value))+" · "+new Date(w.value).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),topic:t.value.trim(),fac:user.full,status:"UPCOMING",rsvp:[user.id],rec:null,minutes:null});
+ toast("<b>✓ Meeting scheduled.</b> Calendar invite created with the room link, "+PEOPLE.length+" members emailed, push notification sent. Day-of reminder will push to confirmed attendees.");render()}
+let HFILT={cat:null,sev:"",status:"",from:"",to:""};
+let hzView=null, EMAILP=false;
+function parseD(d){const p=d.split("/").map(Number);return new Date(2000+p[2],p[0]-1,p[1])}
+function openHz(id){const h=HAZARDS.find(x=>x.id===id);if(h)h.opened=true;hzView=id;tab="haz";render()}
+function hzFlag(id,key,val){const h=HAZARDS.find(x=>x.id===id);h[key]=val;
+ if(key==="committee"&&val)toast("📣 <b>Push sent to SUPERVISORS:</b> Safety Committee convened for report #"+id+".");
+ if(key==="sag"&&val)toast("📣 <b>Push sent to UPPER MANAGEMENT + SUPERVISORS:</b> Safety Action Group requested for report #"+id+" — external agency assistance.","warn");
+ render()}
+function HFL(skipCat){return HAZARDS.filter(h=>{
+ if(!skipCat&&HFILT.cat&&h.cat!==HFILT.cat)return false;
+ if(HFILT.sev&&h.S!==HFILT.sev)return false;
+ if(HFILT.status&&h.status!==HFILT.status)return false;
+ if(HFILT.from&&parseD(h.d)<new Date(HFILT.from))return false;
+ if(HFILT.to&&parseD(h.d)>new Date(HFILT.to))return false;
+ return true})}
+function emailSend(){const boxes=[...document.querySelectorAll(".em-r:checked")];
+ EMAILP=false;render();
+ toast("<b>✉ Email sent to "+boxes.length+" recipient"+(boxes.length===1?"":"s")+"</b> with the filtered Safety Health dashboard attached as PDF.");}
+function riskScore(h){return h.P&&h.S?h.P*SEVN[h.S]:null}
+function hStats(){
+ const HH=HFL();
+ const scored=HH.filter(h=>riskScore(h)!=null);
+ const open=HH.filter(h=>h.status!=="CLOSED").length;
+ const unscored=HH.filter(h=>riskScore(h)==null).length;
+ const closed=HH.filter(h=>h.dtc!=null);
+ const avgClose=closed.length?Math.round(closed.reduce((a,h)=>a+h.dtc,0)/closed.length):0;
+ const cancelled=FLIGHTS.filter(f=>f.cancelled).length;
+ const q3=HFL().filter(h=>h.m>=6).length,q2=HFL().filter(h=>h.m>=3&&h.m<6).length;
+ return{open,unscored,avgClose,cancelled,q3,q2,scored};
+}
+function catBars(){
+ const counts={};HFL(true).forEach(h=>counts[h.cat]=(counts[h.cat]||0)+1);
+ const cats=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+ const max=cats[0]?cats[0][1]:1;
+ return `<div>${cats.map(([c,n])=>`<div onclick="HFILT.cat=HFILT.cat===${JSON.stringify(c)}?null:${JSON.stringify(c)};render()" style="display:flex;align-items:center;gap:8px;margin:5px 0;cursor:pointer;${HFILT.cat&&HFILT.cat!==c?'opacity:.35':''}">
+  <div style="width:190px;font-size:11px;color:var(--text);text-align:right">${c}</div>
+  <div style="flex:1;background:var(--dark-4);height:16px;position:relative"><div style="width:${Math.round(n/max*100)}%;height:100%;background:${HFILT.cat===c?'var(--red-bright)':'#3987e5'}"></div></div>
+  <div style="width:24px;font-size:12px;font-weight:700;color:var(--silver-light)">${n}</div></div>`).join("")}</div>`;
+}
+function heatMatrix(){
+ const cells={};HFL().forEach(h=>{if(h.P&&h.S)cells[h.P+h.S]=(cells[h.P+h.S]||0)+1});
+ let out='<table style="border-collapse:collapse"><tr><td style="font-size:9px;color:var(--muted);padding:2px">Sev ↓</td>'+[1,2,3,4,5].map(p=>`<td style="font-size:9px;color:var(--muted);text-align:center;padding:2px 4px">P${p}</td>`).join("")+"</tr>";
+ ["A","B","C","D","E"].forEach(S=>{out+=`<tr><td style="font-size:10px;color:var(--muted);padding:2px 5px">${S}</td>`+[1,2,3,4,5].map(P=>{
+  const sc=P*SEVN[S];const n=cells[P+S]||0;
+  const bg=sc>=15?"rgba(208,59,59,"+(n?".55":".14")+")":sc>=8?"rgba(232,185,59,"+(n?".5":".12")+")":"rgba(47,168,79,"+(n?".45":".1")+")";
+  return `<td style="width:34px;height:26px;text-align:center;background:${bg};border:1px solid rgba(10,11,13,.6);font-size:12px;font-weight:800;color:${n?"var(--silver-light)":"transparent"}">${n||0}</td>`}).join("")+"</tr>"});
+ return out+"</table>";
+}
+function controlChart(){
+ const src=HFL();
+ const MN=["JAN","FEB","MAR","APR","MAY","JUN","JUL"];
+ const monthly=MN.map((_,i)=>{const hs=src.filter(h=>h.m===i&&riskScore(h)!=null);return hs.length?hs.reduce((a,h)=>a+riskScore(h),0)/hs.length:null});
+ const vals=monthly.filter(v=>v!=null);
+ if(vals.length<2){
+  /* Sparse category: plot its individual reports against the UNIT baseline bands */
+  const reports=src.filter(h=>riskScore(h)!=null);
+  if(!reports.length)return '<div style="font-size:12px;color:var(--muted)">No scored reports in this selection yet — the chart draws the moment the Safety Officer assigns risk.</div>';
+  const base=HAZARDS.filter(h=>riskScore(h)!=null);
+  const bm=MN.map((_,i)=>{const hs=base.filter(h=>h.m===i);return hs.length?hs.reduce((a,h)=>a+riskScore(h),0)/hs.length:null});
+  const bv=bm.filter(v=>v!=null);
+  const mu=bv.reduce((a,b)=>a+b,0)/bv.length;
+  const sd=Math.sqrt(bv.reduce((a,b)=>a+(b-mu)*(b-mu),0)/bv.length)||1;
+  const w=460,hh=170,pad=26,ymax=Math.max(20,mu+2.6*sd),ymin=Math.max(0,mu-2.6*sd);
+  const X=i=>pad+i*(w-pad-8)/(MN.length-1), Y=v=>hh-18-((Math.min(ymax,Math.max(ymin,v))-ymin)/(ymax-ymin))*(hh-30);
+  const band=(k,c,dash)=>`<line x1="${pad}" x2="${w-8}" y1="${Y(mu+k*sd)}" y2="${Y(mu+k*sd)}" stroke="${c}" stroke-dasharray="${dash}" stroke-width="1"/><line x1="${pad}" x2="${w-8}" y1="${Y(mu-k*sd)}" y2="${Y(mu-k*sd)}" stroke="${c}" stroke-dasharray="${dash}" stroke-width="1"/>`;
+  return `<svg viewBox="0 0 ${w} ${hh}" style="width:100%;height:auto">
+   ${band(2,"rgba(208,59,59,.8)","2 5")}${band(1,"rgba(232,185,59,.8)","3 4")}
+   <line x1="${pad}" x2="${w-8}" y1="${Y(mu)}" y2="${Y(mu)}" stroke="#7A8290" stroke-width="1.5"/>
+   <text x="${w-8}" y="${Y(mu)-3}" fill="#7A8290" font-size="9" text-anchor="end">unit mean ${mu.toFixed(1)}</text>
+   <text x="${w-8}" y="${Y(mu+sd)-3}" fill="#E8B93B" font-size="8" text-anchor="end">+1σ</text>
+   <text x="${w-8}" y="${Y(mu+2*sd)-3}" fill="#F27B7B" font-size="8" text-anchor="end">+2σ</text>
+   ${reports.map(h=>{const v=riskScore(h);return `<circle cx="${X(h.m)}" cy="${Y(v)}" r="5" fill="${v>mu+2*sd?"#F27B7B":v>mu+sd?"#E8B93B":"#3987e5"}"/><text x="${X(h.m)}" y="${Y(v)-9}" fill="#C3C2B7" font-size="9" text-anchor="middle">#${h.id} · ${v}</text>`}).join("")}
+   ${MN.map((m,i)=>`<text x="${X(i)}" y="${hh-4}" fill="#7A8290" font-size="9" text-anchor="middle">${m}</text>`).join("")}
+  </svg><div style="font-size:10px;color:var(--muted);margin-top:4px">Too few reports for category-specific bands — showing this category's individual reports against the unit-wide baseline (mean ±1σ/±2σ). Bands become category-specific as reports accumulate.</div>`;
+ }
+ const mu=vals.reduce((a,b)=>a+b,0)/vals.length;
+ const sd=Math.sqrt(vals.reduce((a,b)=>a+(b-mu)*(b-mu),0)/vals.length)||1;
+ const w=460,hh=170,pad=26,ymax=Math.max(20,mu+2.6*sd),ymin=Math.max(0,mu-2.6*sd);
+ const X=i=>pad+i*(w-pad-8)/(MN.length-1), Y=v=>hh-18-((v-ymin)/(ymax-ymin))*(hh-30);
+ const band=(k,c,dash)=>`<line x1="${pad}" x2="${w-8}" y1="${Y(mu+k*sd)}" y2="${Y(mu+k*sd)}" stroke="${c}" stroke-dasharray="${dash}" stroke-width="1"/><line x1="${pad}" x2="${w-8}" y1="${Y(mu-k*sd)}" y2="${Y(mu-k*sd)}" stroke="${c}" stroke-dasharray="${dash}" stroke-width="1"/>`;
+ const pts=monthly.map((v,i)=>v==null?null:[X(i),Y(v),v]).filter(Boolean);
+ return `<svg viewBox="0 0 ${w} ${hh}" style="width:100%;height:auto">
+  ${band(2,"rgba(208,59,59,.8)","2 5")}${band(1,"rgba(232,185,59,.8)","3 4")}
+  <line x1="${pad}" x2="${w-8}" y1="${Y(mu)}" y2="${Y(mu)}" stroke="#7A8290" stroke-width="1.5"/>
+  <text x="${w-8}" y="${Y(mu)-3}" fill="#7A8290" font-size="9" text-anchor="end">mean ${mu.toFixed(1)}</text>
+  <text x="${w-8}" y="${Y(mu+sd)-3}" fill="#E8B93B" font-size="8" text-anchor="end">+1σ</text>
+  <text x="${w-8}" y="${Y(mu+2*sd)-3}" fill="#F27B7B" font-size="8" text-anchor="end">+2σ</text>
+  <polyline fill="none" stroke="#B8BEC8" stroke-width="2" points="${pts.map(p=>p[0]+","+p[1]).join(" ")}"/>
+  ${pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${p[2]>mu+2*sd?"#F27B7B":p[2]>mu+sd?"#E8B93B":"#3987e5"}"/><text x="${p[0]}" y="${p[1]-8}" fill="#C3C2B7" font-size="9" text-anchor="middle">${p[2].toFixed(1)}</text>`).join("")}
+  ${MN.map((m,i)=>`<text x="${X(i)}" y="${hh-4}" fill="#7A8290" font-size="9" text-anchor="middle">${m}</text>`).join("")}
+ </svg>`;
+}
+function pgSafety(){
+ const isSup=user.role==="SUPERVISOR";
+ const hdr=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+   <button class="btn2 ${safView==='ca'?'on':''}" onclick="safView='ca';render()">Corrective actions</button>
+   <button class="btn2 ${safView==='mtg'?'on':''}" onclick="safView='mtg';render()">Safety meetings</button>
+   <button class="btn2 ${safView==='docs'?'on':''}" onclick="safView='docs';render()">Company documents</button>
+   <button class="btn2 ${safView==='health'?'on':''}" style="border-color:rgba(192,32,42,.6);color:var(--red-bright)" onclick="safView='health';render()">📊 Safety Health</button>
+  </div><div id="safmsg" style="font-size:13px;margin-bottom:8px"></div>`;
+ if(safView==='ca'){
+  return `<h1>Safety <span>Management</span></h1><div class="sub">Corrective actions close the loop on every hazard — assigned, dated, and tracked to completion. Overdue items escalate to the Safety Officer.</div>${hdr}
+  <div class="panel"><table><thead><tr><th>ID</th><th>Action</th><th>Hazard</th><th>Assigned to</th><th>Due</th><th>Status</th>${isSup?"<th></th>":""}</tr></thead><tbody>
+  ${CACTIONS.map(c=>`<tr><td>CA-${c.id}</td><td style="color:var(--silver-light)">${c.desc}</td><td><span class="chip c-red">HZ-${c.haz}</span></td><td>${c.to}</td><td>${c.due}</td>
+   <td><span class="chip ${c.status==="COMPLETED"?"c-good":c.status==="IN PROGRESS"?"c-warn":"c-crit"}">${c.status}</span></td>
+   ${isSup?`<td>${c.status!=="COMPLETED"?`<button class="btn2" style="font-size:10px;padding:4px 10px" onclick="caAdvance(${c.id})">Advance →</button>`:""}</td>`:""}</tr>`).join("")}
+  </tbody></table>
+  ${!isSup?'<div class="lock" style="margin-top:8px">Creating and advancing corrective actions requires the Safety Officer / Manager role.</div>':""}</div>`;
+ }
+ if(safView==='mtg'){
+  return `<h1>Safety <span>Management</span></h1><div class="sub">Every operator gets a dedicated online meeting room, provisioned at onboarding. Join from the app if you can't attend in person — attendance is tracked automatically, recordings post afterward, and minutes are generated for you.</div>${hdr}
+  ${isSup?`<div class="panel accent"><h2>Schedule a safety meeting</h2>
+   <div class="grid g3"><div><label class="lab">Topic</label><input id="mtg-topic" placeholder="e.g. Q3 Stand-Down"></div>
+   <div><label class="lab">Date & time</label><input id="mtg-when" type="datetime-local"></div>
+   <div style="align-self:end"><button class="btn" onclick="mtgSchedule()">Schedule</button></div></div>
+   <div style="font-size:11px;color:var(--muted);margin-top:6px">Scheduling creates the calendar event (Google / Outlook — operator's choice) with the dedicated meeting link, emails every member, and sends a push notification. Confirmed attendees get a push reminder when the meeting starts — tapping it joins the room.</div></div>`:""}
+  ${MEETINGS.map(m=>`<div class="panel ${m.status==='UPCOMING'?'accent':''}">
+   <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:baseline">
+    <div><b class="cond" style="color:var(--silver-light);font-size:16px;letter-spacing:1px">${m.topic}</b>
+     <div style="font-size:12px;color:var(--muted)">${m.date} · Facilitator: ${m.fac}</div></div>
+    <span class="chip ${m.status==='UPCOMING'?'c-warn':'c-good'}">${m.status}</span></div>
+   ${m.status==='UPCOMING'?`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center">
+     <button class="btn" onclick="window.open('https://meet.heroops.app/canyon-county','_blank')">Join online meeting</button>
+     <button class="btn2 ${m.rsvp.includes(user.id)?'on':''}" onclick="mtgRsvp(${m.id})">${m.rsvp.includes(user.id)?"✓ Attending":"I'll attend"}</button>
+     <span style="font-size:12px;color:var(--muted)">${m.rsvp.length} of ${PEOPLE.length} confirmed · room: meet.heroops.app/canyon-county (dedicated to this operator)</span></div>`
+   :`<div style="margin-top:10px;font-size:12px;color:var(--muted)">Attendance: <b style="color:var(--silver-light)">${m.att.length} of ${PEOPLE.length}</b> — ${m.att.map(id=>PEOPLE.find(p=>p.id===id).name).join(", ")}
+     &nbsp;·&nbsp; <span class="chip c-blue" style="font-size:9px">▶ ${m.rec}</span></div>
+    <div style="margin-top:8px;padding:10px;background:var(--dark-2);font-size:12px;color:var(--text);border-left:3px solid #E8B93B">${m.minutes}</div>`}
+  </div>`).join("")}`;
+ }
+ if(safView==='health'){
+  if(user.role!=="SUPERVISOR")return `<h1>Safety <span>Management</span></h1>${hdr}<div class="panel"><div class="lock">The Safety Health dashboard is available to Safety Officers and Managers. Sign in as K. Whitfield to view it.</div></div>`;
+  const st=hStats();
+  const top3=HAZARDS.filter(h=>h.m>=6&&riskScore(h)!=null).sort((a,b)=>riskScore(b)-riskScore(a)).slice(0,3);
+  const filtered=HFILT.cat?HFL():[];
+  return `<h1>Safety <span>Health</span></h1><div class="sub">Live safety posture for the unit — every report lands here the moment it's filed. Click a category bar to drill in; the control chart shows the monthly mean risk score against ±1σ and ±2σ bands so drift is visible before it becomes a trend.</div>${hdr}
+  <div class="panel"><div class="grid g4">
+   <div><label class="lab">From date</label><input type="date" value="${HFILT.from}" onchange="HFILT.from=this.value;render()"></div>
+   <div><label class="lab">To date</label><input type="date" value="${HFILT.to}" onchange="HFILT.to=this.value;render()"></div>
+   <div><label class="lab">Severity</label><select onchange="HFILT.sev=this.value;render()"><option value="">All</option>${["A","B","C","D","E"].map(s=>`<option ${HFILT.sev===s?"selected":""}>${s}</option>`).join("")}</select></div>
+   <div><label class="lab">Status</label><select onchange="HFILT.status=this.value;render()"><option value="">All</option>${["OPEN","CORRECTIVE ACTION","CLOSED"].map(s=>`<option ${HFILT.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center">
+   <span style="font-size:12px;color:var(--muted)">${HFL().length} reports match</span>
+   <button class="btn2" onclick="HFILT={cat:null,sev:'',status:'',from:'',to:''};render()">Clear all filters</button>
+   <button class="btn2" onclick="window.print()">🖨 Print / create PDF</button>
+   <button class="btn2 ${EMAILP?'on':''}" onclick="EMAILP=!EMAILP;render()">✉ Email this view</button>
+  </div>
+  ${EMAILP?`<div style="margin-top:10px;border:1px solid var(--dark-5);padding:12px">
+   <div class="lab" style="margin:0 0 6px">Send the current filtered dashboard (as PDF) to:</div>
+   <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px">
+    ${PEOPLE.map(p=>`<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" class="em-r" style="width:auto" ${p.role==="SUPERVISOR"?"checked":""}>${p.full}${p.role==="SUPERVISOR"?" (Supervisor)":""}</label>`).join("")}
+    <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" class="em-r" style="width:auto">Upper management distro</label>
+   </div>
+   <button class="btn" style="margin-top:10px" onclick="emailSend()">Send email</button></div>`:""}
+  </div>
+  <div class="grid g4">
+   <div class="panel tile accent"><div class="lab">Open hazards</div><div class="val" style="color:${st.open?'var(--warn)':'#5BC97A'}">${st.open}</div><div class="note">${st.unscored} awaiting risk assignment</div></div>
+   <div class="panel tile"><div class="lab">Avg days to close</div><div class="val">${st.avgClose}</div><div class="note">closed reports, trailing 12 mo</div></div>
+   <div class="panel tile"><div class="lab">Reports this quarter</div><div class="val">${st.q3}</div><div class="note">vs ${st.q2} last quarter</div></div>
+   <div class="panel tile"><div class="lab">Cancelled flights (qtr)</div><div class="val" style="color:${st.cancelled?'var(--warn)':'#5BC97A'}">${st.cancelled}</div><div class="note">from flight log CANCELLED flag</div></div>
+  </div>
+  <div class="grid g2">
+   <div class="panel"><h2>Reports by category ${HFILT.cat?`<button class="btn2" style="font-size:10px;padding:3px 8px;margin-left:8px" onclick="HFILT.cat=null;render()">clear filter</button>`:'<span style="font-size:10px;color:var(--muted);font-weight:400">· click a bar to drill in</span>'}</h2>${catBars()}</div>
+   <div class="panel"><h2>Risk matrix distribution</h2>${heatMatrix()}<div style="font-size:10px;color:var(--muted);margin-top:6px">Counts of scored reports per probability × severity cell (SMS §3.8 tolerability colors).</div></div>
+  </div>
+  <div class="panel"><h2 style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">Monthly mean risk score — control chart
+   <select style="width:auto;font-size:12px;padding:5px 8px" onchange="HFILT.cat=this.value||null;render()"><option value="">All categories</option>${[...new Set(HAZARDS.map(h=>h.cat))].map(c=>`<option ${HFILT.cat===c?'selected':''}>${c}</option>`).join("")}</select></h2>${controlChart()}
+   <div style="font-size:11px;color:var(--muted)">Amber dots breach +1σ (watch); red dots breach +2σ (act). Filtering a category recomputes the bands for that category alone.</div></div>
+  ${HFILT.cat?`<div class="panel accent"><h2>Drill-down: ${HFILT.cat} (${filtered.length})</h2>
+   <table><thead><tr><th>ID</th><th>Date</th><th>Specific cause</th><th>Risk</th><th>Status</th><th>Days to close</th></tr></thead><tbody>
+   ${filtered.map(h=>`<tr onclick="openHz(${h.id})" style="cursor:pointer"><td style="color:var(--red-bright);font-weight:700">#${h.id} →</td><td>${h.d}</td><td>${h.sub||"—"}</td><td>${h.P&&h.S?h.P+h.S:"—"}</td><td><span class="chip ${h.status==="CLOSED"?"c-gray":"c-warn"}" style="font-size:9px">${h.status}</span></td><td>${h.dtc??"—"}</td></tr>`).join("")}</tbody></table></div>`:""}
+  <div class="panel accent"><h2>Quarterly Safety Summary — auto-generated & auto-distributed</h2>
+   <div style="font-size:13px;color:var(--text);line-height:1.7">Q3 to date: <b>${st.q3} reports</b> filed (${st.q2} in Q2). Ground operations and equipment findings lead. Average closure ${st.avgClose} days. ${st.cancelled} cancelled flight${st.cancelled===1?"":"s"}.</div>
+   <div class="sublab">Top 3 hazards this quarter</div>
+   ${top3.length?top3.map((h,i)=>`<div style="font-size:12px;margin:4px 0"><b style="color:var(--red-bright)">${i+1}.</b> <b style="color:var(--silver-light)">#${h.id} ${h.cat}</b> — ${h.sub} · risk ${h.P}${h.S} (${riskScore(h)})</div>`).join(""):'<div style="font-size:12px;color:var(--muted)">No scored reports yet this quarter.</div>'}
+   <div style="font-size:11px;color:var(--muted);margin-top:10px">At quarter close this summary emails + pushes to every member automatically. At year end, the four quarters compile into an annual report with recommendations on operations and equipment needing attention. The <b style="color:var(--silver)">annual SMS survey</b> (with the "Where do you think our next accident will happen?" question) opens for 2 weeks, and the consensus + per-category health scores go to management and the operator's Drive. Operators never build a report — the system works for them.</div>
+  </div>`;
+ }
+ return `<h1>Safety <span>Management</span></h1><div class="sub">Controlled company documents — GOM, SMS Manual, Emergency Response Plan, SOPs — maintained by the operator's Safety Officer, read-acknowledged by the crew. Old revisions are archived automatically, never lost.</div>${hdr}
+ <div class="panel"><table><thead><tr><th>Document</th><th>Revision</th><th>Effective</th><th>Maintained by</th><th>Crew read</th><th></th></tr></thead><tbody>
+ ${DOCS.map((d,i)=>{const acks=Object.keys(d.ack).length;const mine=!!d.ack[user.id];
+  return `<tr><td style="color:var(--silver-light);font-weight:600">${d.name}</td><td>${d.ver}</td><td>${d.eff}</td><td>${d.by}</td>
+   <td><span class="chip ${acks>=PEOPLE.length?'c-good':acks>=4?'c-warn':'c-crit'}">${acks} / ${PEOPLE.length}</span></td>
+   <td style="white-space:nowrap"><button class="btn2" style="font-size:10px;padding:4px 10px">View</button>
+    ${mine?'<span class="chip c-good" style="font-size:9px;margin-left:6px">✓ READ</span>':`<button class="btn2" style="font-size:10px;padding:4px 10px;margin-left:6px" onclick="docAck(${i})">Acknowledge read</button>`}
+    ${isSup?`<span style="display:inline-flex;gap:6px;margin-left:10px"><input id="docrev-${i}" placeholder="Rev ${parseInt(d.ver.replace(/\D/g,""))+1}" style="width:80px;padding:4px 8px;font-size:11px"><button class="btn2" style="font-size:10px;padding:4px 10px" onclick="docUpload(${i})">Upload revision</button></span>`:""}
+   </td></tr>`}).join("")}
+ </tbody></table>
+ ${!isSup?'<div class="lock" style="margin-top:8px">Uploading revised documents requires the Safety Officer role — crew have read + acknowledge access.</div>':'<div style="font-size:11px;color:var(--muted);margin-top:8px">Uploading a revision archives the prior version, resets crew read-acknowledgments, and notifies all personnel.</div>'}</div>`;
+}
+
+/* ============ PERSONNEL — self-edit own info; managers edit anyone + authority ============ */
+let pplView=null;
+function isMgr(u){return u&&(u.role==="SUPERVISOR"||u.mgr)}
+function pplSet(id,k,v){const p=PEOPLE.find(x=>x.id===id);p[k]=v;
+ if(["so","mgr"].includes(k)){p.role=(p.so||p.mgr)?"SUPERVISOR":(p.pilot?"PILOT":"CREW");
+  toast(v?("<b>✓ Authority granted:</b> "+p.full+" is now "+(k==="so"?"a Safety Officer":"a Manager")+".")
+       :("<b>Authority removed:</b> "+p.full+" is no longer "+(k==="so"?"a Safety Officer":"a Manager")+"."))}
+ if(["pilot","hoistQ","rescQ","safeQ"].includes(k)){
+  p.rtype=p.pilot?"pilot":p.hoistQ?"hoist":p.rescQ?"rescuer":p.safeQ?"safety":"crew"}
+ render()}
+PEOPLE.forEach(p=>{p.hoistQ=p.rtype==="hoist";p.rescQ=p.rtype==="rescuer";p.safeQ=p.rtype==="safety"});
+function pgPeople(){
+ const mgr=isMgr(user);
+ if(pplView){const p=PEOPLE.find(x=>x.id===pplView);
+  const canContact=mgr||user.id===p.id;
+  const txt=(k,label)=>`<div><label class="lab">${label}</label><input value="${p[k]||""}" ${canContact?`onchange="pplSet('${p.id}','${k}',this.value)"`:"disabled"}></div>`;
+  const chk=(k,label,allowed)=>`<label class="opt ${p[k]?'sel':''}" style="cursor:${allowed?'pointer':'default'};opacity:${allowed?1:.6}"><span>${label}</span><input type="checkbox" style="width:auto" ${p[k]?'checked':''} ${allowed?`onchange="pplSet('${p.id}','${k}',this.checked)"`:"disabled"}></label>`;
+  return `<button class="btn2" onclick="pplView=null;render()">← All personnel</button>
+  <div class="panel accent" style="margin-top:12px"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:baseline">
+   <h1 style="margin:0">${p.full}</h1>
+   <span>${bandChip(READINESS[p.id].score)} ${p.onDuty?'<span class="chip c-good">ON DUTY</span>':'<span class="chip c-gray">OFF DUTY</span>'} ${provChip(p)}</span></div>
+   <div style="font-size:12px;color:var(--muted)">${p.pos} · Level ${p.level} · Oura: connected <span style="color:var(--muted)">(personal access token is never displayed — to anyone)</span></div></div>
+  <div class="panel"><h2>Contact & personal ${canContact?'<span style="font-size:10px;color:#5BC97A;font-weight:400">· editable — '+(user.id===p.id?"this is your record":"manager access")+'</span>':'<span class="lock">· view only — members edit only their own info</span>'}</h2>
+   <div class="grid g2">${txt("full","Full name (legal name changes, etc.)")}${txt("em","Email")}${txt("ph","Phone")}${txt("addr","Home address")}${txt("pos","Position / title")}</div></div>
+  <div class="panel"><h2>Qualifications ${mgr?"":'<span class="lock">· manager only</span>'}</h2>
+   <div class="grid g3">${chk("pilot","Pilot",mgr)}${chk("ifr","IFR current",mgr)}${chk("nvg","NVG current",mgr)}${chk("hoistQ","Hoist operator",mgr)}${chk("rescQ","Rescuer",mgr)}${chk("safeQ","Safety member",mgr)}</div></div>
+  <div class="panel accent"><h2>Authority / roles ${mgr?'<span style="font-size:10px;color:#5BC97A;font-weight:400">· manager only · multiple people may hold each</span>':'<span class="lock">· manager only</span>'}</h2>
+   <div class="grid g2">${chk("so","SAFETY OFFICER — scores hazards, redaction, Safety Health, committees",mgr)}${chk("mgr","MANAGER — edits personnel & fleet, approves FRATs",mgr)}</div>
+   <div style="font-size:11px;color:var(--muted);margin-top:8px">Checking a box grants that authority immediately (e.g., appointing a safety team of several members). Changes are logged and pushed to supervisors.</div></div>`;
+ }
+ return `<h1>Unit <span>Personnel</span></h1><div class="sub">Everyone can open their own record and update their contact info; managers can edit anyone and assign authority. Oura tokens are never shown here or anywhere.</div>
+ <div class="panel">${PEOPLE.map(p=>`<div onclick="pplView='${p.id}';render()" style="cursor:pointer;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 4px;border-bottom:1px solid rgba(37,43,52,.6)">
+  <div><b class="cond" style="color:var(--silver-light);font-size:15px;letter-spacing:1px">${p.full}</b> <span style="font-size:11px;color:var(--muted)">· ${p.pos} · ${p.ph}</span></div>
+  <span>${p.so?'<span class="chip c-red" style="font-size:8px">SAFETY OFFICER</span> ':''}${p.mgr?'<span class="chip c-blue" style="font-size:8px">MANAGER</span> ':''}${p.pilot?'<span class="chip c-gray" style="font-size:8px">PILOT</span> ':''}${bandChip(READINESS[p.id].score)} ${p.onDuty?'<span class="chip c-good" style="font-size:9px">ON DUTY</span>':'<span class="chip c-gray" style="font-size:9px">OFF</span>'}</span>
+ </div>`).join("")}</div>`;
+}
+/* ================= RENDER ================= */
+function render(){
+  const app=$("app");
+  if(!user){app.innerHTML=signinView();return}
+  const pages={dash:pgDash,ready:pgReady,ppl:pgPeople,acft:pgAircraft,curr:pgCurr,frat:pgFrat,flights:pgFlights,haz:pgHaz,safety:pgSafety};
+  app.innerHTML=shell(pages[tab]());
+}
+render();
+</script>
+</body>
+</html>
