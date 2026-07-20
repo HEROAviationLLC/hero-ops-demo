@@ -178,7 +178,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g3.1 — 2026-07-20 · all people, aircraft & records are fictional</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g4 — 2026-07-20 · all people, aircraft & records are fictional</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
@@ -1001,7 +1001,7 @@ function devOf(p){return WEARABLES.find(w=>w.id===(p.device||"oura"))||WEARABLES
 function devName(p){return devOf(p).name}
 function wearHub(){
  return `<div class="panel"><h2>Connect your wearable</h2>
-  <div style="font-size:13px;color:var(--muted);margin-bottom:10px">The HERO Score isn't tied to any one brand. Pick the device you actually wear \u2014 HERO reads whatever signals it provides and renormalizes the score weighting around them. Only the score is ever visible to supervisors.</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:10px">The HERO Score isn't tied to any one brand. Pick the device you actually wear \u2014 HERO reads whatever signals it provides and renormalizes the score weighting around them, and <b style=\"color:var(--gold)\">HERO Baseline Equalization</b> calibrates every brand against your own baseline \u2014 the same person scores the same on any device. Only the score is ever visible to supervisors.</div>
   <div class="grid g3">${WEARABLES.map(w=>`<button class="btn2" style="display:block;text-align:left;padding:10px 12px" onclick="WZ={dev:'${w.id}',step:0};render()">
     <b style="letter-spacing:1px">${w.name}</b><br><span style="font-size:9px;color:${w.id==='oura'?'#5BC97A':'var(--muted)'};letter-spacing:1px">${w.tag}${w.id==='oura'?'':' \u00b7 demo simulated'}</span></button>`).join("")}</div></div>`}
 function wearWizard(){
@@ -1025,17 +1025,55 @@ function wearWizard(){
    <div style="display:flex;justify-content:space-between;margin-top:14px">
     <button class="btn2" onclick="${s===0?"WZ=null":"WZ.step--"};render()">${s===0?"Cancel":"\u2190 Back"}</button>
     ${last?`<button class="btn2" onclick="WZ=null;render()">Close</button>`:`<button class="btn" onclick="WZ.step++;render()">Next \u2192</button>`}</div></div></div>`}
+/* ===== HERO BASELINE EQUALIZATION (proprietary cross-device calibration) =====
+   1. Anchor: every member has one underlying physiological baseline; vendor readings are
+      treated as biased observations of it, never as the truth.
+   2. De-bias: per-device bias/gain corrections (DEV_CAL) remove each brand's known lean
+      (e.g. Body Battery optimism) and damp volatile recovery metrics toward center.
+   3. Conservative coverage adjustment: a device covering fewer of the 7 core signals takes
+      a small haircut \u2014 fewer sensors can lower a score, never raise it.
+   4. Baseline bounding: the final score is clamped to \u00b13 of the member's established
+      baseline, so switching brands never moves the number a supervisor sees.
+   Production replaces the demo's seeded baseline with each member's 14\u201330-day rolling history. */
+const DEV_CAL={oura:{b:0,g:1},whoop:{b:-2,g:.96},garmin:{b:4,g:.95},apple:{b:3,g:.96},fitbit:{b:2,g:.97},polar:{b:-1,g:.97}};
+function heroTrue(p){
+ if(!p._true){
+  const r=READINESS[p.id];p._true={};
+  if(r&&typeof r.score==="number"){
+   HS_COMPS.forEach(c=>{const v=c[0]==="temp"?r.tempScore:r[c[0]];p._true[c[0]]=(v==null||v==="\u2014")?r.score:+v});
+   p._true.base=r.score;p._true.sm=r.stressedMin!=null?r.stressedMin:45;p._true.rm=r.restoredMin!=null?r.restoredMin:120;
+  }else{
+   let h=0;for(const ch of p.id)h=(h*31+ch.charCodeAt(0))%997;
+   HS_COMPS.forEach((c,i)=>{p._true[c[0]]=55+((h*7+i*13)%38)});
+   const av=HS_COMPS;p._true.base=Math.round(av.reduce((s,c)=>s+c[2]*p._true[c[0]],0)/av.reduce((s,c)=>s+c[2],0));
+   p._true.sm=20+(h%70);p._true.rm=60+(h%120);
+  }
+ }
+ return p._true;
+}
 function wearConnect(dev){
- const w=WEARABLES.find(x=>x.id===dev),p=user;
- const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a));
- const r={src:"simulated \u2014 "+w.name+" (demo)",stress:"normal"};
- HS_COMPS.forEach(c=>{const v=w.caps.includes(c[0])?rnd(58,94):null;if(c[0]==="temp")r.tempScore=v;else r[c[0]]=v});
- if(w.caps.includes("stress")){r.stressedMin=rnd(20,90);r.restoredMin=rnd(60,180)}
+ const w=WEARABLES.find(x=>x.id===dev),p=user,t=heroTrue(p),cal=DEV_CAL[dev]||{b:0,g:1};
+ const clamp=v=>Math.max(0,Math.min(100,Math.round(v)));
+ const jit=i=>((p.id.charCodeAt(0)*7+i*17+dev.charCodeAt(0)*3)%5)-2;
+ const r={src:"calibrated \u2014 "+w.name+" via HERO Baseline Equalization (demo)",stress:"normal"};
+ HS_COMPS.forEach((c,i)=>{
+  let v=null;
+  if(w.caps.includes(c[0])){
+   const vendor=(t[c[0]]??70)+cal.b+jit(i);              // what the brand would report (biased)
+   v=clamp(70+((vendor-cal.b)-70)*cal.g);                // de-biased, volatility-damped
+  }
+  if(c[0]==="temp")r.tempScore=v;else r[c[0]]=v;
+ });
+ if(w.caps.includes("stress")){r.stressedMin=t.sm;r.restoredMin=t.rm}
  const av=HS_COMPS.filter(c=>w.caps.includes(c[0]));
- r.score=Math.round(av.reduce((s,c)=>s+c[2]*(c[0]==="temp"?r.tempScore:r[c[0]]),0)/av.reduce((s,c)=>s+c[2],0));
+ const covered=av.reduce((s,c)=>s+c[2],0);
+ let score=Math.round(av.reduce((s,c)=>s+c[2]*(c[0]==="temp"?r.tempScore:r[c[0]]),0)/covered);
+ score-=Math.round((100-covered)*0.05);                  // conservative coverage haircut (max \u22482)
+ if(t.base!=null)score=Math.max(t.base-3,Math.min(t.base+3,score));  // baseline bounding
+ r.score=clamp(score);
  READINESS[p.id]=r;p.device=dev;p.oura="synced";WZ=null;
- OURA_LOG.unshift({t:"LINKED",name:p.full,d:fmt(TODAY),note:w.name+" linked \u2014 included in tonight's 18:00 digest to "+SAFETY_EMAIL});
- toast("<b>\u2713 "+w.name+" connected.</b> Your HERO Score is built from the "+av.length+" signals "+w.name+" provides \u2014 weights renormalized. Only the score is visible to supervisors.");
+ OURA_LOG.unshift({t:"LINKED",name:p.full,d:fmt(TODAY),note:w.name+" linked \u2014 cross-device calibrated \u00b7 included in tonight's 18:00 digest to "+SAFETY_EMAIL});
+ toast("<b>\u2713 "+w.name+" connected \u2014 score "+r.score+".</b> HERO Baseline Equalization calibrates every brand to your own baseline \u2014 switching devices won't move your score, and fewer sensors can never inflate it.");
  render();
 }
 function pgReady(){
