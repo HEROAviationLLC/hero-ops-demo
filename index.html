@@ -178,7 +178,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g2 — 2026-07-20 · all people, aircraft & records are fictional</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g3 — 2026-07-20 · all people, aircraft & records are fictional</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
@@ -861,6 +861,17 @@ const PLAN={fatigue:true,frat:true,flightlog:true,currency:true,fleet:true,train
   if(PLAN.currency)PLAN.flightlog=true;}}catch(e){}})();
 const TAB_REQ={ready:"fatigue",acft:"fleet",curr:"currency",trn:"training",frat:"frat",flights:"flightlog"};
 function tabOn(t){return !TAB_REQ[t]||PLAN[TAB_REQ[t]]}
+function planLabel(){
+ const on=Object.keys(PLAN).filter(k=>PLAN[k]);
+ if(on.length===Object.keys(PLAN).length)return "FULL PLATFORM — every module enabled";
+ const NAMES={fatigue:"Fatigue & Readiness",frat:"FRAT",flightlog:"Flight Log",currency:"Crew Currencies",fleet:"Fleet & Maintenance",training:"Training Records"};
+ const extra=on.map(k=>NAMES[k]).join(" + ");
+ return "CORE SMS"+(extra?" + "+extra:" ONLY")+" — "+(Object.keys(PLAN).length-on.length)+" module"+(Object.keys(PLAN).length-on.length===1?"":"s")+" hidden (see upgrades on the Dashboard)";
+}
+function planBanner(){
+ return `<div style="background:rgba(232,185,59,.14);border:1px solid rgba(232,185,59,.55);border-left:4px solid var(--warn);color:var(--warn);font-size:12px;font-weight:700;letter-spacing:.6px;padding:9px 14px;margin:0 0 14px">
+  ⚠ DEMO VIEW — ${planLabel()}</div>`;
+}
 const PLAN_NAMES={fatigue:"Fatigue & Readiness — HERO Score from any wearable",frat:"FRAT — auto-scoring flight risk assessments w/ supervisor workflow",flightlog:"Flight Log — digital logs w/ audit trail",currency:"Crew Currencies — auto-computed from flight logs",fleet:"Fleet & Maintenance — aircraft status, hoist cycles, inspections",training:"Training Records — task books, tests, certifications"};
 function upgradeCard(){const off=Object.keys(PLAN).filter(k=>!PLAN[k]);if(!off.length)return "";
  return `<div class="panel" style="border-left:3px solid var(--gold)"><h2>⬆ Available upgrades — not in your current plan</h2>
@@ -3050,7 +3061,7 @@ function render(){
   const app=$("app");
   if(!user){app.innerHTML=signinView();return}
   const pages={dash:pgDash,ready:pgReady,ppl:pgPeople,acft:pgAircraft,curr:pgCurr,trn:pgTraining,frat:pgFrat,flights:pgFlights,haz:pgHaz,safety:pgSafety};
-  app.innerHTML=shell(pages[tab]());
+  app.innerHTML=shell(planBanner()+pages[tab]());
 }
 render();
 </script>
