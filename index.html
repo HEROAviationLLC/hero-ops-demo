@@ -178,7 +178,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g3 — 2026-07-20 · all people, aircraft & records are fictional</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g3.1 — 2026-07-20 · all people, aircraft & records are fictional</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
@@ -3059,7 +3059,7 @@ function _pplUnused(){return ""
 /* ================= RENDER ================= */
 function render(){
   const app=$("app");
-  if(!user){app.innerHTML=signinView();return}
+  if(!user){app.innerHTML=planBanner()+signinView();return}
   const pages={dash:pgDash,ready:pgReady,ppl:pgPeople,acft:pgAircraft,curr:pgCurr,trn:pgTraining,frat:pgFrat,flights:pgFlights,haz:pgHaz,safety:pgSafety};
   app.innerHTML=shell(planBanner()+pages[tab]());
 }
