@@ -178,7 +178,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g1.2 — 2026-07-20 · all people, aircraft & records are fictional</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g2 — 2026-07-20 · all people, aircraft & records are fictional</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
@@ -853,6 +853,20 @@ function checkinBanner(){
     </div></div>`}
 
 /* ================= PAGES ================= */
+/* ===== CLIENT ENTITLEMENTS (set per contract in HERO Client Admin; preview: ?plan=core or ?plan=fatigue,frat,flightlog…) ===== */
+const PLAN={fatigue:true,frat:true,flightlog:true,currency:true,fleet:true,training:true};
+(()=>{try{const q=new URLSearchParams(location.search).get("plan");
+ if(q!=null){Object.keys(PLAN).forEach(k=>PLAN[k]=false);
+  q.split(",").map(s=>s.trim()).filter(Boolean).forEach(k=>{if(k in PLAN)PLAN[k]=true;if(k==="flightops")PLAN.frat=PLAN.flightlog=PLAN.currency=true});
+  if(PLAN.currency)PLAN.flightlog=true;}}catch(e){}})();
+const TAB_REQ={ready:"fatigue",acft:"fleet",curr:"currency",trn:"training",frat:"frat",flights:"flightlog"};
+function tabOn(t){return !TAB_REQ[t]||PLAN[TAB_REQ[t]]}
+const PLAN_NAMES={fatigue:"Fatigue & Readiness — HERO Score from any wearable",frat:"FRAT — auto-scoring flight risk assessments w/ supervisor workflow",flightlog:"Flight Log — digital logs w/ audit trail",currency:"Crew Currencies — auto-computed from flight logs",fleet:"Fleet & Maintenance — aircraft status, hoist cycles, inspections",training:"Training Records — task books, tests, certifications"};
+function upgradeCard(){const off=Object.keys(PLAN).filter(k=>!PLAN[k]);if(!off.length)return "";
+ return `<div class="panel" style="border-left:3px solid var(--gold)"><h2>⬆ Available upgrades — not in your current plan</h2>
+ <div style="font-size:12px;color:var(--muted);margin-bottom:6px">These modules are part of the same platform and activate instantly — no new software, no data migration.</div>
+ ${off.map(k=>`<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 4px;border-bottom:1px solid rgba(37,43,52,.6)"><span style="font-size:13px;color:var(--silver-light)">${PLAN_NAMES[k]}</span><span class="chip c-gray" style="font-size:8px;white-space:nowrap">UPGRADE</span></div>`).join("")}
+ <div style="font-size:12px;margin-top:10px">Ask about adding these: <b style="color:var(--gold)">HERO Aviation, LLC</b> · <a href="mailto:joel.smith@heroaviationusa.com" style="color:var(--gold)">joel.smith@heroaviationusa.com</a></div></div>`}
 const TABS=[["dash","Dashboard"],["ready","Readiness"],["ppl","Personnel"],["acft","Aircraft"],["curr","Currency"],["trn","Training"],["frat","FRAT"],["flights","Flight Log"],["haz","Hazards"],["safety","Safety Mgmt"]];
 
 function shell(content){
@@ -863,10 +877,10 @@ function shell(content){
     <span class="chip ${netOnline()?'c-good':'c-warn'}" style="font-size:9px">${netOnline()?'● SYNCED':'○ OFFLINE'+(pendingCount()?' · '+pendingCount()+' PENDING':'')}</span>
     <button class="switch" onclick="signOut()">Switch user</button></div>
   </header>
-  <nav>${TABS.map(([k,l])=>`<button class="${tab===k?'active':''}" onclick="go('${k}')">${l}</button>`).join("")}</nav>
+  <nav>${TABS.filter(([k])=>tabOn(k)).map(([k,l])=>`<button class="${tab===k?'active':''}" onclick="go('${k}')">${l}</button>`).join("")}</nav>
   <main>${checkinBanner()}${content}</main>`;
 }
-function go(t){tab=t;render()}
+function go(t){if(!tabOn(t))t="dash";tab=t;render()}
 
 function pgDash(){
   const avg=crewAvg();
@@ -874,12 +888,13 @@ function pgDash(){
   const onDuty=PEOPLE.filter(p=>p.onDuty&&!p.display);
   return `<h1>Operations <span>Dashboard</span></h1><div class="sub">Everything on this screen is role-aware — and every tile is a door: tap it to go to the full page behind the number.</div>
   <div class="grid g4">
-    <div class="panel tile accent" style="cursor:pointer" onclick="go('ready')"><div class="lab">Collective crew readiness (on duty)</div><div class="val" style="color:${bandColor(avg)}">${avg}</div><div class="note">green ≥ 70 · yellow 50–69.9 · red < 50 →</div></div>
-    <div class="panel tile" style="cursor:pointer" onclick="acView=null;go('acft')"><div class="lab">Fleet available</div><div class="val">${ACTIVE().length} / ${AIRCRAFT.length}</div><div class="note">${AIRCRAFT.filter(a=>a.squawks).length} with open/deferred squawks →</div></div>
-    <div class="panel tile" style="cursor:pointer" onclick="go('frat')"><div class="lab">FRATs pending approval</div><div class="val">${PENDING_FRATS.length}</div><div class="note">supervisor review required ≥ ${TH.sup} →</div></div>
-    <div class="panel tile" style="cursor:pointer" onclick="CURRF={name:'',task:'',status:'EXPIRED',duty:'on'};currView='list';go('curr')"><div class="lab">Expired currencies (on-duty crew)</div><div class="val" style="color:${alertCount?'#F27B7B':'#5BC97A'}">${alertCount}</div><div class="note">red items = not authorized to exercise →</div></div>
+    ${PLAN.fatigue?`<div class="panel tile accent" style="cursor:pointer" onclick="go('ready')"><div class="lab">Collective crew readiness (on duty)</div><div class="val" style="color:${bandColor(avg)}">${avg}</div><div class="note">green ≥ 70 · yellow 50–69.9 · red < 50 →</div></div>
+`:""}${PLAN.fleet?`<div class="panel tile" style="cursor:pointer" onclick="acView=null;go('acft')"><div class="lab">Fleet available</div><div class="val">${ACTIVE().length} / ${AIRCRAFT.length}</div><div class="note">${AIRCRAFT.filter(a=>a.squawks).length} with open/deferred squawks →</div></div>
+`:""}${PLAN.frat?`<div class="panel tile" style="cursor:pointer" onclick="go('frat')"><div class="lab">FRATs pending approval</div><div class="val">${PENDING_FRATS.length}</div><div class="note">supervisor review required ≥ ${TH.sup} →</div></div>
+`:""}${PLAN.currency?`<div class="panel tile" style="cursor:pointer" onclick="CURRF={name:'',task:'',status:'EXPIRED',duty:'on'};currView='list';go('curr')"><div class="lab">Expired currencies (on-duty crew)</div><div class="val" style="color:${alertCount?'#F27B7B':'#5BC97A'}">${alertCount}</div><div class="note">red items = not authorized to exercise →</div></div>
+`:""}
   </div>
-  ${user.role==="SUPERVISOR"?`<div class="panel accent"><h2>On-duty crew readiness (supervisor view)</h2>
+  ${PLAN.fatigue&&user.role==="SUPERVISOR"?`<div class="panel accent"><h2>On-duty crew readiness (supervisor view)</h2>
     <table class="fit-table"><tbody>${onDuty.map(p=>`<tr><td style="color:var(--silver-light);font-weight:600">${lf(p)}</td><td class="hidephone">${p.pos}</td><td>${readyNum(p)}</td><td>${readyChip(p)}</td><td style="white-space:normal">${provChip(p)}</td></tr>`).join("")}</tbody></table>
     <div class="lock" style="margin-top:8px">Scores only — individual biometric detail is never visible to supervisors. Duty-day count and provenance ARE visible: they're the fatigue-exposure picture. ${PEOPLE.filter(p=>!p.display).length-onDuty.length} off-duty crew hidden.</div></div>`:""}
   ${DASH_RES?resBoard():wxPanel()}
@@ -900,7 +915,7 @@ function pgDash(){
    <div style="font-size:13px;line-height:1.9;color:var(--text)">
     <b style="color:var(--silver-light)">1.</b> In Chrome, tap <b>⋮</b> (top right) → <b>Add to Home screen</b> → Add. You get a one-tap Westridge Air Ops icon that opens straight to this dashboard.<br>
     <b style="color:var(--silver-light)">2.</b> A true always-on lock-screen weather widget for Android ships with the production HERO Ops app — this shortcut is the fastest path until then.</div></div>`):""}`}
-  ${WX.detail||WX.view||DASH_RES?"":`<div class="grid g3">${ACTIVE().map(a=>`
+  ${WX.detail||WX.view||DASH_RES||!PLAN.fleet?"":`<div class="grid g3">${ACTIVE().map(a=>`
     <div class="panel" style="cursor:pointer" onclick="goAc('${a.n}')"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b class="cond" style="color:var(--silver-light);font-size:18px;letter-spacing:1px">${a.n}</b> <span style="color:var(--red-bright);font-size:12px;font-weight:700">${a.cs}</span></div>${acPhoto(a,120,64)}</div>
     <div style="font-size:12px;color:var(--muted)">${a.mk} · ${a.base}</div>
     <div class="grid g4" style="margin-top:10px;text-align:center">
@@ -910,8 +925,9 @@ function pgDash(){
       <div><div class="lab" style="margin:0">To 100 hr</div><b style="${mxHrsStyle(a.to100)}">${a.to100}h</b></div>
     </div>${a.squawks?`<div class="banner b-warn" style="font-size:11px">⚠ ${a.squawks}</div>`:""}</div>`).join("")}
   </div>`}
-  <div class="panel"><h2>Recent flights</h2><table><thead><tr><th>ID</th><th>Date</th><th>Dep / Trng</th><th>Aircraft</th><th>Mission</th><th>PIC</th><th>Hrs</th><th class="hidephone">AAR</th></tr></thead>
-  <tbody>${FLIGHTS.map(f=>`<tr><td>#${f.id}</td><td style="white-space:nowrap">${f.d}${f.tm?'<br><span style="font-size:10px;color:var(--muted)">'+f.tm+'</span>':''}</td><td>${f.dep==="MISSION"?'<span class="chip c-red" style="font-size:8px">DEPLOYMENT</span>':'<span class="chip c-blue" style="font-size:8px">TRAINING</span>'}</td><td>${f.ac}</td><td>${f.type}</td><td>${lfStr(f.pic)}</td><td>${f.hrs.toFixed(1)}</td><td class="hidephone">${f.aar?'<span class="chip c-good">✓ Complete</span>':'<span class="chip c-crit">■ Required</span>'}</td></tr>`).join("")}</tbody></table></div>`;
+  ${PLAN.flightlog?`<div class="panel"><h2>Recent flights</h2><table><thead><tr><th>ID</th><th>Date</th><th>Dep / Trng</th><th>Aircraft</th><th>Mission</th><th>PIC</th><th>Hrs</th><th class="hidephone">AAR</th></tr></thead>
+  <tbody>${FLIGHTS.map(f=>`<tr><td>#${f.id}</td><td style="white-space:nowrap">${f.d}${f.tm?'<br><span style="font-size:10px;color:var(--muted)">'+f.tm+'</span>':''}</td><td>${f.dep==="MISSION"?'<span class="chip c-red" style="font-size:8px">DEPLOYMENT</span>':'<span class="chip c-blue" style="font-size:8px">TRAINING</span>'}</td><td>${f.ac}</td><td>${f.type}</td><td>${lfStr(f.pic)}</td><td>${f.hrs.toFixed(1)}</td><td class="hidephone">${f.aar?'<span class="chip c-good">✓ Complete</span>':'<span class="chip c-crit">■ Required</span>'}</td></tr>`).join("")}</tbody></table></div>`:""}
+  ${upgradeCard()}`;
 }
 
 function scoreColor(s,light){
