@@ -178,7 +178,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g4 — 2026-07-20 · all people, aircraft & records are fictional</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g4.1 — 2026-07-20 · all people, aircraft & records are fictional</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
@@ -909,7 +909,7 @@ function pgDash(){
     <table class="fit-table"><tbody>${onDuty.map(p=>`<tr><td style="color:var(--silver-light);font-weight:600">${lf(p)}</td><td class="hidephone">${p.pos}</td><td>${readyNum(p)}</td><td>${readyChip(p)}</td><td style="white-space:normal">${provChip(p)}</td></tr>`).join("")}</tbody></table>
     <div class="lock" style="margin-top:8px">Scores only — individual biometric detail is never visible to supervisors. Duty-day count and provenance ARE visible: they're the fatigue-exposure picture. ${PEOPLE.filter(p=>!p.display).length-onDuty.length} off-duty crew hidden.</div></div>`:""}
   ${DASH_RES?resBoard():wxPanel()}
-  ${DASH_RES?"":`<div style="margin:2px 0 10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn2" onclick="DASH_RES=true;render()">🗓 AIR OPS RESOURCES — display board</button><button class="btn2" onclick="wxwOpen()">📲 Base ATIS on your Lock Screen / Home Screen</button></div>
+  ${DASH_RES?"":`<div style="margin:2px 0 10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn2" onclick="wxwOpen()">📲 Base ATIS on your Lock Screen / Home Screen</button></div>
   ${WXW===1?`<div class="panel accent" style="border-left:3px solid var(--gold)"><h2 style="margin:0 0 6px">Add the ${OPERATOR.baseIcao} base ATIS to your ${WXW_IOS?"iPhone":"phone"}?</h2>
    <div style="font-size:13px;color:var(--text)">This sets up a small widget on your ${WXW_IOS?"Lock Screen or Home Screen":"home screen"} showing the live base weather — ATIS letter, wind, altimeter, visibility and time — <b>without opening the app</b>.${WXW_IOS?" Your phone will ask you to allow the free Scriptable app to run the widget — that's expected.":""}</div>
    <div style="display:flex;gap:14px;margin-top:12px;flex-wrap:wrap">
