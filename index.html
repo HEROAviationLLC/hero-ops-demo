@@ -178,7 +178,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g4.1 — 2026-07-20 · all people, aircraft & records are fictional</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g5 — 2026-07-20 · all people, aircraft & records are fictional</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
@@ -382,9 +382,9 @@ const MIT_SUPV=[["No supervisor mitigation",0],["Swap in higher-time / more curr
 /* Filed FRAT details — used to prefill flight logs (incident + crew per aircraft) */
 let FR_PAGE="form",FRA={from:"",to:"",pilot:"",ac:"",risk:"",status:""},FRA_SEL=null;
 let FRAT_LOG=[
- {id:54,d:"06/22/26 · 08:15",by:"Ashford, Dana",inc:"",ft:"trainp",score:9,risk:"LOW",status:"RELEASED",acs:{"N706WR":{}},snap:[{k:"Flight type",v:"Training — Pattern / Area",p:"+2"},{k:"Route weather",v:"VFR — GO",p:"+0"},{k:"N706WR · Air 6 (H6)",v:"crew: Ashford, Dana",p:"acft +4 · terrain +3 = 9"}]},
+ {id:54,d:"06/22/26 · 08:15",by:"Ashford, Dana",inc:"",ft:"trainp",score:9,risk:"LOW",status:"FILED",acs:{"N706WR":{}},snap:[{k:"Flight type",v:"Training — Pattern / Area",p:"+2"},{k:"Route weather",v:"VFR — GO",p:"+0"},{k:"N706WR · Air 6 (H6)",v:"crew: Ashford, Dana",p:"acft +4 · terrain +3 = 9"}]},
  {id:55,d:"06/28/26 · 14:05",by:"Danvers, Cole",inc:"INC-26-098112",ft:"fire",score:21,risk:"MODERATE",status:"APPROVED",decision:{ok:1,by:"Smith, Joel",when:"06/28/26 14:22",notes:"Senior PIC assigned; day only.",mit:"Swap in higher-time / more current crew",adj:17},acs:{"N703WR":{}},snap:[{k:"Flight type",v:"Firefighting — Water Drops",p:"+5"},{k:"Route weather",v:"MARGINAL +5",p:"+5"},{k:"Terrain",v:"Mountainous · high DA",p:"+5"},{k:"N703WR · Air 3 (H3)",v:"crew: Danvers, Cole",p:"acft +4 · currency +2 = 21"}]},
- {id:56,d:"07/06/26 · 19:40",by:"Ives, Molly",inc:"INC-26-101433",ft:"sar",score:13,risk:"LOW",status:"RELEASED",acs:{"N705WR":{}},snap:[{k:"Flight type",v:"Search and Rescue",p:"+4"},{k:"Route weather",v:"VFR — GO",p:"+0"},{k:"Time of day",v:"TWILIGHT",p:"+2"},{k:"N705WR · Air 5 (H5)",v:"crew: Ives, Molly · Colter, Andre",p:"acft +4 · terrain +3 = 13"}]},
+ {id:56,d:"07/06/26 · 19:40",by:"Ives, Molly",inc:"INC-26-101433",ft:"sar",score:13,risk:"LOW",status:"FILED",acs:{"N705WR":{}},snap:[{k:"Flight type",v:"Search and Rescue",p:"+4"},{k:"Route weather",v:"VFR — GO",p:"+0"},{k:"Time of day",v:"TWILIGHT",p:"+2"},{k:"N705WR · Air 5 (H5)",v:"crew: Ives, Molly · Colter, Andre",p:"acft +4 · terrain +3 = 13"}]},
  {id:57,d:"07/13/26 · 21:40",by:"Smith, Joel",score:17,risk:"MODERATE",status:"PENDING SUPERVISOR",inc:"INC-26-117904",ft:"hoist",acs:{"N701WR":{pic:"joel",sic:"ashford",stamp:"Smith 78 · Ashford 84",avgS:81,scores:{joel:78,ashford:84}}}}];
 /* FRAT draft state */
 let FR=null;
@@ -902,7 +902,7 @@ function pgDash(){
     ${PLAN.fatigue?`<div class="panel tile accent" style="cursor:pointer" onclick="go('ready')"><div class="lab">Collective crew readiness (on duty)</div><div class="val" style="color:${bandColor(avg)}">${avg}</div><div class="note">green ≥ 70 · yellow 50–69.9 · red < 50 →</div></div>
 `:""}${PLAN.fleet?`<div class="panel tile" style="cursor:pointer" onclick="acView=null;go('acft')"><div class="lab">Fleet available</div><div class="val">${ACTIVE().length} / ${AIRCRAFT.length}</div><div class="note">${AIRCRAFT.filter(a=>a.squawks).length} with open/deferred squawks →</div></div>
 `:""}${PLAN.frat?`<div class="panel tile" style="cursor:pointer" onclick="go('frat')"><div class="lab">FRATs pending approval</div><div class="val">${PENDING_FRATS.length}</div><div class="note">supervisor review required ≥ ${TH.sup} →</div></div>
-`:""}${PLAN.currency?`<div class="panel tile" style="cursor:pointer" onclick="CURRF={name:'',task:'',status:'EXPIRED',duty:'on'};currView='list';go('curr')"><div class="lab">Expired currencies (on-duty crew)</div><div class="val" style="color:${alertCount?'#F27B7B':'#5BC97A'}">${alertCount}</div><div class="note">red items = not authorized to exercise →</div></div>
+`:""}${PLAN.currency?`<div class="panel tile" style="cursor:pointer" onclick="CURRF={name:'',task:'',status:'EXPIRED',duty:'on'};currView='list';go('curr')"><div class="lab">Expired currencies (on-duty crew)</div><div class="val" style="color:${alertCount?'#F27B7B':'#5BC97A'}">${alertCount}</div><div class="note">red = expired under your unit’s currency rules →</div></div>
 `:""}
   </div>
   ${PLAN.fatigue&&user.role==="SUPERVISOR"?`<div class="panel accent"><h2>On-duty crew readiness (supervisor view)</h2>
@@ -1409,12 +1409,12 @@ function pgCurr(){
           return `<td class="curr-cell ${c.cls}" onmousemove='cellTip(event,${JSON.stringify(p.full)},${JSON.stringify(t[0])},${t[1]},{since:${c.since},remaining:${c.remaining},last:new Date(${c.last.getTime()}),expires:new Date(${c.expires.getTime()})})' onmouseleave="hideTip()">${fmt(c.expires)}</td>`}).join("")}</tr>`}).join("")).join("")}
     </tbody></table></div>`:`<div class="panel"><div style="font-size:13px;color:var(--muted)">No members match this filter yet — assign Helitac levels and platoons on the Personnel page.</div></div>`);
   return `<h1>Currency <span>Status</span></h1>
-  <div class="sub">Full transparency across the unit — anyone can check anyone's currency. <b style="color:var(--silver)">Hover any date cell</b> for last tracked, days passed, and days remaining. Green = current · yellow = final 20% of the window · red = expired (not authorized to exercise that privilege).</div>
+  <div class="sub">Full transparency across the unit — anyone can check anyone's currency. <b style="color:var(--silver)">Hover any date cell</b> for last tracked, days passed, and days remaining. Green = current · yellow = final 20% of the window · red = expired under your unit’s currency requirements.</div>
   ${header}
   ${currView==='mine'
     ?`<div class="panel"><h2 style="text-align:center;color:var(--red-bright)">Currency Status Report — ${PEOPLE[pi].full}</h2>
       <table><thead><tr><th></th><th style="text-align:center">Threshold (days)</th><th style="text-align:center">Status / Expires</th></tr></thead><tbody>${personRows}</tbody></table>
-      <div style="font-size:12px;color:var(--muted);margin-top:12px;font-style:italic">NOTE: Items in yellow seek attention. Items in RED require immediate attention — crew members are not authorized to respond on deployments and exercise the privileges of any expired item in RED.</div></div>`
+      <div style="font-size:12px;color:var(--muted);margin-top:12px;font-style:italic">NOTE: Items in yellow seek attention. Items in RED require immediate attention — expired items fall under your unit’s own currency requirements and authorization rules.</div></div>`
     :matrix}`;
 }
 
@@ -1468,7 +1468,7 @@ function getWx(station){
    ≥1000' & ≥3SM → VFR, +0 · ≥800' & ≥2SM → +5 · 500–800' or 1–2SM → +8, needs 2 IFR-current pilots
    <500' or <1SM → NO-GO */
 function wxTier(w){
-  if(w.ceil<500||w.vis<1)return{pts:0,nogo:true,label:"NO-GO",cls:"c-crit",desc:"Below minimums (<500' or <1 SM)"};
+  if(w.ceil<500||w.vis<1)return{pts:0,nogo:true,label:"BELOW MIN",cls:"c-crit",desc:"Below your unit’s minimums (<500' or <1 SM)"};
   if(w.ceil>=1000&&w.vis>=3)return{pts:0,nogo:false,label:"VFR — GO",cls:"c-good",desc:"≥1000' & ≥3 SM"};
   if(w.ceil>=800&&w.vis>=2)return{pts:5,nogo:false,label:"MARGINAL +5",cls:"c-warn",desc:"≥800' & ≥2 SM"};
   return{pts:8,nogo:false,ifr2:true,label:"LOW IMC +8",cls:"c-or",desc:"500–800' or 1–2 SM — requires 2 IFR-current pilots"};
@@ -1671,10 +1671,10 @@ function fratArchView(){
   <div><label class="lab">Filed by (name)</label><input value="${FRA.pilot}" placeholder="e.g. Smith" onchange="FRA.pilot=this.value;render()"></div>
   <div><label class="lab">Aircraft</label><select onchange="FRA.ac=this.value;render()"><option value="">All</option>${AIRCRAFT.map(a=>`<option ${FRA.ac===a.n?'selected':''}>${a.n}</option>`).join("")}</select></div>
   <div><label class="lab">Risk</label><select onchange="FRA.risk=this.value;render()"><option value="">All</option>${["LOW","MODERATE","HIGH"].map(r=>`<option ${FRA.risk===r?'selected':''}>${r}</option>`).join("")}</select></div>
-  <div><label class="lab">Status</label><select onchange="FRA.status=this.value;render()"><option value="">All</option>${["RELEASED","PENDING SUPERVISOR","APPROVED","REJECTED"].map(s=>`<option ${FRA.status===s?'selected':''}>${s}</option>`).join("")}</select></div>
+  <div><label class="lab">Status</label><select onchange="FRA.status=this.value;render()"><option value="">All</option>${["FILED","PENDING SUPERVISOR","APPROVED","REJECTED"].map(s=>`<option ${FRA.status===s?'selected':''}>${s}</option>`).join("")}</select></div>
  </div><div style="font-size:11px;color:var(--muted);margin-top:6px">${list.length} FRAT${list.length===1?"":"s"} match · records older than 2 years purge automatically from the archive (production backend enforces retention).</div></div>
  <div class="panel"><table class="fit-table"><thead><tr><th>FRAT</th><th>Date</th><th>Filed by</th><th>Aircraft</th><th>Score</th><th>Status</th></tr></thead><tbody>
-  ${list.map(f=>`<tr onclick="FRA_SEL=FRA_SEL===${f.id}?null:${f.id};render()" style="cursor:pointer"><td style="color:var(--red-bright);font-weight:700">#${f.id} →</td><td style="white-space:nowrap">${f.d}</td><td>${lfStr(f.by)||"—"}</td><td style="font-size:11px">${Object.keys(f.acs||{}).join(" / ")}</td><td><span class="chip ${f.risk==="HIGH"?"c-crit":f.risk==="MODERATE"?"c-warn":"c-good"}">${f.score??"—"}</span></td><td><span class="chip ${f.status==="REJECTED"?"c-crit":f.status==="APPROVED"?"c-good":f.status==="PENDING SUPERVISOR"?"c-warn":"c-gray"}" style="font-size:9px">${f.status||"RELEASED"}</span></td></tr>`).join("")||'<tr><td colspan="6" style="color:var(--muted);font-size:12px">No FRATs match these filters.</td></tr>'}
+  ${list.map(f=>`<tr onclick="FRA_SEL=FRA_SEL===${f.id}?null:${f.id};render()" style="cursor:pointer"><td style="color:var(--red-bright);font-weight:700">#${f.id} →</td><td style="white-space:nowrap">${f.d}</td><td>${lfStr(f.by)||"—"}</td><td style="font-size:11px">${Object.keys(f.acs||{}).join(" / ")}</td><td><span class="chip ${f.risk==="HIGH"?"c-crit":f.risk==="MODERATE"?"c-warn":"c-good"}">${f.score??"—"}</span></td><td><span class="chip ${f.status==="REJECTED"?"c-crit":f.status==="APPROVED"?"c-good":f.status==="PENDING SUPERVISOR"?"c-warn":"c-gray"}" style="font-size:9px">${f.status||"FILED"}</span></td></tr>`).join("")||'<tr><td colspan="6" style="color:var(--muted);font-size:12px">No FRATs match these filters.</td></tr>'}
  </tbody></table></div>
  ${sel?`<div class="panel accent" style="border-left:3px solid var(--gold)">
   <h2 style="margin:0 0 4px;cursor:pointer" onclick="FRA_SEL=null;render()">FRAT #${sel.id} — full record <span style="font-size:10px;color:var(--muted);font-weight:400">▲ tap to collapse</span></h2>
@@ -1683,7 +1683,7 @@ function fratArchView(){
   <div class="panel" style="margin-top:10px"><h2 style="font-size:13px">Audit trail</h2>
    <div style="font-size:12px">FRAT submitted by <b style="color:var(--silver-light)">${lfStr(sel.by)||"—"}</b> on <b>${sel.d}</b></div>
    ${sel.decision?`<div style="font-size:12px;margin-top:4px;color:${sel.decision.ok?"#5BC97A":"#F27B7B"}">${sel.decision.ok?"APPROVED":"REJECTED"} by <b>${sel.decision.by}</b> on <b>${sel.decision.when}</b>${sel.decision.mit?` · mitigation: ${sel.decision.mit} (adjusted ${sel.decision.adj})`:""}${sel.decision.notes?`<br><span style="color:var(--muted)">notes: ${sel.decision.notes}</span>`:""}</div>`
-   :sel.status==="PENDING SUPERVISOR"?'<div style="font-size:12px;color:var(--warn);margin-top:4px">Awaiting supervisor decision.</div>':'<div style="font-size:12px;color:var(--muted);margin-top:4px">Released to fly — no supervisor review required at this score.</div>'}
+   :sel.status==="PENDING SUPERVISOR"?'<div style="font-size:12px;color:var(--warn);margin-top:4px">Awaiting supervisor decision.</div>':'<div style="font-size:12px;color:var(--muted);margin-top:4px">Filed — no supervisor review required at this score under the unit’s thresholds.</div>'}
   </div></div>`:""}`;
 }
 function pgFrat(){
@@ -1693,7 +1693,7 @@ function pgFrat(){
   const timeStr=sc.np.s&&sc.np.s.sunrise?("SR "+sc.np.s.sunrise.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+" · SS "+sc.np.s.sunset.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})):"";
   const ready=FR.ft&&FR.dest&&FR.acIds.length>0;
   return `<h1>Flight Risk <span>Assessment</span></h1>
-  <div class="sub">Nearly everything below scores itself — live weather by sector, crew readiness from the rings, currency from the flight logs, aircraft status from maintenance. The pilot picks the mission, the machine surfaces the risk. Filed by: <b style="color:var(--silver-light)">${user.full}</b> for the unit walking out the door.</div>
+  <div class="sub">Nearly everything below scores itself — live weather by sector, crew readiness from the crew’s wearables, currency from the flight logs, aircraft status from maintenance. <b style="color:var(--gold)">HERO informs — it never decides:</b> every flight decision remains with your unit’s personnel, procedures and chain of command. The pilot picks the mission, the machine surfaces the risk. Filed by: <b style="color:var(--silver-light)">${user.full}</b> for the unit walking out the door.</div>
 
   <div class="panel accent"><h2>1 · Deployment & flight type</h2>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
@@ -1739,7 +1739,7 @@ function pgFrat(){
       <button class="btn2" onclick="pullWx()">Pull live weather</button>
       <span style="font-size:12px;color:var(--muted)">${FR.wxStatus}</span>
     </div>
-    ${sc.nogo?`<div class="banner b-crit">⛔ WEATHER NO-GO — ceilings below 500' or visibility below 1 SM on this route. This FRAT cannot be submitted.</div>`:""}
+    ${sc.nogo?`<div class="banner b-crit">⚠ BELOW YOUR UNIT’S WEATHER MINIMUMS — ceilings below 500' or visibility below 1 SM on this route. This FRAT can’t be filed as-is: revise the route or departure time, or proceed under your unit’s own procedures and authority — every flight decision remains your unit’s.</div>`:""}
     ${!sc.nogo&&sc.wx.pts>0?`<div class="banner ${sc.wx.ifr2?'b-crit':'b-warn'}" style="background:${sc.wx.ifr2?'rgba(236,131,90,.14)':''};color:${sc.wx.ifr2?'#EC835A':''}">Route weather adds +${sc.wx.pts}${sc.wx.ifr2?" — REQUIRES 2 IFR-CURRENT PILOTS per aircraft":""}</div>
     <label class="lab">Weather mitigation (credit back)</label><select style="max-width:380px" onchange="frMit('wx',null,this.value)"><option value="">No mitigation</option>${MIT_WX.map((m,i)=>`<option value="${i}" ${FR.wxMit===i?'selected':''}>${m[0]} (−${m[1]})</option>`).join("")}</select>`:""}
     <div style="margin-top:10px;font-size:12px;color:var(--muted)">Terrain (auto from sector): <b style="color:var(--silver-light)">${sc.terrLabel}</b> ${FR.dest&&FR.dest!=="outside"?`— +${sc.terr}`:""}</div>
@@ -1754,7 +1754,7 @@ function pgFrat(){
       ${ACTIVE().filter(a=>!a.down||(sc.ft&&sc.ft.id==="maint")||FR.acIds.includes(a.n)).map(a=>`<button class="btn2 ${FR.acIds.includes(a.n)?'on':''}" ${a.down?'style="border-color:rgba(232,50,62,.7)"':''} onclick="frToggleAc('${a.n}')">${a.n} · ${a.cs}${a.down?' · 🔧 DOWN-MX':''}</button>`).join("")}
     </div>
     ${(()=>{const hid=ACTIVE().filter(a=>a.down&&!(sc.ft&&sc.ft.id==="maint")&&!FR.acIds.includes(a.n));return hid.length?`<div style="font-size:11px;color:var(--warn);margin-bottom:8px">🔧 ${hid.map(a=>a.n+" ("+a.cs+")").join(", ")} down for maintenance — hidden from selection. Choose flight type <b>Maintenance Flight</b> to fly it back into service (+3).</div>`:""})()}
-    ${sc.mxNogo?`<div class="banner b-crit">⛔ AIRCRAFT NO-GO — an aircraft on this FRAT is DOWN for maintenance. Deselect it, or select flight type “Maintenance Flight” to return it to service.</div>`:""}
+    ${sc.mxNogo?`<div class="banner b-crit">⚠ AIRCRAFT DOWN FOR MAINTENANCE — an aircraft on this FRAT is flagged DOWN in your unit’s maintenance records. Deselect it, or select flight type “Maintenance Flight” to return it to service.</div>`:""}
     ${FR.acIds.map(id=>{
       const pa=sc.perAc.find(p=>p.a.n===id);const a=pa.a;
       return `<div class="panel" style="border-left:3px solid var(--red)">
@@ -1857,7 +1857,7 @@ function submitFrat(){const sc=scoreFrat2();
   if(sc.nogo||sc.mxNogo)return;
   const desc=(FR.inc?FR.inc+" · ":"")+(sc.ft?sc.ft.name:"Flight")+" → "+(FR.dest==="outside"?"outside district":(sc.destSec?sc.destSec.name:""))+(FR.acIds.length>1?" · "+FR.acIds.length+" aircraft":"");
   const newId=58+FRAT_LOG.length;
-  FRAT_LOG.unshift({id:newId,by:lf(user),score:sc.worst,risk:sc.worst>=TH.high?"HIGH":sc.worst>=TH.med?"MODERATE":"LOW",status:sc.sup?"PENDING SUPERVISOR":"RELEASED",snap:fratSnap(sc),d:fmt(new Date(FR.time))+" · "+new Date(FR.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),inc:FR.inc||"",ft:FR.ft||"",acs:Object.fromEntries(FR.acIds.map(id=>{
+  FRAT_LOG.unshift({id:newId,by:lf(user),score:sc.worst,risk:sc.worst>=TH.high?"HIGH":sc.worst>=TH.med?"MODERATE":"LOW",status:sc.sup?"PENDING SUPERVISOR":"FILED",snap:fratSnap(sc),d:fmt(new Date(FR.time))+" · "+new Date(FR.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),inc:FR.inc||"",ft:FR.ft||"",acs:Object.fromEntries(FR.acIds.map(id=>{
     const cr=crewOf(id);const scores=cr.map(p=>READINESS[p.id].score);
     const stamp=cr.map(p=>p.full.split(" ").slice(-1)[0]+" "+READINESS[p.id].score).join(" · ");
     const avg=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):null;
@@ -1865,9 +1865,9 @@ function submitFrat(){const sc=scoreFrat2();
   if(sc.sup)PENDING_FRATS.push({id:newId,pilot:lf(user),desc,score:sc.worst,risk:sc.worst>=TH.high?"HIGH":sc.worst>=TH.med?"MEDIUM":"LOW",when:new Date().toLocaleString(),snap:fratSnap(sc)});
   const wasSup=sc.sup;
   if(sc.sup)notifFire("⚠ FRAT #"+newId+" awaiting supervisor approval","Score "+sc.worst+" ("+(sc.worst>=TH.high?"HIGH":"MODERATE")+") — filed by "+lf(user)+". Open Westridge Air Ops → FRAT to review.");
-  toast("<b>✓ FRAT submitted successfully.</b> "+(sc.sup?"Routed to the supervisor approval queue.":"Released to fly — logged to the audit trail."));
+  toast("<b>✓ FRAT submitted successfully.</b> "+(sc.sup?"Routed to the supervisor review queue.":"Filed and logged to the audit trail — no supervisor review required under your unit’s thresholds."));
   newFrat();render();
-  setTimeout(()=>{const m=$("fratmsg");if(m){m.textContent=wasSup?"Submitted — routed to the supervisor queue with per-aircraft scores.":"Submitted — released to fly. Logged with per-aircraft audit trail.";m.style.color=wasSup?"var(--warn)":"#5BC97A"}},0)}
+  setTimeout(()=>{const m=$("fratmsg");if(m){m.textContent=wasSup?"Submitted — routed to the supervisor review queue with per-aircraft scores.":"Submitted and logged with per-aircraft audit trail — no supervisor review required under your unit’s thresholds.";m.style.color=wasSup?"var(--warn)":"#5BC97A"}},0)}
 function decide(id,ok){
   const p=PENDING_FRATS.find(x=>x.id===id);if(!p)return;
   const mit=MIT_SUPV[SUPV_MIT]||MIT_SUPV[0];
@@ -2691,7 +2691,7 @@ function auditPdf(q){
   <h2>Safety meetings & attendance</h2><table><tr><th>Date</th><th>Facilitator</th><th>Status</th><th>Attended</th><th>In-person</th><th>Online</th></tr>
   ${mtgs.map(m=>{const at=Object.values(m.attend||{});const y=at.filter(a=>a.yes===true);return row([m.date,lfStr(m.fac),m.status,y.length,y.filter(a=>a.mode!=="ONLINE").length,y.filter(a=>a.mode==="ONLINE").length])}).join("")||row(["—","","","","",""])}</table>
   <h2>FRATs & supervisor decisions</h2><table><tr><th>FRAT</th><th>Date</th><th>Filed by</th><th>Score</th><th>Status</th><th>Decision</th></tr>
-  ${frats.map(f=>row(["#"+f.id,f.d,lfStr(f.by)||"—",f.score??"—",f.status||"RELEASED",f.decision?(f.decision.ok?"Approved":"Rejected")+" by "+f.decision.by+" "+f.decision.when:"—"])).join("")||row(["—","","","","",""])}</table>
+  ${frats.map(f=>row(["#"+f.id,f.d,lfStr(f.by)||"—",f.score??"—",f.status||"FILED",f.decision?(f.decision.ok?"Approved":"Rejected")+" by "+f.decision.by+" "+f.decision.when:"—"])).join("")||row(["—","","","","",""])}</table>
   <div class="ft">CONFIDENTIAL — Westridge Air Operations SMS record. Auto-emailed to management and the Safety Officer on generation (production). © 2026 HERO Aviation, LLC · Retention: hazards 5 yrs · FRATs 2 yrs.</div>
   </body></html>`);
  w.document.close();w.print();
