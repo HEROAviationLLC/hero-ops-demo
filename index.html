@@ -178,7 +178,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g5 — 2026-07-20 · all people, aircraft & records are fictional</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g5.1 — 2026-07-20 · all people, aircraft & records are fictional</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
@@ -1051,6 +1051,12 @@ function heroTrue(p){
  }
  return p._true;
 }
+function wearDisconnect(){
+ const p=user;p.oura="none";p.device=null;
+ OURA_LOG.unshift({t:"DISCONNECTED",name:p.full,d:fmt(TODAY),note:"Member disconnected from the readiness page (voluntary — no reason required)"});
+ toast("<b>Wearable disconnected — data transfer stopped immediately.</b> Sharing is voluntary; reconnect anytime. The Safety Officer sees only the status change.","warn");
+ render();
+}
 function wearConnect(dev){
  const w=WEARABLES.find(x=>x.id===dev),p=user,t=heroTrue(p),cal=DEV_CAL[dev]||{b:0,g:1};
  const clamp=v=>Math.max(0,Math.min(100,Math.round(v)));
@@ -1085,7 +1091,7 @@ function pgReady(){
     personal=`<div class="panel accent"><div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;justify-content:space-between">
       <div><div class="lab" style="margin:0;cursor:pointer" onclick="RD_TABLE=!RD_TABLE;render()" title="Tap for the full day-by-day data">Joel Smith — HERO Readiness Score <span style="color:var(--red-bright)">${RD_TABLE?"▾":"▸"}</span></div>
         <div class="scorebig" style="color:${bandColor(mine.score)}">${mine.score}</div>
-        ${bandChip(mine.score)} <span style="font-size:11px;color:var(--muted)">source: ${mine.src} \u00b7 via ${devOf(user).name} \u2014 <span style="color:var(--gold);cursor:pointer" onclick="WZ={dev:null,step:0};render()">switch wearable</span></span>
+        ${bandChip(mine.score)} <span style="font-size:11px;color:var(--muted)">source: ${mine.src} \u00b7 via ${devOf(user).name} \u2014 <span style="color:var(--gold);cursor:pointer" onclick="WZ={dev:null,step:0};render()">switch wearable</span> · <span style="color:var(--warn);cursor:pointer" onclick="wearDisconnect()">disconnect</span></span>
         ${mine.adj?`<div style="font-size:12px;margin-top:6px;color:${mine.adj<0?'var(--warn)':'#5BC97A'}">Oura readiness ${mine.ouraRaw} ${mine.adj<0?'− '+Math.abs(mine.adj)+' (stressful day detected)':'+ '+mine.adj+' (restored day detected)'}</div>`:""}
       </div>
       <div style="flex:1;min-width:280px"><div class="lab" style="margin:0 0 4px">14-day trend</div>${trendSvg()}</div></div>
@@ -1114,7 +1120,7 @@ function pgReady(){
       ${dv.caps.includes("stress")?`<div class="metric"><div class="k">Live shift stress</div><div class="v" style="font-size:15px"><span style="color:#F27B7B">${me.stressedMin??"\u2014"}m</span> / <span style="color:#5BC97A">${me.restoredMin??"\u2014"}m</span></div></div>`:""}
       </div>`;
     personal=user.oura==="synced"?`<div class="panel accent"><div class="lab" style="margin:0">${user.full} — HERO Readiness Score (your data)</div>
-      <div class="scorebig" style="color:${bandColor(me.score)}">${me.score}</div>${bandChip(me.score)}<div style="font-size:11px;color:var(--muted);margin-top:4px">via ${devOf(user).name} \u00b7 <span style="color:var(--gold);cursor:pointer" onclick="WZ={dev:null,step:0};render()">switch wearable</span></div>
+      <div class="scorebig" style="color:${bandColor(me.score)}">${me.score}</div>${bandChip(me.score)}<div style="font-size:11px;color:var(--muted);margin-top:4px">via ${devOf(user).name} \u00b7 <span style="color:var(--gold);cursor:pointer" onclick="WZ={dev:null,step:0};render()">switch wearable</span> · <span style="color:var(--warn);cursor:pointer" onclick="wearDisconnect()">disconnect</span></div>
       ${compGrid}
       <div style="font-size:12px;color:var(--muted);margin-top:8px">Granular biometrics are visible only to you.</div></div>`
     :`<div class="panel accent"><div class="lab" style="margin:0">${user.full} — HERO Readiness Score</div>
@@ -2947,10 +2953,9 @@ function ouraLink(id){const p=PEOPLE.find(x=>x.id===id);p.oura="linked";
 function ouraStopAsk(id){const p=PEOPLE.find(x=>x.id===id);p._askStop=true;ouraReason="";render()}
 function ouraStopCancel(id){const p=PEOPLE.find(x=>x.id===id);p._askStop=false;render()}
 function ouraStop(id){const p=PEOPLE.find(x=>x.id===id);
- if(!ouraReason.trim()){toast("<b>⛔ A reason is required</b> to stop sharing — this is sent to the Safety Officer.","warn");return}
  p.oura="stopped";p._askStop=false;
- OURA_LOG.unshift({t:"DISCONNECTED",name:p.full,d:fmt(TODAY),note:ouraReason.trim()});
- toast("<b>Oura sharing stopped.</b> Email sent now to "+SAFETY_EMAIL+" — member, date and reason. Your data stays yours.","warn");
+ OURA_LOG.unshift({t:"DISCONNECTED",name:p.full,d:fmt(TODAY),note:ouraReason.trim()||"No reason given (voluntary disconnect)"});
+ toast("<b>Wearable disconnected — data transfer stopped immediately.</b> The Safety Officer is notified of the status change only. Your data stays yours; reconnect anytime.","warn");
  ouraReason="";render()}
 async function adminLinkOura(id){
  if(!isAdmin(user))return;
@@ -2989,13 +2994,13 @@ function ouraPanel(p){
   <button class="btn" onclick="ouraLink('${p.id}')">Link Oura Ring</button></div>
   <div style="font-size:10px;color:var(--muted);margin-top:6px">This option disappears once your data syncs successfully. You stay in control — you can stop sharing at any time from this page.</div></div>`;
  if(p.oura==="linked")return `<div class="panel accent"><h2>Oura Ring</h2><div style="font-size:12px">▲ Linked — waiting on first successful sync…</div></div>`;
- return `<div class="panel"><h2>Oura Ring ${ouraChip(p)}</h2>
+ return `<div class="panel"><h2>Wearable ${ouraChip(p)}</h2>
   <div style="font-size:12px;color:var(--muted)">Connected and syncing (every 30 min on duty, daily off duty). Token encrypted — never displayed, to anyone. Sync problems alert the Safety Officer immediately.</div>
-  ${p._askStop?`<div class="banner b-crit" style="margin-top:10px"><b>Stop sharing your Oura data?</b><br>
-   <span style="font-size:12px">Your data stays under your control and syncing ends immediately. A reason is <b>required</b> — it is emailed now to the Safety Officer (${SAFETY_EMAIL}) with your name and today's date.</span>
-   <textarea rows="2" placeholder="Reason for disconnecting (required)…" style="margin-top:8px" oninput="ouraReason=this.value"></textarea>
-   <div style="margin-top:8px"><button class="btn" onclick="ouraStop('${p.id}')">Stop sharing my data</button> <button class="btn2" onclick="ouraStopCancel('${p.id}')">Cancel</button></div></div>`
-  :`<div style="margin-top:10px"><button class="btn2" onclick="ouraStopAsk('${p.id}')">Stop sharing my Oura data…</button></div>`}</div>`;
+  ${p._askStop?`<div class="banner b-crit" style="margin-top:10px"><b>Disconnect your wearable?</b><br>
+   <span style="font-size:12px">Your data stays under your control and syncing ends immediately. Sharing is voluntary — disconnect for any reason, no questions asked. Any reason you choose to give is emailed to the Safety Officer (${SAFETY_EMAIL}) with your name and today's date.</span>
+   <textarea rows="2" placeholder="Reason (optional — shared with the Safety Officer)…" style="margin-top:8px" oninput="ouraReason=this.value"></textarea>
+   <div style="margin-top:8px"><button class="btn" onclick="ouraStop('${p.id}')">Disconnect wearable</button> <button class="btn2" onclick="ouraStopCancel('${p.id}')">Cancel</button></div></div>`
+  :`<div style="margin-top:10px"><button class="btn2" onclick="ouraStopAsk('${p.id}')">Disconnect wearable — stop sharing my data…</button></div>`}</div>`;
 }
 function ouraLedger(){
  const linked=PEOPLE.filter(p=>p.oura==="synced").length,none=PEOPLE.filter(p=>p.oura==="none"||p.oura==="stopped").length;
