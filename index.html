@@ -159,6 +159,15 @@
   .b-crit{background:var(--crit-bg);color:#F27B7B}
   .btn-good{background:var(--good-bg);color:#5BC97A;border:none;padding:6px 12px;font-weight:700;cursor:pointer;font-size:12px}
   .btn-crit{background:var(--crit-bg);color:#F27B7B;border:none;padding:6px 12px;font-weight:700;cursor:pointer;font-size:12px}
+
+  /* ===== READABILITY PASS (fonts +~2-3, compact tables) ===== */
+  html{zoom:1.16}
+  @media(max-width:720px){html{zoom:1.05}}
+  table{width:auto;min-width:0}
+  th{padding:8px 22px 8px 2px}
+  td{padding:9px 22px 9px 2px}
+  th:last-child,td:last-child{padding-right:8px}
+  .matrix-wrap table{width:max-content}
 </style>
 </head>
 <body>
@@ -178,7 +187,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g5.1 — 2026-07-20 · all people, aircraft & records are fictional</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g6 — 2026-07-23 · all people, aircraft & records are fictional</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
