@@ -187,7 +187,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g9 — 2026-07-24 · all people, aircraft & records are fictional</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g10 — 2026-07-24 · all people, aircraft & records are fictional</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
@@ -407,6 +407,8 @@ const FLIGHT_TYPES=[
  {id:"recon",name:"Recon / Patrol",cx:2,req:{pilot:["PILOT-IN-COMMAND"]}},
  {id:"vip",name:"VIP / Executive Transport",cx:2,req:{pilot:["PILOT-IN-COMMAND"]}},
  {id:"ferry",name:"Routine / Ferry Flight",cx:1,req:{pilot:["PILOT-IN-COMMAND"]}},
+ {id:"trbasic",name:"Basic Phase Training Flight",cx:2,req:{}},
+ {id:"trmtn",name:"Mountain Phase Training Flight",cx:3,req:{}},
  {id:"trainp",name:"Training — Pattern / Area",cx:2,req:{}},
  {id:"traind",name:"Training — Dual Instruction",cx:2,req:{}},
  {id:"trains",name:"Training — Solo Student",cx:3,req:{}}
@@ -1482,21 +1484,621 @@ function currPeople(){
  if(currPl!=="ALL")list=list.filter(p=>p.pl===currPl);
  return list;
 }
+/* ================= PILOT TRAINING — gradesheets & phase tracking =================
+   Forms transposed: LAFD 114-610 (Basic Phase, rev 3 05/20/2024) and
+   114-613 (Mountain/Advanced Phase, rev 2 06/15/2024). */
+let GRADESHEETS=[];
+let TRV={page:null,pid:null,gsId:null,block:null};
+const TRN_PHASES={basic:{name:"Basic Phase",form:"FORM 114-610"},mtn:{name:"Mountain/Advanced Phase",form:"FORM 114-613"}};
+const TRN_BLOCKS=[15,30,45,60,75];
+const GRADE_OPTS=[["PERFORM","T"],["PRACTICE","T"],["EXPLAIN","T"],["DESCRIBE","T"],["NOT OBSERVED","T"],["MANAGE/DECIDE","S"],["PRACTICE","S"],["EXPLAIN","S"]];
+const GOOD_G=[0,5], NEUTRAL_G=[4];
+/* Basic Phase task catalog — std: 5-column array = per-block standard [15,30,45,60,75 HR]; string = applies to all blocks */
+const SMO="SMOOTH, CONSISTENT, & PURPOSEFUL";
+const TRN_BASIC=[
+ {sec:"TAKEOFF TO HOVER",rows:[
+  ["Heading Variation",["±5°","±3°","±1°","±1°","±1°"]],
+  ["Altitude",["±5'","±1'","±1'","±1'","±1'"]],
+  ["Drift - Rearward 0'",["±2'","±1'","0'","0'","0'"]],
+  ["Control Inputs",SMO]]},
+ {sec:"LANDING",rows:[
+  ["Heading Variation",["±5°","±3°","±1°","±1°","±1°"]],
+  ["Drift - Rearward 0'",["±2'","±1'","0'","0'","0'"]],
+  ["Control Inputs",SMO],
+  ["Accuracy",["±2'","±1'","0'","0'","0'"]]]},
+ {sec:"TURNS",rows:[
+  ["Constant Rate","SEE INSTRUCTORS NOTES"],
+  ["Altitude",["±3'","±1'","±1'","±1'","±1'"]],
+  ["Drift - Rearward 0'",["±2'","±1'","0'","0'","0'"]],
+  ["Control Inputs",["±2'","±1'","0'","0'","0'"]]]},
+ {sec:"MANEUVERING",rows:[
+  ["Pattern","CONSISTENT PACE"],
+  ["Altitude",["±2'","±1'","0'","0'","0'"]],
+  ["Heading Variation",["±5°","±3°","±1°","±1°","±1°"]],
+  ["Drift - Rearward 0'",["±2'","±1'","0'","0'","0'"]],
+  ["Control Inputs",SMO]]},
+ {sec:"TAKEOFF FROM HOVER",rows:[
+  ["Within H/V","SEE RFM"],
+  ["Heading Variation",["±5'","±3'","±1'","±1'","±1'"]],
+  ["Climb Speed",["±10'","±5'","±3'","±1'","±1'"]],
+  ["Ground Track","Nose Straight Thru ETL Transitioning to In-Trim Flt"],
+  ["Control Inputs",SMO]]},
+ {sec:"CRUISE FLIGHT",rows:[
+  ["Assigned Altitude",["±100'","±50'","±25'","±20'","±10'"]],
+  ["Airspeed",["±15","±10","±5","±1","±1"]],
+  ["Trim",["± ½ BALL","± ¼ BALL","CENTER","CENTER","CENTER"]]]},
+ {sec:"AIR WORK — Accel./Decel. - 30° Bank Turns",rows:[
+  ["30° Bank Turns",["±5°","±3°","±1°","±1°","±1°"]],
+  ["Altitude",["±100'","±50'","±25'","±20'","±10'"]],
+  ["Air Speed",["±10","±5","±3","±1","±1"]],
+  ["Heading Variation",["±5°","±3°","±1°","±1°","±1°"]],
+  ["Trim",["½ BALL","CENTER","CENTER","CENTER","CENTER"]]]},
+ {sec:"PATTERNS — Upwind",rows:[
+  ["Altitude",["±100'","±50'","±25'","±10'","±10'"]],
+  ["Airspeed",["±10","±5","±3","±1","±1"]],
+  ["Ground Track","Rectangular, In-Trim, Adjusted For Wind"]]},
+ {sec:"PATTERNS — Crosswind",rows:[
+  ["Altitude",["±100'","±50'","±25'","±10'","±10'"]],
+  ["Airspeed",["±10","±5","±3","±1","±1"]],
+  ["Ground Track","Rectangular, Adjusted For Wind"]]},
+ {sec:"PATTERNS — Downwind",rows:[
+  ["Abeam Lz","Early, On-Time, Late"],
+  ["Altitude",["±100'","±50'","±25'","±10'","±10'"]],
+  ["Airspeed - 70% TQ","Best Attainable @ 70% TQ"],
+  ["Ground Track","Rectangular, Adjusted For Wind"]]},
+ {sec:"PATTERNS — Base",rows:[
+  ["Altitude",["±100'","±50'","±25'","±10'","±10'"]],
+  ["Airspeed",["±10","±5","±3","±1","±1"]],
+  ["Ground Track","Rectangular, Adjusted For Wind"]]},
+ {sec:"PATTERNS — Final",rows:[
+  ["Altitude",["±100'","±50'","±25'","±10'","±10'"]],
+  ["Airspeed",["±10","±5","±3","±1","±1"]],
+  ["Rate of Closure","GS/IAS Coordinated & Corrected for Wind Condition"],
+  ["Uniform Angle","Consistent Appr. Angle from Appr. to Appr."]]},
+ {sec:"PATTERNS — Termination",rows:[
+  ["Accuracy-Skid Length",["±2'","±1'","0","0","0"]],
+  ["Heading Variation",["±10°","±5°","0°","0°","0°"]],
+  ["Altitude At 5' Hover",["±5'","±3'","±1'","±1'","±1'"]]]},
+ {sec:"PATTERNS — Power Usage At Termination",rows:[
+  ["Smoothness / Timing","Coordinated, Consistent Power Management"],
+  ["Trim",["± 1 BALL","± ½ BALL","± ¼ BALL","CENTER","CENTER"]]]},
+ {sec:"QUICK STOPS",rows:[
+  ["Altitude",["±20'","±10","±5","±5","±1"]],
+  ["Heading Variation",["±10°","±5°","0°","0°","0°"]],
+  ["Trim",["± 1 BALL","± ½ BALL","CENTER","CENTER","CENTER"]],
+  ["Power Coordination","Coordinated, Consistent Power Management"]]},
+ {sec:"QUICK STOPS — Termination",rows:[
+  ["Accuracy",["±100'","±50'","±25'","±10'","±5'"]],
+  ["Heading Variation",["±10°","±5°","0°","0°","0°"]],
+  ["Altitude at 5' Hover",["±5'","±3'","±1'","±1'","±1'"]]]},
+ {sec:"AUTOROTATIONS",rows:[
+  ["Entry Altitude",["±100'","±50'","±25'","±10'","±10'"]],
+  ["Entry Airspeed",["±10","±5","±5","0","0"]],
+  ["Descent Airspeed",["±10","±5","±5","±1","±1"]],
+  ["RPM",["±6%","±4%","±2%","±1%","±1%"]],
+  ["Trim",["± 1 BALL","± ½ BALL","± ¼ BALL","CENTER","CENTER"]]]},
+ {sec:"AUTOROTATIONS — Flare",rows:[
+  ["Altitude Initiated","On Time For Conditions"],
+  ["Amount","Appropriate For Conditions To Reach Objective"],
+  ["Awareness of Tail","No Possible Ground Contact"],
+  ["Collective/Throttle Coordination","Transition From Autorotative To Powered Flight"]]},
+ {sec:"AUTOROTATIONS — Termination",rows:[
+  ["Skids Attitude",["±10°","±5°","0°","0°","0°"]],
+  ["Torque","WITHIN LIMITS"],
+  ["Accuracy",["±250'","±50'","±25'","±10'","±5'"]]]},
+ {sec:"HOVER AUTOS",rows:[
+  ["Altitude",["±2'","±1'","±1'","0'","0'"]],
+  ["Drift - Rearward 0'",["±2'","±1'","0'","0'","0'"]],
+  ["Heading Variation",["±10°","±5°","0°","0°","0°"]],
+  ["Collective Usage",SMO],
+  ["Control Inputs",SMO]]},
+ {sec:"FORCED LANDINGS — Entry",rows:[
+  ["Down Collective",["3 SEC.","2 SEC.","NO DELAY","NO DELAY","NO DELAY"]],
+  ["Airspeed",["±10","±5","±5","0","0"]],
+  ["RPM",["±6%","±4%","±2%","±2%","±2%"]],
+  ["Trim",["± 1 BALL","± ½ BALL","± ¼ BALL","CENTER","CENTER"]],
+  ["Landing Site Picked",["YES","YES","YES","YES","YES"]],
+  ["Accuracy",["±100 YDS","±50 YDS","±100'","±50'","±25'"]]]},
+ {sec:"EMERGENCY PROCEDURES",rows:[
+  ["Hydraulic Failure","Follows RFM"],
+  ["Tail Rotor Failure","Follows RFM"],
+  ["Hot Start Procedures","Follows RFM"]]},
+ {sec:"COCKPIT PROCEDURES",rows:[
+  ["Instruments","Effective Instrument Scan"],
+  ["Controls","Consistent & Purposeful"],
+  ["Radios","Exhibits Good SRM"],
+  ["Start-up","Efficient & Purposeful"],
+  ["Shut-Down","Efficient & Purposeful"]]},
+ {sec:"CHALLENGE QUESTION",rows:[
+  ["Challenge Question","Correct Response"]]}
+];
+/* Mountain/Advanced — all maneuvers held to the 75-hour Basic Phase standards (form note) */
+const M75="Held to 75-hr Basic Phase standard";
+const TRN_MTN=[
+ {sec:"MOUNTAIN FLYING — RECON",rows:[["Wind (Speed & Direction)",M75],["Best Spot Picked",M75],["Recognize Obstructions",M75],["Recon Airspeed",M75]]},
+ {sec:"PINNACLE APPROACH",rows:[["Approach Angle",M75],["Airspeed",M75],["Uniform Angle",M75]]},
+ {sec:"PINNACLE APPROACH — Termination",rows:[["Accuracy",M75],["Touchdown Control",M75],["Power Usage",M75],["Heading Variation",M75]]},
+ {sec:"CONFINED AREA",rows:[["Approach Angle",M75],["Airspeed",M75],["Uniform Angle",M75]]},
+ {sec:"CONFINED AREA — Termination",rows:[["Accuracy",M75],["Touchdown Control",M75],["Power Usage",M75],["Heading Variation",M75]]},
+ {sec:"SLOPE LANDINGS (LEFT, RIGHT, UPHILL, DOWNHILL)",rows:[["Touchdown Control",M75],["Heading Variation",M75],["Power Coordination",M75]]},
+ {sec:"SINGLE SKID LANDINGS",rows:[["Touchdown Control",M75],["Heading Variation",M75],["Power Coordination",M75]]},
+ {sec:"RIDGELINE BALANCE",rows:[["Balance Point",M75],["Touchdown Control",M75],["Heading Variation",M75],["Power Coordination",M75]]},
+ {sec:"TANK LANDINGS",rows:[["Approach Angle",M75],["Airspeed",M75],["Uniform Angle",M75]]},
+ {sec:"TANK LANDINGS — Termination",rows:[["Accuracy",M75],["Touchdown Control",M75],["Power Usage",M75],["Heading Variation",M75]]},
+ {sec:"AUTOROTATIONS STRAIGHT IN — Airspeed",rows:[["Entry",M75],["Descent",M75]]},
+ {sec:"AUTOROTATIONS STRAIGHT IN",rows:[["RPM",M75],["Trim",M75]]},
+ {sec:"AUTOROTATIONS STRAIGHT IN — Flare",rows:[["Altitude Initiated",M75],["Amount",M75],["Tail Awareness",M75],["Collective / Throttle Coordination",M75]]},
+ {sec:"AUTOROTATIONS STRAIGHT IN — Termination",rows:[["Leveling",M75],["Pitch Pull",M75],["Skids Parallel",M75],["Torque (Power Recovery)",M75],["Accuracy",M75]]},
+ {sec:"AUTOROTATIONS: 180, 360, OTHER ADVANCED — Airspeed",rows:[["Entry",M75],["Descent",M75]]},
+ {sec:"AUTOROTATIONS: 180, 360, OTHER ADVANCED",rows:[["RPM",M75],["Trim",M75]]},
+ {sec:"AUTOROTATIONS: 180, 360, OTHER ADVANCED — Flare",rows:[["Altitude Initiated",M75],["Amount",M75],["Tail Awareness",M75],["Collective / Throttle Coordination",M75]]},
+ {sec:"AUTOROTATIONS: 180, 360, OTHER ADVANCED — Termination",rows:[["Leveling",M75],["Pitch Pull",M75],["Skids Parallel",M75],["Torque (Power Recovery)",M75],["Accuracy",M75]]},
+ {sec:"FORCED LANDINGS",rows:[["Entry - Down Collective",M75],["Airspeed",M75],["RPM",M75],["Trim",M75],["Landing Site Picked",M75],["Accuracy",M75]]},
+ {sec:"COCKPIT PROCEDURE",rows:[["Instruments",M75],["Controls",M75],["Radios",M75],["Startup",M75],["Shutdown",M75]]},
+ {sec:"ADVANCED PROCEDURES",rows:[["Helispot",M75],["High Rise",M75],["Hose Pull",M75],["Hospital",M75],["Nightsun",M75],["Sling Load",M75],["Water Dropping",M75]]}
+];
+function trnCatalog(phase){return phase==="mtn"?TRN_MTN:TRN_BASIC}
+function trnAccess(u){return !!(u&&(u.pilot||u.pl==="SD"||u.so))}
+function trnInstr(u){return !!(u&&u.instr)}
+function trnSum(m){return (+m.warm||0)+(+m.comm||0)+(+m.ck||0)+(+m.intr||0)+(+m.bank||0)+(+m.demo||0)}
+function trnR(x){return Math.round((+x||0)*10)/10}
+/* Walk a trainee's gradesheets in flight-date order and derive the whole chain:
+   flight numbers, phase totals, bank balances, blocks, checkride attempts/fails,
+   remedial pool. Recomputed from raw sheets every time, so a back-dated sheet
+   slots into sequence and everything downstream renumbers automatically. */
+function trnWalk(pid){
+ const sheets=GRADESHEETS.filter(g=>g.tp===pid).sort((a,b)=>new Date(a.d)-new Date(b.d));
+ const st={basic:{time:0,bank:0,passed:0,fails:0,remLeft:0,attempts:0,flights:0,total:0},
+           mtn:{time:0,bank:0,passed:0,fails:0,remLeft:0,attempts:0,flights:0,total:0},
+           washed:false,complete:false,phase:"basic"};
+ const out=[];
+ for(const g of sheets){
+  const ph=g.phase||"basic", s=st[ph];
+  const d={};
+  d.flightNo=++s.flights;
+  d.prevPhase=trnR(s.time); d.prevBank=trnR(s.bank);
+  d.block=TRN_BLOCKS[Math.min(s.passed,4)];
+  const allowW=0.3, allowC=(g.dist==="xc")?0.3:0;
+  d.unusedWarm=trnR(Math.max(0,allowW-(+g.m.warm||0)));
+  d.unusedComm=trnR(Math.max(0,allowC-(+g.m.comm||0)));
+  d.usedBank=trnR((+g.m.bank||0)+(+g.bankExt||0));
+  d.remedialBefore=trnR(s.remLeft);
+  const counted=Math.max(0,(+g.tach||0)-trnSum(g.m));
+  if(s.remLeft>0&&!g.ckr){ // remedial flight — hours go to the remedial pool, not phase time
+   d.remedial=true;
+   if(+g.bankExt>0)s.remLeft=trnR(s.remLeft+(+g.bankExt));
+   d.remedialApplied=trnR(Math.min(counted,s.remLeft));
+   s.remLeft=trnR(Math.max(0,s.remLeft-counted));
+   d.phaseCounted=0;
+  }else{
+   d.remedial=false;d.remedialApplied=0;
+   d.phaseCounted=g.ckr?0:trnR(counted);
+   s.time=trnR(s.time+d.phaseCounted);
+  }
+  s.total=trnR(s.total+(+g.tach||0));
+  s.bank=trnR(s.bank+d.unusedWarm+d.unusedComm-d.usedBank);
+  d.phaseTotal=trnR(s.time); d.bankBal=trnR(s.bank); d.remedialLeft=trnR(s.remLeft);
+  if(g.ckr&&g.ckrPass!=null){
+   s.attempts++;
+   if(g.ckrPass){s.passed++;s.remLeft=0;d.ckrResult="PASS"}
+   else{s.fails++;d.ckrResult="FAIL";
+    if(s.fails>=4){st.washed=true}else{s.remLeft=5.0}}
+   d.remedialLeft=trnR(s.remLeft);
+  }
+  out.push({g,d});
+ }
+ if(st.basic.passed>=5)st.phase="mtn";
+ if(st.mtn.passed>=5)st.complete=true;
+ const cur=st[st.phase];
+ st.standardBlock=TRN_BLOCKS[Math.min(cur.passed,4)];
+ st.nextThresh=Math.min(cur.passed+1,5)*15;
+ st.ckrEligible=!st.washed&&!st.complete&&cur.remLeft<=0&&cur.time>=st.nextThresh;
+ st.ckrApproaching=!st.washed&&!st.complete&&cur.remLeft<=0&&!st.ckrEligible&&cur.time>=st.nextThresh-1.0;
+ st.attemptsLeft=Math.max(0,4-cur.fails);
+ return {sheets:out,st};
+}
+function trnTrainees(){
+ const ids=new Set(GRADESHEETS.map(g=>g.tp));
+ PEOPLE.forEach(p=>{if(p.pilot&&p.rank==="I"&&!p.display)ids.add(p.id)});
+ return [...ids].map(id=>PEOPLE.find(p=>p.id===id)).filter(Boolean).sort(byLastName);
+}
+function gsNew(pid){
+ const w=trnWalk(pid);
+ const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+ const g={id:GRADESHEETS.length?Math.max(...GRADESHEETS.map(x=>x.id))+1:1,
+  tp:pid,phase:w.st.phase,d:now.toISOString().slice(0,16),
+  ckr:false,ckrPass:null,tach:"",m:{warm:"",comm:"",ck:"",intr:"",bank:"",demo:""},
+  dist:"local",bankExt:0,ac:"",flightLink:"",grades:{},wxLocs:[],wxAuto:"",wxNotes:"",
+  comments:"",tCmt:"",pathImg:null,status:"OPEN",edits:0,
+  instrId:user.id,instrName:user.full,
+  audit:[{by:lf(user),when:new Date().toLocaleString(),act:"Gradesheet created"}],
+  instrSig:null,tSig:null};
+ GRADESHEETS.push(g);return g;
+}
+
+/* ---------- gradesheet field plumbing ---------- */
+let GS_SIGN=null; // 'instr' | 'trainee' — a signature pad is open (render suppressed while drawing)
+function gsG(id){return GRADESHEETS.find(x=>x.id===id)}
+function gsLog(g,act){g.audit=g.audit||[];const last=g.audit[g.audit.length-1];
+ if(last&&last.act===act&&last.by===lf(user)){last.when=new Date().toLocaleString();return}
+ g.audit.push({by:lf(user),when:new Date().toLocaleString(),act})}
+function gsCanEdit(g){return trnInstr(user)&&(g.instrId===user.id||user.so)&&g.status==="OPEN"}
+function gsSet(id,k,v){const g=gsG(id);if(!gsCanEdit(g))return;
+ if(k.startsWith("m.")){g.m[k.slice(2)]=v;gsLog(g,"Edited time accounting")}
+ else{g[k]=v;gsLog(g,"Edited "+k)}
+ if(k==="ckr"&&v&&!g.m.ck&&g.tach)g.m.ck=g.tach;
+ render()}
+function gsGrade(id,key,gi){const g=gsG(id);if(!gsCanEdit(g))return;
+ const cur=g.grades[key]||{};
+ g.grades[key]={g:cur.g===gi?null:gi,n:cur.n||""};gsLog(g,"Edited grades");render()}
+function gsGradeNote(id,key,v){const g=gsG(id);if(!gsCanEdit(g))return;
+ g.grades[key]=g.grades[key]||{g:null,n:""};g.grades[key].n=v;gsLog(g,"Edited grade notes")}
+function gsLinkFlight(id,fid){const g=gsG(id);if(!gsCanEdit(g))return;
+ g.flightLink=fid;
+ const f=FLIGHTS.find(x=>x.id==fid);
+ if(f){
+  const iso=(typeof f.d==="string"&&/^\d{4}-/.test(f.d))?f.d:(x=>{const p=x.split("/");return "20"+p[2]+"-"+String(p[0]).padStart(2,"0")+"-"+String(p[1]).padStart(2,"0")})(f.d);
+  g.d=iso+"T"+(f.tm||"12:00");
+  if(f.tachE!=null&&f.tachS!=null)g.tach=trnR(f.tachE-f.tachS);
+  g.ac=f.ac||g.ac;
+  gsLog(g,"Prefilled from flight log #"+f.id);
+  toast("<b>✓ Prefilled from flight #"+f.id+"</b> — date/time, flight time ("+g.tach+") and aircraft pulled in; everything stays editable.");
+ }
+ render()}
+const TRN_LOCS=[WX_BASE,...WX_NEAR,...WX_OUT.flatMap(g=>g[1])];
+function gsWxTgl(id,loc){const g=gsG(id);if(!gsCanEdit(g))return;
+ g.wxLocs=g.wxLocs||[];const i=g.wxLocs.indexOf(loc);
+ if(i>=0)g.wxLocs.splice(i,1);else g.wxLocs.push(loc);
+ gsLog(g,"Edited training locations");render()}
+async function gsWxPull(id){const g=gsG(id);if(!gsCanEdit(g))return;
+ if(!(g.wxLocs||[]).length){toast("<b>Select at least one training location first.</b>","warn");return}
+ toast("Pulling reported weather for "+g.wxLocs.join(", ")+"…");
+ const out=[];
+ for(const loc of g.wxLocs){
+  try{const w=await wxOne(loc);
+   out.push(loc+" ("+(w&&w.timeStr||"—")+"): "+(w&&w.raw?w.raw:(w?w.cat+" · wind "+w.wind:"no report available")));
+  }catch(e){out.push(loc+": weather fetch failed")}
+ }
+ g.wxAuto="Reported weather — pulled "+new Date().toLocaleString()+":\n"+out.join("\n");
+ gsLog(g,"Pulled automated weather");render()}
+function gsPath(id,input){const g=gsG(id);if(!gsCanEdit(g))return;
+ const f=input.files&&input.files[0];if(!f||!f.type.startsWith("image"))return;
+ const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{
+  const sc=Math.min(1,1400/Math.max(img.width,img.height));
+  const cv=document.createElement("canvas");cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);
+  cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+  g.pathImg=cv.toDataURL("image/jpeg",0.8);gsLog(g,"Flight-path snapshot attached");
+  toast("<b>✓ Flight-path snapshot attached</b> — it prints as its own page of the gradesheet.");render()};img.src=r.result};
+ r.readAsDataURL(f);input.value=""}
+/* ---------- signature pad ---------- */
+function sigInit(cid){const cv=document.getElementById(cid);if(!cv||cv._init)return;cv._init=true;
+ const ctx=cv.getContext("2d");ctx.lineWidth=2.2;ctx.lineCap="round";ctx.strokeStyle="#10131A";
+ let dr=false,last=null;
+ const pos=e=>{const r=cv.getBoundingClientRect();const t=e.touches?e.touches[0]:e;
+  return [(t.clientX-r.left)*cv.width/r.width,(t.clientY-r.top)*cv.height/r.height]};
+ const dn=e=>{dr=true;last=pos(e);cv._drawn=true;e.preventDefault()};
+ const mv=e=>{if(!dr)return;const p=pos(e);ctx.beginPath();ctx.moveTo(last[0],last[1]);ctx.lineTo(p[0],p[1]);ctx.stroke();last=p;e.preventDefault()};
+ const up=()=>{dr=false};
+ cv.addEventListener("mousedown",dn);cv.addEventListener("mousemove",mv);window.addEventListener("mouseup",up);
+ cv.addEventListener("touchstart",dn,{passive:false});cv.addEventListener("touchmove",mv,{passive:false});cv.addEventListener("touchend",up)}
+function sigClear(cid){const cv=document.getElementById(cid);if(!cv)return;cv.getContext("2d").clearRect(0,0,cv.width,cv.height);cv._drawn=false}
+function sigBlock(s){return s?`<div style="border:1px solid rgba(184,190,200,.3);padding:8px 12px;background:rgba(37,43,52,.35);display:inline-block;min-width:280px">
+ <img src="${s.img}" style="height:56px;background:#fff;display:block;margin-bottom:4px">
+ <div style="font-size:11px;color:var(--silver-light)"><b>${s.name}</b> · ${s.rank}${s.shift?" · "+s.shift:""}</div>
+ <div style="font-size:10px;color:var(--muted)">signed ${s.when}</div></div>`:""}
+function gsSign(id,who){
+ const cv=document.getElementById("sigpad");
+ if(!cv||!cv._drawn){toast("<b>⛔ Draw your signature in the box first.</b>","warn");return}
+ const g=gsG(id);
+ const sig={img:cv.toDataURL("image/png"),when:new Date().toLocaleString(),name:user.full,rank:rankStr(user),shift:(PLATOONS[user.pl]||{}).name||""};
+ if(who==="instr"){
+  if(!trnInstr(user)||g.instrId!==user.id&&!user.so)return;
+  g.instrSig=sig;g.status="SIGNED";gsLog(g,"Instructor signed — gradesheet locked, sent to trainee for review");
+  const t=PEOPLE.find(p=>p.id===g.tp);
+  toast("<b>✓ Signed & locked.</b> "+(t?t.full:"The trainee")+" has been notified to review this gradesheet in full. Only you (or the Safety Officer) can reopen it for edits.");
+ }else{
+  if(user.id!==g.tp)return;
+  g.tSig=sig;
+  if((g.tCmt||"").trim()){g.status="T_REVIEW";gsLog(g,"Trainee signed with comments — instructor notified to review");
+   toast("<b>✓ Signed.</b> Your comments were attached — "+lfStr(g.instrName)+" has been notified to review them before the sheet files.");}
+  else{g.status="FILED";gsLog(g,"Trainee signed — gradesheet filed");
+   toast("<b>✓ Signed & filed.</b> This gradesheet is stored in Pilot Training.");}
+ }
+ GS_SIGN=null;render()}
+function gsAckReview(id){const g=gsG(id);
+ if(!(trnInstr(user)&&(g.instrId===user.id||user.so)))return;
+ g.status="FILED";gsLog(g,"Instructor reviewed trainee comments — gradesheet filed");
+ toast("<b>✓ Trainee comments reviewed — gradesheet filed.</b>");render()}
+function gsReopen(id){const g=gsG(id);
+ if(!(trnInstr(user)&&(g.instrId===user.id||user.so)))return;
+ if(!confirm("Reopen gradesheet #"+g.id+" for editing? Both signatures clear, the audit trail records the edit, and the sheet re-sends to the trainee for a fresh review after you re-sign."))return;
+ g.edits=(g.edits||0)+1;
+ gsLog(g,"REOPENED FOR EDIT #"+g.edits+(g.instrSig?" — prior instructor signature ("+g.instrSig.when+") voided":"")+(g.tSig?"; prior trainee signature ("+g.tSig.when+") voided":""));
+ g.instrSig=null;g.tSig=null;g.status="OPEN";
+ toast("<b>Gradesheet reopened (edit #"+g.edits+").</b> Signature chain restarted — re-sign when done and the trainee will be asked to review again.","warn");render()}
+function gsCkrResult(id,pass){const g=gsG(id);if(!gsCanEdit(g))return;
+ g.ckrPass=pass;
+ gsLog(g,"Qualification check ride marked "+(pass?"PASSED":"FAILED"));
+ if(!pass){const w=trnWalk(g.tp);const fails=w.st[g.phase].fails;
+  toast("<b>Check ride marked FAILED.</b> "+(fails>=4?"That was the 4th attempt — the program stops here.":"5.0 hours of remedial training begins — remedial flights do not count toward phase time. "+Math.max(0,4-fails)+" attempt"+(4-fails===1?"":"s")+" left."),"warn")}
+ else toast("<b>✓ Check ride PASSED</b> — the next block unlocks and the grading standard advances.");
+ render()}
+
+/* ---------- Pilot Training pages ---------- */
+function trnListPage(){
+ const rows=trnTrainees().map(p=>{
+  const w=trnWalk(p.id),st=w.st,cur=st[st.phase];
+  const phName=TRN_PHASES[st.phase].name;
+  const warn=st.ckrApproaching||st.ckrEligible;
+  const warnTxt=st.ckrEligible?`${st.nextThresh} hour ${phName.toLowerCase()} check ride — ELIGIBLE NOW`:`${st.nextThresh} hour ${phName.toLowerCase()} check ride approaching`;
+  return `<tr onclick="TRV={page:'tr',pid:'${p.id}'};render()" style="cursor:pointer;${warn?'background:rgba(232,185,59,.12)':''}">
+   <td><b style="color:var(--silver-light)">${lf(p)}</b>${rankChip(p)}
+    ${cur.fails?`<div style="font-size:10px;color:#F27B7B;font-weight:700">${cur.fails} failed checkride${cur.fails>1?"s":""}: ${st.attemptsLeft} attempt${st.attemptsLeft===1?"":"s"} left</div>`:""}
+    ${st.washed?'<div style="font-size:10px;color:#F27B7B;font-weight:700">PROGRAM FAILED — training stopped</div>':""}
+    ${st.complete?'<div style="font-size:10px;color:#5BC97A;font-weight:700">PROGRAM COMPLETE</div>':""}
+    ${cur.remLeft>0?`<div style="font-size:10px;color:var(--warn);font-weight:700">IN REMEDIAL — ${cur.remLeft.toFixed(1)} hrs left</div>`:""}</td>
+   <td>${phName}<div style="font-size:10px;color:var(--muted)">${st.standardBlock} HR block</div></td>
+   <td><b class="cond" style="font-size:15px">${cur.time.toFixed(1)}</b><span style="font-size:10px;color:var(--muted)"> / 75.0</span></td>
+   <td>${(st.basic.total+st.mtn.total).toFixed(1)}</td>
+   <td>${cur.bank.toFixed(1)}</td>
+   <td>${warn?`<span class="chip c-warn" style="font-size:9px">⚠ ${warnTxt}</span>`:st.washed?'<span class="chip c-crit" style="font-size:9px">STOPPED</span>':st.complete?'<span class="chip c-good" style="font-size:9px">COMPLETE</span>':'<span class="chip c-gray" style="font-size:9px">IN PROGRESS</span>'}</td></tr>`}).join("");
+ return `<div style="margin-bottom:10px"><button class="btn2" onclick="TRV={page:null};render()">← Training hub</button></div>
+ <h1>Pilot <span>Training</span></h1>
+ <div class="sub">Basic Phase (75 training hrs) → Mountain/Advanced Phase (75 training hrs). Check ride every 15 hours; grading standard advances only on a passed ride. Tap a trainee for the full phase map and gradesheets.${trnInstr(user)?"":" <b style='color:var(--muted)'>Filing gradesheets requires the Instructor Pilot qualification.</b>"}</div>
+ <div class="panel"><table class="fit-table"><thead><tr><th>Trainee</th><th>Phase · block</th><th>Phase hrs</th><th>Total flight hrs</th><th>Bank</th><th></th></tr></thead><tbody>
+ ${rows||'<tr><td colspan="6" style="color:var(--muted);font-size:12px">No trainees — Pilot I members appear here automatically.</td></tr>'}
+ </tbody></table></div>`;
+}
+function trnBlockMap(pid,st){
+ const map=ph=>{
+  const s=st[ph];const active=st.phase===ph&&!st.complete&&!st.washed;
+  return `<div style="margin-top:8px"><div class="lab">${TRN_PHASES[ph].name}</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+  ${TRN_BLOCKS.map((b,i)=>{
+   const passed=i<s.passed;
+   const current=active&&i===s.passed;
+   const rem=current&&s.remLeft>0;
+   const locked=!passed&&!current;
+   const style=passed?"border:1px solid #2FA84F;background:rgba(47,168,79,.15);cursor:pointer"
+    :rem?"border:1px solid var(--warn);background:rgba(232,185,59,.15)"
+    :current?"border:1px solid var(--gold);background:rgba(200,160,60,.12)"
+    :"border:1px solid rgba(122,130,144,.3);opacity:.35";
+   return `<div ${passed?`onclick="TRV={page:'tr',pid:'${pid}',block:'${ph}${b}'};render()"`:""} style="padding:8px 12px;min-width:96px;${style}">
+    <b style="font-size:13px;color:${passed?'#5BC97A':rem?'var(--warn)':current?'var(--gold)':'var(--muted)'}">${b} HR</b>
+    <div style="font-size:9px;color:${passed?'#5BC97A':'var(--muted)'}">${passed?"✓ PASSED — tap for gradesheets":rem?"IN REMEDIAL · "+s.remLeft.toFixed(1)+" hrs left":current?(s.time>=b?"CHECK RIDE ELIGIBLE":"in progress · "+s.time.toFixed(1)+" / "+b+".0"):"locked"}</div></div>`}).join("")}
+  </div></div>`};
+ return map("basic")+map("mtn");
+}
+function trnTrPage(pid){
+ const p=PEOPLE.find(x=>x.id===pid);if(!p)return trnListPage();
+ const w=trnWalk(pid),st=w.st,cur=st[st.phase];
+ let sheets=[...w.sheets].reverse();
+ let blockNote="";
+ if(TRV.block){const ph=TRV.block.startsWith("mtn")?"mtn":"basic";const b=+TRV.block.replace(ph,"");
+  sheets=sheets.filter(x=>(x.g.phase||"basic")===ph&&x.d.block===b);
+  blockNote=`<div class="banner b-good" style="font-size:12px">Showing gradesheets from the <b>${b} HR ${TRN_PHASES[ph].name}</b> block. <span style="cursor:pointer;text-decoration:underline" onclick="TRV.block=null;render()">show all</span></div>`}
+ return `<div style="margin-bottom:10px"><button class="btn2" onclick="TRV={page:'list'};render()">← All trainees</button></div>
+ <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:baseline">
+  <h1>${p.full} <span>· ${RANKS[p.rank]||p.pos}</span></h1>
+  ${trnInstr(user)&&!st.washed&&!st.complete?`<button class="btn" onclick="TRV={page:'gs',gsId:gsNew('${pid}').id};render()">＋ New gradesheet — ${TRN_PHASES[st.phase].name}</button>`:""}</div>
+ ${cur.fails?`<div style="font-size:12px;color:#F27B7B;font-weight:700;margin:2px 0 6px">${cur.fails} failed checkride${cur.fails>1?"s":""}: ${st.attemptsLeft} attempt${st.attemptsLeft===1?"":"s"} left${cur.remLeft>0?" · in remedial training — "+cur.remLeft.toFixed(1)+" remedial hrs left (banked time can extend)":""}</div>`:""}
+ ${st.washed?'<div class="banner b-crit" style="font-size:12px"><b>Program failed — 4th check-ride attempt unsuccessful. Flight training stopped per unit policy.</b> Records below are retained in full for the file.</div>':""}
+ ${st.complete?'<div class="banner b-good" style="font-size:12px"><b>✓ Program complete</b> — Basic and Mountain/Advanced phases passed.</div>':""}
+ <div class="grid g4" style="margin-top:6px">
+  <div class="panel tile"><div class="lab">${TRN_PHASES[st.phase].name} time</div><div class="val">${cur.time.toFixed(1)}</div><div style="font-size:9px;color:var(--muted)">of 75.0 training hrs</div></div>
+  <div class="panel tile"><div class="lab">Total flight hrs (training)</div><div class="val">${(st.basic.total+st.mtn.total).toFixed(1)}</div><div style="font-size:9px;color:var(--muted)">incl. warm-up, commute, rides, remedial</div></div>
+  <div class="panel tile"><div class="lab">Bank balance</div><div class="val">${cur.bank.toFixed(1)}</div><div style="font-size:9px;color:var(--muted)">0.3 local / 0.6 &gt;10 NM per flight</div></div>
+  <div class="panel tile"><div class="lab">Grading standard</div><div class="val">${st.standardBlock} HR</div><div style="font-size:9px;color:var(--muted)">${st.ckrEligible?"CHECK RIDE ELIGIBLE":st.ckrApproaching?"check ride approaching":"advances on passed ride"}</div></div>
+ </div>
+ ${st.ckrApproaching||st.ckrEligible?`<div class="banner b-warn" style="font-size:12px">⚠ <b>${st.nextThresh} hour ${TRN_PHASES[st.phase].name} check ride ${st.ckrEligible?"— trainee is at the threshold and eligible now":"approaching"}</b>${st.ckrEligible?"":" · "+(st.nextThresh-cur.time).toFixed(1)+" training hrs to go"}.</div>`:""}
+ <div class="panel"><h2>Phase & block progression <span style="font-size:10px;color:var(--muted);font-weight:400">· green = passed (tap to open that block's gradesheets) · gold = current · yellow = remedial · dimmed = locked</span></h2>
+ ${trnBlockMap(pid,st)}</div>
+ ${blockNote}
+ <div class="panel"><h2>Gradesheets <span style="font-size:10px;color:var(--muted);font-weight:400">· newest first · trainees have full view, zero edit</span></h2>
+ <table class="fit-table"><thead><tr><th>Flt #</th><th>Date</th><th>Phase · std</th><th>Type</th><th>Phase time</th><th>Bank</th><th>Status</th></tr></thead><tbody>
+ ${sheets.map(({g,d})=>`<tr onclick="TRV={page:'gs',gsId:${g.id}};render()" style="cursor:pointer">
+  <td style="color:var(--red-bright);font-weight:700">#${d.flightNo} →</td>
+  <td style="white-space:nowrap">${new Date(g.d).toLocaleString([],{month:"2-digit",day:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"})}</td>
+  <td style="font-size:11px">${TRN_PHASES[g.phase].name.split(" ")[0]} · ${d.block} HR</td>
+  <td>${g.ckr?`<span class="chip ${g.ckrPass==null?"c-warn":g.ckrPass?"c-good":"c-crit"}" style="font-size:8px">CHECK RIDE${g.ckrPass==null?"":g.ckrPass?" ✓ PASS":" ✗ FAIL"}</span>`:d.remedial?'<span class="chip c-warn" style="font-size:8px">REMEDIAL</span>':'<span class="chip c-blue" style="font-size:8px">TRAINING</span>'}</td>
+  <td>${d.remedial?`<span style="color:var(--warn)">${d.remedialApplied.toFixed(1)} → remedial</span>`:`+${d.phaseCounted.toFixed(1)} → ${d.phaseTotal.toFixed(1)}`}</td>
+  <td>${d.bankBal.toFixed(1)}</td>
+  <td><span class="chip ${g.status==="FILED"?"c-good":g.status==="OPEN"?"c-warn":"c-blue"}" style="font-size:8px">${g.status==="SIGNED"?"AWAITING TRAINEE":g.status==="T_REVIEW"?"COMMENTS TO REVIEW":g.status}</span>${g.edits?` <span class="chip c-gray" style="font-size:8px">EDIT #${g.edits}</span>`:""}</td></tr>`).join("")||'<tr><td colspan="7" style="color:var(--muted);font-size:12px">No gradesheets yet.</td></tr>'}
+ </tbody></table></div>`;
+}
+
+/* ---------- the gradesheet itself ---------- */
+function gsDerived(g){const w=trnWalk(g.tp);const hit=w.sheets.find(x=>x.g.id===g.id);return {d:hit?hit.d:{},st:w.st}}
+function gsGradeRow(g,key,label,std,edit){
+ const gr=g.grades[key]||{};
+ const good=GOOD_G.includes(gr.g), na=NEUTRAL_G.includes(gr.g), bad=gr.g!=null&&!good&&!na;
+ const bg=good?"rgba(47,168,79,.16)":bad?"rgba(208,59,59,.16)":"transparent";
+ const border=good?"#2FA84F":bad?"#D03B3B":"rgba(37,43,52,.6)";
+ return `<div style="border-left:3px solid ${border};background:${bg};padding:6px 8px;margin:3px 0">
+  <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+   <span style="font-size:12px;color:var(--silver-light);min-width:170px">${label} <span style="font-size:10px;color:var(--gold)">· ${std}</span></span>
+   <span style="display:flex;gap:4px;flex-wrap:wrap">
+    ${GRADE_OPTS.map(([o,fam],gi)=>`<label style="display:inline-flex;align-items:center;gap:3px;font-size:8.5px;letter-spacing:.4px;color:${fam==="S"?"#8FB4E8":"var(--muted)"};border:1px solid ${gr.g===gi?(GOOD_G.includes(gi)?"#2FA84F":NEUTRAL_G.includes(gi)?"#7A8290":"#D03B3B"):"rgba(122,130,144,.3)"};padding:2px 5px;cursor:${edit?"pointer":"default"}">
+     <input type="checkbox" style="width:auto;margin:0" ${gr.g===gi?"checked":""} ${edit?`onchange="gsGrade(${g.id},'${key}',${gi})"`:"disabled"}>${fam==="S"?"SRM: ":""}${o}</label>`).join("")}
+   </span></div>
+  ${na?'<div style="font-size:10px;color:var(--muted);margin-top:3px">Skill not flown / not observed this flight.</div>':""}
+  ${edit?`<input placeholder="Notes on this skill…" value="${(gr.n||"").replace(/"/g,"&quot;")}" style="margin-top:4px;font-size:11px" onchange="gsGradeNote(${g.id},'${key}',this.value)">`
+   :(gr.n?`<div style="font-size:11px;color:var(--text);margin-top:3px"><b style="color:var(--muted)">Note:</b> ${gr.n}</div>`:"")}
+ </div>`}
+function gsPage(){
+ const g=gsG(TRV.gsId);
+ if(!g)return trnListPage();
+ const p=PEOPLE.find(x=>x.id===g.tp);
+ const {d,st}=gsDerived(g);
+ const edit=gsCanEdit(g);
+ const isTrainee=user.id===g.tp;
+ const cat=trnCatalog(g.phase);
+ const bi=TRN_BLOCKS.indexOf(d.block||15);
+ const phTotal=trnR((+g.tach||0)-trnSum(g.m))>=0?trnR((d.prevPhase||0)+(g.ckr||d.remedial?0:Math.max(0,trnR((+g.tach||0)-trnSum(g.m))))):d.prevPhase||0;
+ const bankBal=trnR((d.prevBank||0)+(d.unusedWarm||0)+(d.unusedComm||0)-(d.usedBank||0));
+ const num=(k,lab)=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:2px 0"><span style="font-size:11px;color:var(--muted)">${lab}</span>
+  ${edit?`<input class="num" type="number" step="0.1" min="0" style="width:80px" value="${g.m[k]}" onchange="gsSet(${g.id},'m.${k}',this.value)">`:`<b style="color:var(--silver-light)">${(+g.m[k]||0).toFixed(1)}</b>`}</div>`;
+ const mins=[["warm","Warm-Up"],["comm","“Commute”"],["ck","“Check-Ride”"],["intr","“Interruption”"],["bank","“Banked Time”"],["demo","“Demo Time”"]];
+ const sigPanel=(who)=>GS_SIGN===who?`<div class="banner b-warn" style="margin-top:8px">
+   <div style="font-size:11px;color:var(--text);margin-bottom:4px"><b>${user.full}</b> · ${rankStr(user)}${(PLATOONS[user.pl]||{}).name?" · "+(PLATOONS[user.pl]||{}).name:""} · ${new Date().toLocaleString()}</div>
+   <canvas id="sigpad" width="420" height="110" style="background:#fff;touch-action:none;max-width:100%;border:1px solid #999"></canvas>
+   <div style="margin-top:6px"><button class="btn" onclick="gsSign(${g.id},'${who}')">Apply signature</button> <button class="btn2" onclick="sigClear('sigpad')">Clear</button> <button class="btn2" onclick="GS_SIGN=null;render()">Cancel</button></div></div>`:"";
+ return `<div style="margin-bottom:10px"><button class="btn2" onclick="TRV={page:'tr',pid:'${g.tp}'};render()">← ${p?p.full:"Trainee"}</button>
+  <button class="btn2" style="margin-left:8px" onclick="gsPdf(${g.id})">🖨 Print gradesheet PDF</button>
+  ${!edit&&trnInstr(user)&&(g.instrId===user.id||user.so)&&g.status!=="OPEN"?`<button class="btn2" style="margin-left:8px;border-color:var(--warn);color:var(--warn)" onclick="gsReopen(${g.id})">✎ Reopen for edit</button>`:""}</div>
+ <h1>${TRN_PHASES[g.phase].name} <span>Task / Qualification Sheet</span> <span style="font-size:11px;color:var(--muted);font-weight:400">· ${TRN_PHASES[g.phase].form}${g.edits?" · edit #"+g.edits:""}</span></h1>
+ ${isTrainee?'<div class="banner b-good" style="font-size:11px">You are viewing your gradesheet. Everything the instructor entered is locked — you can add comments and sign at the bottom.</div>':""}
+ ${g.status==="SIGNED"&&!isTrainee?'<div class="banner b-warn" style="font-size:11px">Signed & locked — awaiting trainee review'+(edit?'':' · reopen to edit')+'.</div>':""}
+ ${g.status==="T_REVIEW"?'<div class="banner b-warn" style="font-size:11px"><b>Trainee added comments</b> — review them below, then file the sheet.</div>':""}
+ ${g.status==="FILED"?'<div class="banner b-good" style="font-size:11px">✓ Filed in Pilot Training.</div>':""}
+ <div class="panel accent"><h2>1 · Flight & grading standard</h2>
+  <div class="grid g3">
+   <div><label class="lab">Date & time of flight <span style="font-weight:400;text-transform:none">· auto — change if filing late</span></label>
+    ${edit?`<input type="datetime-local" value="${g.d}" onchange="gsSet(${g.id},'d',this.value)">`:`<div style="padding:8px 0;color:var(--silver-light)">${new Date(g.d).toLocaleString()}</div>`}</div>
+   <div><label class="lab">Name — pilot trainee</label>
+    ${edit?`<select onchange="gsSet(${g.id},'tp',this.value)">${trnTrainees().map(t=>`<option value="${t.id}" ${g.tp===t.id?"selected":""}>${lf(t)} — ${RANKS[t.rank]||""}</option>`).join("")}</select>`:`<div style="padding:8px 0;color:var(--silver-light)">${p?lf(p):"—"}</div>`}</div>
+   <div><label class="lab">Flight number <span style="font-weight:400;text-transform:none">· auto, sequential by flight date</span></label><div style="padding:8px 0"><b class="cond" style="font-size:16px;color:var(--gold)">#${d.flightNo||"—"}</b> <span style="font-size:10px;color:var(--muted)">re-sequences if a sheet is back-dated</span></div></div>
+   <div><label class="lab">Grading standard <span style="font-weight:400;text-transform:none">· auto — hours + last passed ride</span></label><div style="padding:8px 0"><b class="cond" style="font-size:16px;color:var(--gold)">${d.block||15} HOUR</b>${g.phase==="mtn"?' <span style="font-size:9px;color:var(--muted)">all maneuvers held to 75-hr Basic standards</span>':""}</div></div>
+   <div><label class="lab">Aircraft</label>${edit?`<select onchange="gsSet(${g.id},'ac',this.value)"><option value="">—</option>${ACTIVE().map(a=>`<option ${g.ac===a.n?"selected":""}>${a.n}</option>`).join("")}</select>`:`<div style="padding:8px 0;color:var(--silver-light)">${g.ac||"—"}</div>`}</div>
+   <div><label class="lab">Link flight log entry <span style="font-weight:400;text-transform:none">· prefills date, time & flight time</span></label>
+    ${edit?`<select onchange="gsLinkFlight(${g.id},this.value)"><option value="">— none —</option>${FLIGHTS.filter(f=>/Training Flight|Training/.test(f.type||"")).map(f=>`<option value="${f.id}" ${g.flightLink==f.id?"selected":""}>#${f.id} · ${f.d} · ${f.ac} · ${f.type} · PIC ${lfStr(f.pic)}</option>`).join("")}</select>`:`<div style="padding:8px 0;color:var(--silver-light)">${g.flightLink?"Flight #"+g.flightLink:"—"}</div>`}</div>
+  </div>
+  <label class="opt ${g.ckr?'sel':''}" style="cursor:${edit?'pointer':'default'};margin-top:10px;max-width:520px;border:1px solid var(--gold)"><span><b style="color:var(--gold)">QUALIFICATION CHECK RIDE</b> — checked by the check pilot · ride hours do NOT count toward phase training time</span><input type="checkbox" style="width:auto" ${g.ckr?'checked':''} ${edit?`onchange="gsSet(${g.id},'ckr',this.checked)"`:"disabled"}></label>
+  ${g.ckr?`<div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="font-size:11px;color:var(--muted)">Result:</span>
+   <button class="btn2" ${edit?`onclick="gsCkrResult(${g.id},true)"`:""} style="${g.ckrPass===true?'background:#2FA84F;border-color:#2FA84F;color:#fff;font-weight:700':''}">✓ PASSED</button>
+   <button class="btn2" ${edit?`onclick="gsCkrResult(${g.id},false)"`:""} style="${g.ckrPass===false?'background:var(--red-bright);border-color:var(--red-bright);color:#fff;font-weight:700':''}">✗ FAILED</button>
+   ${g.ckrPass===false?`<span style="font-size:11px;color:#F27B7B;font-weight:700">Remedial: 5.0 hrs begins — does not count toward phase time. ${st.attemptsLeft} attempt${st.attemptsLeft===1?"":"s"} left.</span>`:""}</div>`:""}
+  ${d.remedial?`<div class="banner b-warn" style="font-size:12px;margin-top:8px"><b>REMEDIAL FLIGHT</b> — hours on this sheet apply to the remedial pool, not phase time. Applied this flight: <b>${(d.remedialApplied||0).toFixed(1)}</b> · remedial hours left after this flight: <b>${(d.remedialLeft||0).toFixed(1)}</b>
+   ${edit?`<div style="margin-top:6px;display:flex;align-items:center;gap:8px"><span style="font-size:11px">Extend remedial with banked time (bank: ${(d.prevBank||0).toFixed(1)}):</span><input class="num" type="number" step="0.1" min="0" max="${(d.prevBank||0).toFixed(1)}" style="width:80px" value="${g.bankExt||0}" onchange="gsSet(${g.id},'bankExt',this.value)"><span style="font-size:10px;color:var(--muted)">hrs drawn from bank → added to the remedial pool</span></div>`:(+g.bankExt?`<div style="font-size:11px;margin-top:4px">Banked time used to extend remedial: ${(+g.bankExt).toFixed(1)}</div>`:"")}</div>`:""}
+ </div>
+ <div class="panel accent"><h2>2 · Time accounting</h2>
+  <div class="grid g2" style="align-items:start">
+   <div>
+    <div style="display:flex;justify-content:space-between;padding:2px 0"><span style="font-size:11px;color:var(--muted)">Previous ${TRN_PHASES[g.phase].name} Time <span style="font-size:9px">· auto from prior gradesheets</span></span><b style="color:var(--silver-light)">${(d.prevPhase||0).toFixed(1)}</b></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:2px 0"><span style="font-size:11px;color:var(--muted)">Plus: Today's Flt. Tach Time</span>
+     ${edit?`<input class="num" type="number" step="0.1" min="0" style="width:80px" value="${g.tach}" onchange="gsSet(${g.id},'tach',this.value)">`:`<b style="color:var(--silver-light)">${(+g.tach||0).toFixed(1)}</b>`}</div>
+    <div style="font-size:10px;color:var(--muted);margin:2px 0 2px 8px">Minus:</div>
+    <div style="margin-left:8px">${mins.map(([k,l])=>num(k,l)).join("")}</div>
+    <div style="display:flex;justify-content:space-between;border-top:1px solid rgba(184,190,200,.3);margin-top:4px;padding-top:4px"><b style="font-size:12px">${TRN_PHASES[g.phase].name} Total Time</b><b class="cond" style="font-size:16px;color:${d.remedial||g.ckr?"var(--muted)":"#5BC97A"}">${(d.phaseTotal!=null?d.phaseTotal:0).toFixed(1)}</b></div>
+    ${g.ckr?'<div style="font-size:10px;color:var(--muted)">Check ride — no phase time accrues on this sheet.</div>':""}
+   </div>
+   <div>
+    <div style="margin-bottom:6px"><label class="lab">Flight distance <span style="font-weight:400;text-transform:none">· sets the banked-time allowance</span></label>
+     <div style="display:flex;gap:6px">${[["local","Local — ≤10 NM of "+WX_BASE+" · 0.3 bank"],["xc","Beyond 10 NM · 0.6 bank"]].map(([v,l])=>`<button class="btn2 ${g.dist===v?'on':''}" ${edit?`onclick="gsSet(${g.id},'dist','${v}')"`:""} style="font-size:10px">${l}</button>`).join("")}</div></div>
+    <div style="display:flex;justify-content:space-between;padding:2px 0"><span style="font-size:11px;color:var(--muted)">Previous Banked Time <span style="font-size:9px">· auto</span></span><b style="color:var(--silver-light)">${(d.prevBank||0).toFixed(1)}</b></div>
+    <div style="display:flex;justify-content:space-between;padding:2px 0"><span style="font-size:11px;color:var(--muted)">Plus: Unused "Warm Up" <span style="font-size:9px">· auto = 0.3 − warm-up claimed</span></span><b style="color:#5BC97A">${(d.unusedWarm||0).toFixed(1)}</b></div>
+    <div style="display:flex;justify-content:space-between;padding:2px 0"><span style="font-size:11px;color:var(--muted)">Plus: Unused "Commute" <span style="font-size:9px">· auto = ${g.dist==="xc"?"0.3":"0.0"} − commute claimed</span></span><b style="color:#5BC97A">${(d.unusedComm||0).toFixed(1)}</b></div>
+    <div style="display:flex;justify-content:space-between;padding:2px 0"><span style="font-size:11px;color:var(--muted)">Minus: Used "Banked" <span style="font-size:9px">· auto = banked-time line${+g.bankExt?" + remedial extension":""}</span></span><b style="color:#F27B7B">${(d.usedBank||0).toFixed(1)}</b></div>
+    <div style="display:flex;justify-content:space-between;border-top:1px solid rgba(184,190,200,.3);margin-top:4px;padding-top:4px"><b style="font-size:12px">Bank Time Balance</b><b class="cond" style="font-size:16px;color:var(--gold)">${(d.bankBal!=null?d.bankBal:0).toFixed(1)}</b></div>
+    <div style="font-size:10px;color:var(--muted);margin-top:4px">Carries to the next gradesheet as Previous Banked Time automatically.</div>
+   </div>
+  </div>
+ </div>
+ <div class="panel accent"><h2>3 · Performance — ${g.phase==="mtn"?"Mountain/Advanced tasks":"graded to the "+(d.block||15)+" HR standard only"}</h2>
+  <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Green = flying to standard (PERFORM / SRM MANAGE-DECIDE) · red = needs work (PRACTICE / EXPLAIN / DESCRIBE) · NOT OBSERVED = no highlight, noted as not flown. One grade per skill; add a note on any line.</div>
+  ${cat.map((s,si)=>`<div style="margin-top:10px"><div class="lab" style="color:var(--red-bright)">${s.sec}</div>
+   ${s.rows.map((r,ri)=>gsGradeRow(g,si+"."+ri,r[0],Array.isArray(r[1])?r[1][bi]:r[1],edit)).join("")}</div>`).join("")}
+ </div>
+ <div class="panel accent"><h2>4 · Wind conditions, training location(s), notes</h2>
+  <label class="lab">Training locations</label>
+  <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px">${TRN_LOCS.map(l=>`<button class="btn2 ${(g.wxLocs||[]).includes(l)?'on':''}" style="font-size:10px;padding:4px 9px" ${edit?`onclick="gsWxTgl(${g.id},'${l}')"`:""}>${l}</button>`).join("")}</div>
+  ${edit?`<button class="btn2" onclick="gsWxPull(${g.id})">⟳ Pull reported weather for selected locations</button>`:""}
+  ${g.wxAuto?`<div style="font-size:11px;font-family:monospace;color:var(--silver-light);background:rgba(37,43,52,.4);padding:8px;margin-top:6px;white-space:pre-wrap">${g.wxAuto}</div>`:""}
+  <label class="lab" style="margin-top:8px">Instructor weather / conditions notes <span style="font-weight:400;text-transform:none">· if conditions differed from the report</span></label>
+  ${edit?`<textarea rows="2" onchange="gsSet(${g.id},'wxNotes',this.value)">${g.wxNotes||""}</textarea>`:`<div style="font-size:12px;color:var(--text)">${g.wxNotes||"—"}</div>`}
+ </div>
+ <div class="panel accent"><h2>5 · Flight path — debrief & accountability</h2>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Open the track for ${g.ac||"the aircraft"}, screenshot the flight path, and attach it — it prints as its own page of this gradesheet.</div>
+  ${g.ac?`<a class="btn2" style="text-decoration:none" target="_blank" href="https://www.flightradar24.com/data/aircraft/${g.ac.toLowerCase()}">FlightRadar24 — ${g.ac} ↗</a>
+  <a class="btn2" style="text-decoration:none;margin-left:6px" target="_blank" href="https://globe.adsbexchange.com/?reg=${g.ac}">ADS-B Exchange — ${g.ac} ↗</a>`:'<span style="font-size:11px;color:var(--muted)">Select the aircraft above to enable the tracking links.</span>'}
+  ${edit?`<label class="btn2" style="cursor:pointer;display:inline-block;margin-left:6px">📎 Attach flight-path snapshot<input type="file" accept="image/*" style="display:none" onchange="gsPath(${g.id},this)"></label>`:""}
+  ${g.pathImg?`<div style="margin-top:8px"><img src="${g.pathImg}" style="max-width:100%;max-height:340px;border:1px solid rgba(37,43,52,.8)"></div>`:""}
+ </div>
+ <div class="panel accent"><h2>6 · Instructor comments</h2>
+  ${edit?`<textarea rows="6" placeholder="Copious notes about the flight, trends, and what to work on before the next flight…" onchange="gsSet(${g.id},'comments',this.value)">${g.comments||""}</textarea>`:`<div style="font-size:13px;line-height:1.6;white-space:pre-wrap">${g.comments||"—"}</div>`}
+ </div>
+ <div class="panel"><h2>7 · Signatures</h2>
+  <div class="grid g2" style="align-items:start">
+   <div><div class="lab">Instructor</div>
+    ${g.instrSig?sigBlock(g.instrSig):edit?`<button class="btn" onclick="GS_SIGN='instr';render()">✍ Sign & send to trainee</button><div style="font-size:10px;color:var(--muted);margin-top:4px">Signing locks every entry above and notifies ${p?p.full:"the trainee"} to review the full sheet.</div>${sigPanel('instr')}`:'<div style="font-size:11px;color:var(--muted)">Unsigned.</div>'}
+   </div>
+   <div><div class="lab">Pilot trainee</div>
+    ${g.tSig?sigBlock(g.tSig):""}
+    ${!g.tSig&&isTrainee&&g.status==="SIGNED"?`
+     <label class="lab" style="margin-top:4px">Trainee comments <span style="font-weight:400;text-transform:none">· optional — notes, context, or disagreement; the instructor is notified if you add any</span></label>
+     <textarea rows="3" onchange="gsG(${g.id}).tCmt=this.value">${g.tCmt||""}</textarea>
+     <div style="margin-top:6px"><button class="btn" onclick="GS_SIGN='trainee';render()">✍ Sign — reviewed in full</button></div>${sigPanel('trainee')}`:""}
+    ${!g.tSig&&!isTrainee?'<div style="font-size:11px;color:var(--muted)">'+(g.status==="OPEN"?"Opens after the instructor signs.":"Awaiting trainee signature.")+'</div>':""}
+    ${g.tCmt&&(g.tSig||g.status!=="OPEN")&&!isTrainee?`<div class="banner b-warn" style="font-size:12px;margin-top:6px"><b>Trainee comments:</b><br>${g.tCmt}</div>`:""}
+    ${g.status==="T_REVIEW"&&trnInstr(user)&&(g.instrId===user.id||user.so)?`<div style="margin-top:6px"><button class="btn" onclick="gsAckReview(${g.id})">✓ Comments reviewed — file gradesheet</button></div>`:""}
+   </div>
+  </div>
+ </div>
+ <div class="panel"><h2>Audit trail <span style="font-size:10px;color:var(--muted);font-weight:400">· every action & edit — permanent record</span></h2>
+  ${(g.audit||[]).map(a=>`<div style="font-size:11px;border-bottom:1px solid rgba(37,43,52,.5);padding:4px 0"><b style="color:var(--silver-light)">${a.by}</b> — ${a.act} <span style="color:var(--muted)">· ${a.when}</span></div>`).join("")}
+ </div>`;
+}
+function gsPdf(id){
+ const g=gsG(id);const p=PEOPLE.find(x=>x.id===g.tp);const {d}=gsDerived(g);
+ const cat=trnCatalog(g.phase);const bi=TRN_BLOCKS.indexOf(d.block||15);
+ const gRow=(key,label,std)=>{const gr=g.grades[key]||{};
+  const good=GOOD_G.includes(gr.g),na=NEUTRAL_G.includes(gr.g),bad=gr.g!=null&&!good&&!na;
+  const sel=gr.g!=null?((GRADE_OPTS[gr.g][1]==="S"?"SRM: ":"")+GRADE_OPTS[gr.g][0]):"—";
+  return `<tr style="background:${good?"#e2f3e6":bad?"#fbe3e3":"#fff"}"><td>${label}</td><td>${std}</td><td><b>${sel}</b></td><td>${gr.n||""}</td></tr>`};
+ const w=window.open("","_blank");
+ w.document.write(`<html><head><title>${TRN_PHASES[g.phase].name} Gradesheet — ${p?p.full:""} — Flt #${d.flightNo||""}</title><style>
+  body{font-family:Arial;padding:26px;color:#111;font-size:12px}h1{font-size:17px;margin:0}h2{font-size:13px;margin:14px 0 4px;color:#8A1219;border-bottom:1px solid #ccc;padding-bottom:2px}
+  table{border-collapse:collapse;width:100%;margin-top:4px}td,th{border:1px solid #999;padding:3px 6px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f2f2f2}
+  .kv{display:inline-block;border:1px solid #C0202A;padding:4px 10px;margin:3px 6px 3px 0;font-size:11px}.pb{page-break-before:always}</style></head><body>
+  <h1>${OPERATOR&&OPERATOR.name?OPERATOR.name:"Air Operations"} — ${TRN_PHASES[g.phase].name} Task / Qualification Sheet <span style="font-size:11px;color:#666">${TRN_PHASES[g.phase].form}</span></h1>
+  <div style="font-size:11px;color:#555">Generated ${new Date().toLocaleString()} · powered by HERO Ops${g.edits?" · edit #"+g.edits+" (see audit trail)":""}</div>
+  <div style="margin-top:8px"><span class="kv">Date: <b>${new Date(g.d).toLocaleString()}</b></span><span class="kv">Name: <b>${p?p.full:"—"}</b></span><span class="kv">Flight #: <b>${d.flightNo||"—"}</b></span><span class="kv">Grading Standard: <b>${d.block||15} HOUR</b></span><span class="kv">Qualification Check Ride: <b>${g.ckr?"YES — "+(g.ckrPass==null?"result pending":g.ckrPass?"PASSED":"FAILED"):"NO"}</b></span><span class="kv">Aircraft: <b>${g.ac||"—"}</b></span></div>
+  <h2>Time accounting</h2>
+  <table><tr><th>Previous Phase Time</th><th>+ Today's Flt Tach</th><th>− Warm-Up</th><th>− Commute</th><th>− Check-Ride</th><th>− Interruption</th><th>− Banked</th><th>− Demo</th><th>Phase Total</th></tr>
+  <tr><td>${(d.prevPhase||0).toFixed(1)}</td><td>${(+g.tach||0).toFixed(1)}</td>${["warm","comm","ck","intr","bank","demo"].map(k=>`<td>${(+g.m[k]||0).toFixed(1)}</td>`).join("")}<td><b>${(d.phaseTotal||0).toFixed(1)}</b></td></tr></table>
+  <table style="margin-top:6px"><tr><th>Previous Banked</th><th>+ Unused Warm Up</th><th>+ Unused Commute</th><th>− Used Banked</th><th>Bank Balance</th>${d.remedial?"<th>Remedial applied</th><th>Remedial left</th>":""}</tr>
+  <tr><td>${(d.prevBank||0).toFixed(1)}</td><td>${(d.unusedWarm||0).toFixed(1)}</td><td>${(d.unusedComm||0).toFixed(1)}</td><td>${(d.usedBank||0).toFixed(1)}</td><td><b>${(d.bankBal||0).toFixed(1)}</b></td>${d.remedial?`<td>${(d.remedialApplied||0).toFixed(1)}</td><td>${(d.remedialLeft||0).toFixed(1)}</td>`:""}</tr></table>
+  <h2>Performance — ${g.phase==="mtn"?"held to 75-hr Basic Phase standards":(d.block||15)+" HR standard"}</h2>
+  ${cat.map((s,si)=>`<table><tr><th colspan="4">${s.sec}</th></tr><tr><th style="width:26%">Skill</th><th style="width:20%">Standard</th><th style="width:18%">Grade</th><th>Notes</th></tr>
+   ${s.rows.map((r,ri)=>gRow(si+"."+ri,r[0],Array.isArray(r[1])?r[1][bi]:r[1])).join("")}</table>`).join("")}
+  <h2>Wind conditions, training locations, notes</h2>
+  <div>Locations: <b>${(g.wxLocs||[]).join(", ")||"—"}</b></div>
+  ${g.wxAuto?`<div style="white-space:pre-wrap;font-family:monospace;font-size:10px;border:1px solid #999;padding:6px;margin-top:4px">${g.wxAuto}</div>`:""}
+  ${g.wxNotes?`<div style="margin-top:4px"><b>Instructor notes:</b> ${g.wxNotes}</div>`:""}
+  <h2>Instructor comments</h2><div style="white-space:pre-wrap">${g.comments||"—"}</div>
+  ${g.tCmt?`<h2>Trainee comments</h2><div style="white-space:pre-wrap">${g.tCmt}</div>`:""}
+  <h2>Signatures</h2>
+  <table><tr><th style="width:50%">Instructor</th><th>Pilot Trainee</th></tr><tr>
+   <td>${g.instrSig?`<img src="${g.instrSig.img}" style="height:46px"><br><b>${g.instrSig.name}</b> · ${g.instrSig.rank}${g.instrSig.shift?" · "+g.instrSig.shift:""}<br>${g.instrSig.when}`:"—"}</td>
+   <td>${g.tSig?`<img src="${g.tSig.img}" style="height:46px"><br><b>${g.tSig.name}</b> · ${g.tSig.rank}${g.tSig.shift?" · "+g.tSig.shift:""}<br>${g.tSig.when}`:"—"}</td></tr></table>
+  <h2>Audit trail</h2>
+  <table>${(g.audit||[]).map(a=>`<tr><td style="width:22%">${a.when}</td><td style="width:20%">${a.by}</td><td>${a.act}</td></tr>`).join("")}</table>
+  ${g.pathImg?`<div class="pb"><h2>Flight path — ${g.ac||""} · ${new Date(g.d).toLocaleString()}</h2><img src="${g.pathImg}" style="max-width:100%"></div>`:""}
+  </body></html>`);
+ w.document.close();w.print()}
 function pgTraining(){
+ if(TRV.page&&!trnAccess(user)){TRV={page:null}}
+ if(TRV.page==='gs'){const r=gsPage();if(GS_SIGN)setTimeout(()=>sigInit('sigpad'),60);return r}
+ if(TRV.page==='tr')return trnTrPage(TRV.pid);
+ if(TRV.page==='list')return trnListPage();
  const card=(icon,title,sub,items)=>`<div class="panel accent" style="border-left:3px solid var(--gold)">
   <h2>${icon} ${title}</h2><div style="font-size:12px;color:var(--muted);margin-bottom:8px">${sub}</div>
   ${items.map(i=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid rgba(37,43,52,.6)"><span style="font-size:13px;color:var(--silver-light)">${i}</span><span class="chip c-gray" style="font-size:8px">COMING SOON</span></div>`).join("")}</div>`;
  return `<h1>Training <span>Records</span></h1>
  <div class="sub">The unit's training hub — legally defensible proof of training sufficiency. Records, task books, test forms and certification print-outs, all tied to each member's file and the currency matrix.</div>
- <div class="banner b-warn" style="font-size:12px">🚧 <b>Placeholder — module in development.</b> Structure below reflects the planned build; records import begins when the source documents are provided.</div>
- ${card("🧑‍✈️","Pilot Training Records","Per-pilot file: check rides, proficiency events, instrument & NVG training, instructor endorsements.",
-   ["Individual pilot training file (per member)","Check ride & evaluation forms","NVG / instrument / mountain proficiency events","Instructor endorsements & sign-offs","Certification print-outs (FAA, department)"])}
+ ${trnAccess(user)?`<div class="panel accent" style="border-left:3px solid var(--red-bright);cursor:pointer" onclick="TRV={page:'list'};render()">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+   <div><h2 style="margin:0">🧑‍✈️ Pilot Training — gradesheets & phase tracking</h2>
+    <div style="font-size:12px;color:var(--muted);margin-top:4px">Basic Phase & Mountain/Advanced Phase task/qualification sheets (Forms 114-610 / 114-613) · 15-hour blocks & check rides · banked time · remedial tracking · signature chain with full audit trail.</div></div>
+   <span class="chip c-good" style="font-size:9px">LIVE · ${GRADESHEETS.length} gradesheet${GRADESHEETS.length===1?"":"s"} · ${trnTrainees().length} trainee${trnTrainees().length===1?"":"s"}</span></div></div>`
+ :'<div class="panel"><div class="lock">Pilot Training is restricted to pilot ranks and Special Duty members.</div></div>'}
  ${card("🪖","Helitac Level 1 — Records & Task Book","Task-book tracking with itemized sign-offs, evaluator, and date stamps.",
    ["Level 1 task book (itemized sign-offs)","Skills evaluations & test forms","Currency tie-in to the Currency matrix","Certification print-out"])}
  ${card("🎖","Helitac Level 2 — Records & Task Book","Advanced task book with prerequisite gating from Level 1.",
    ["Level 2 task book (itemized sign-offs)","Prerequisite gating (Level 1 complete)","Skills evaluations & test forms","Certification print-out"])}
- <div style="font-size:11px;color:var(--muted)">Planned: evaluator e-sign with audit trail · expiration alerts feeding the Currency matrix · print/export for audits and legal discovery.</div>`;
+ <div style="font-size:11px;color:var(--muted)">Helitac task books: evaluator e-sign with audit trail · expiration alerts feeding the Currency matrix · print/export for audits and legal discovery.</div>`;
 }
+
 function ifrPanel(){
   const pilots=PEOPLE.filter(p=>p.pilot&&!p.display);
   if(!pilots.length)return "";
@@ -3253,6 +3855,7 @@ function pgSafety(){
 const SAFETY_EMAIL="joel.smith@heroaviationusa.com";
 const ADMIN_EMAILS=["joel.smith@heroaviationusa.com","joel.smith@heroaviationusa.com","joelasmith314@gmail.com"];
 function isAdmin(u){return !!(u&&ADMIN_EMAILS.includes((u.em||"").toLowerCase()))}
+PEOPLE.forEach(p=>{if(p.pilot&&(p.so||p.mgr||["IV","V"].includes(p.rank||"")))p.instr=true});
 PEOPLE.forEach(p=>{if(ADMIN_EMAILS.includes((p.em||"").toLowerCase())){p.admin=true;p.so=true;p.mgr=true;p.role="SUPERVISOR"}});
 const HELITAC=["Helitac Level 1","Helitac Level 2"];
 const PLATOONS={A:{name:"A Shift",col:"#F04E4E"},B:{name:"B Shift",col:"#4E8CF0"},C:{name:"C Shift",col:"#2FA84F"},SD:{name:"Special Duty",col:"#E6E9EF"}};
@@ -3350,6 +3953,33 @@ PEOPLE.filter(p=>p.pilot&&!p.display).forEach((p,i)=>{
  p.rank=p.rank||(/(Chief)/i.test(p.pos)||p.so?"V":/(Lead)/i.test(p.pos)||p.mgr?"IV":["III","III","II","I","III"][i%5]);
  if(p.rank==="IV"||p.rank==="V")p.mgr=true;
  p.dateIn=p.dateIn||["3/12/24","7/1/25","10/15/23","1/8/26","5/20/24","11/2/22"][i%6]});
+/* Demo seeds — a trainee mid-Basic-Phase so the module shows populated */
+(function(){
+ PEOPLE.forEach(p=>{if(p.pilot&&(p.so||p.mgr||["IV","V"].includes(p.rank||"")))p.instr=true});
+ const t=PEOPLE.find(p=>p.pilot&&(p.rank||"")==="I"&&!p.display);
+ const i=PEOPLE.find(p=>p.pilot&&p.instr&&!p.display)||PEOPLE.find(p=>p.so&&!p.display);
+ if(!t||!i)return;
+ const SQ="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='50'><path d='M5,35 C30,5 50,45 75,25 S120,10 150,30 S180,20 195,28' stroke='%23103' fill='none' stroke-width='2'/></svg>";
+ GRADESHEETS.push(
+  {id:1,tp:t.id,phase:"basic",d:"2026-07-10T09:05",ckr:false,ckrPass:null,tach:"1.6",
+   m:{warm:"0.2",comm:"",ck:"",intr:"",bank:"",demo:""},dist:"local",bankExt:0,ac:"N706WR",flightLink:"",
+   grades:{"0.0":{g:0,n:""},"0.1":{g:0,n:"Solid within ±5' all reps."},"0.2":{g:1,n:"Rearward drift creeping in on the third set — rework next flight."},"1.0":{g:0,n:""},"5.0":{g:5,n:"Good divide-attention radio work."}},
+   wxLocs:["KBUR"],wxAuto:"Reported weather — pulled 07/10/2026, 11:40:\nKBUR (0853hrs): KBUR 101653Z 26007KT 10SM FEW015 24/13 A2990",wxNotes:"Marine layer burned off by start of patterns — conditions matched the report.",
+   comments:"First block progressing well. Hover work is ahead of the curve; landings need drift discipline before the 15-hour ride.",
+   tCmt:"",pathImg:null,status:"FILED",edits:0,instrId:i.id,instrName:i.full,
+   audit:[{by:"(instructor)",when:"07/10/2026, 11:35",act:"Gradesheet created"},{by:"(instructor)",when:"07/10/2026, 11:58",act:"Instructor signed — gradesheet locked, sent to trainee for review"},{by:"(trainee)",when:"07/10/2026, 15:22",act:"Trainee signed — gradesheet filed"}],
+   instrSig:{img:SQ,when:"07/10/2026, 11:58",name:i.full,rank:"Pilot "+(i.rank||"V"),shift:"A Shift"},
+   tSig:{img:SQ,when:"07/10/2026, 15:22",name:t.full,rank:"Pilot I",shift:"B Shift"}},
+  {id:2,tp:t.id,phase:"basic",d:"2026-07-17T10:30",ckr:false,ckrPass:null,tach:"1.8",
+   m:{warm:"",comm:"",ck:"",intr:"",bank:"",demo:""},dist:"xc",bankExt:0,ac:"N706WR",flightLink:"",
+   grades:{"0.0":{g:0,n:""},"0.2":{g:0,n:"Drift corrected — nice progress."},"2.0":{g:2,n:"Talk through rate control before flying it again."},"7.0":{g:4,n:""}},
+   wxLocs:["KBUR","KWJF"],wxAuto:"Reported weather — pulled 07/17/2026, 13:05:\nKBUR (1653hrs): KBUR 171653Z 25009KT 10SM CLR 27/12 A2989\nKWJF (1650hrs): KWJF 171650Z 24012G18KT 10SM CLR 31/08 A2986",wxNotes:"",
+   comments:"Cross-country leg to the high desert; gusts at KWJF gave useful crosswind reps.",
+   tCmt:"",pathImg:null,status:"SIGNED",edits:0,instrId:i.id,instrName:i.full,
+   audit:[{by:"(instructor)",when:"07/17/2026, 13:00",act:"Gradesheet created"},{by:"(instructor)",when:"07/17/2026, 13:20",act:"Instructor signed — gradesheet locked, sent to trainee for review"}],
+   instrSig:{img:SQ,when:"07/17/2026, 13:20",name:i.full,rank:"Pilot "+(i.rank||"V"),shift:"A Shift"},tSig:null});
+})();
+
 PEOPLE.forEach(p=>{p.dateIn=p.dateIn||["2/4/23","8/19/24","6/7/25","12/1/23"][PEOPLE.indexOf(p)%4]});
 FLIGHTS.forEach((f,i)=>{if(f.dep==="TRAINING"){f.appr=2;f.holds=i%2?1:0}});
 PEOPLE.forEach(p=>{p.hoistQ=p.rtype==="hoist";p.rescQ=p.rtype==="rescuer";p.safeQ=p.rtype==="safety";p.ht1=p.ht1||p.pos==="Helitac Level 1";p.ht2=(!p.ht1&&p.ht2)||p.pos==="Helitac Level 2"});
@@ -3415,7 +4045,7 @@ function pgPeople(){
   ${ouraPanel(p)}
   ${docsPanel(p)}
   <div class="panel"><h2>Qualifications ${mgr?"":'<span class="lock">· manager only</span>'}</h2>
-   <div class="grid g3">${chk("pilot","Pilot",mgr)}${chk("hoistQ","Hoist operator",mgr)}${chk("rescQ","Rescuer",mgr)}${chk("safeQ","Safety member",mgr)}${chk("ht1","Helitac Level 1",mgr)}${chk("ht2","Helitac Level 2",mgr)}</div>
+   <div class="grid g3">${chk("pilot","Pilot",mgr)}${chk("instr","Instructor Pilot — files gradesheets",mgr)}${chk("hoistQ","Hoist operator",mgr)}${chk("rescQ","Rescuer",mgr)}${chk("safeQ","Safety member",mgr)}${chk("ht1","Helitac Level 1",mgr)}${chk("ht2","Helitac Level 2",mgr)}</div>
    <div style="font-size:10px;color:var(--muted);margin-top:6px">IFR and NVG currency are no longer manual checkboxes — they are computed from logged flights (see Currency).</div>
    ${p.pilot?`<div style="margin-top:12px"><label class="lab">Pilot rank <span style="font-weight:400;text-transform:none">· single selection${mgr?"":" · manager only"}</span></label>
     <div class="grid g3">${Object.keys(RANKS).map(r=>`<label class="opt ${p.rank===r?'sel':''}" style="cursor:${mgr?'pointer':'default'};opacity:${mgr?1:.6}"><span>${RANKS[r]}</span><input type="radio" name="rank-${p.id}" style="width:auto" ${p.rank===r?'checked':''} ${mgr?`onchange="rankSet('${p.id}','${r}')"`:"disabled"}></label>`).join("")}</div>
