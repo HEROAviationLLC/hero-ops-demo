@@ -187,7 +187,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g7 — 2026-07-24 · all people, aircraft & records are fictional</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g8 — 2026-07-24 · all people, aircraft & records are fictional</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
@@ -466,7 +466,7 @@ const MIT_EXT=[["Operational timeout / launch review",2],["Supervisor consulted"
 const TH={med:15,high:25,sup:20};
 let PENDING_FRATS=[{id:57,pilot:"G. Fontaine",desc:"INC-26-117904 · Night NVG SAR standby launch, river corridor",score:17,risk:"MEDIUM",when:"07/13/26 · 21:42",
  snap:[{k:"Flight type",v:"Hoist Rescue",p:"+5"},{k:"Deployment",v:"MISSION · INC-26-117904",p:""},{k:"Departure",v:"KBUR — ceiling 2,500' · 6 SM",p:"+0"},{k:"Destination",v:"Mid-City / East (Elysian Park) — river corridor",p:""},{k:"Destination wx",v:"KCQT — ceiling 900' · 3 SM (marginal)",p:"+5"},{k:"Terrain",v:"Dense urban · wires · congested (auto)",p:"+3"},{k:"Time of day",v:"NIGHT — all pilots NVG current",p:"+4"},{k:"External pressure",v:"Life-safety urgency (EMS/SAR)",p:"+4 −2 mitigated"},{k:"N701WR · Air 1 (H1)",v:"crew: Joel Smith (PIC), Dana Ashford (SIC) · readiness avg 81",p:"fatigue +0 · currency +0 · acft +4 (open squawks) = 17"}]}];
-let SUPV=null,SUPV_NOTES="",SUPV_MIT=0,DECIDED=[];
+let SUPV=null,SUPV_NOTES="",SUPV_MIT=0,DECIDED=[],FRAT_ERR=[];
 const MIT_SUPV=[["No supervisor mitigation",0],["Swap in higher-time / more current crew",4],["Restrict mission profile (day only / no hoist)",3],["Delay launch until conditions improve",3],["Add IFR-current SIC",2],["Supervisor monitoring + recurrent brief",1]];
 /* Filed FRAT details — used to prefill flight logs (incident + crew per aircraft) */
 let FR_PAGE="form",FRA={from:"",to:"",pilot:"",ac:"",risk:"",status:""},FRA_SEL=null;
@@ -574,7 +574,7 @@ function acSvg(a,w){
 const ACIMG={};
 function acPhoto(a,w,h){
  return `<div class="acphoto" style="width:${w}px;max-width:100%;flex-shrink:0">
-  <img src="${ACIMG[a.n]}" alt="${a.mk}" loading="lazy" style="width:100%;height:${h}px;object-fit:cover;border:1px solid rgba(184,190,200,.15);display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+  <img src="${a.photo||ACIMG[a.n]}" alt="${a.mk}" loading="lazy" style="width:100%;height:${h}px;object-fit:cover;border:1px solid rgba(184,190,200,.15);display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
   <div style="display:none">${acSvg(a,w)}<div style="font-size:9px;color:var(--muted);text-align:center;margin-top:2px">Type photo loads when opened in a web browser</div></div></div>`;
 }
 function goAc(n){acView=n;tab="acft";render()}
@@ -1249,7 +1249,7 @@ function pfStart(n){const a=AIRCRAFT.find(x=>x.n===n);
   m1d:mxT[0]?mxT[0][0]:"",m1t:mxT[0]?mxT[0][2]:"",
   m2d:mxT[1]?mxT[1][0]:"",m2t:mxT[1]?mxT[1][2]:"",
   m3d:mxT[2]?mxT[2][0]:"",m3t:mxT[2]?mxT[2][2]:"",
-  calDue:"",preBrief:false,fratDone:false,assign:"Alert",notes:""};
+  calDue:"",calDesc:"",preBrief:false,fratDone:false,assign:"Alert",notes:""};
  render()}
 function pfSet(k,v){PF[k]=v;render()}
 function pfSubmit(){
@@ -1304,12 +1304,13 @@ function pfForm(){
     <input placeholder="Description" value="${PF["m"+n+"d"]}" onchange="pfSet('m${n}d',this.value)" style="margin-bottom:6px">
     <input class="num" type="number" step="0.1" placeholder="Due at tach" value="${PF["m"+n+"t"]}" onchange="pfSet('m${n}t',this.value)"></div>`).join("")}
   </div>
-  <div style="max-width:280px;margin-top:10px"><label class="lab">Calendar inspection due date</label><input type="date" value="${PF.calDue}" onchange="pfSet('calDue',this.value)"></div></div>
+  <div class="grid g2" style="margin-top:10px"><div><label class="lab">Calendar inspection due date</label><input type="date" value="${PF.calDue}" onchange="pfSet('calDue',this.value)"></div>
+   <div><label class="lab">Calendar inspection — what is it? <span style="font-weight:400;text-transform:none">· e.g. "Batt deep cycle / monthly hoist"</span></label><input placeholder="Description of the calendar inspection" value="${PF.calDesc||""}" onchange="pfSet('calDesc',this.value)"></div></div></div>
  <div class="panel accent"><h2>4 · Readiness & assignment</h2>
   <div class="grid g3">
-   <label class="opt ${PF.preBrief?'sel':''}" style="cursor:pointer"><span>Pre-brief completed</span><input type="checkbox" style="width:auto" ${PF.preBrief?'checked':''} onchange="pfSet('preBrief',this.checked)"></label>
-   <label class="opt ${PF.fratDone?'sel':''}" style="cursor:pointer"><span>FRAT completed</span><input type="checkbox" style="width:auto" ${PF.fratDone?'checked':''} onchange="pfSet('fratDone',this.checked)"></label>
    <div><label class="lab">Assignment type</label>${sel("assign",PF_ASSIGN)}</div>
+   <div><label class="lab">FRAT — this 24-h shift <span style="font-weight:400;text-transform:none">· resets 0600</span></label>
+    ${fratThisShift(PF.ac)?'<span class="chip c-good" style="font-size:10px;padding:6px 10px">✓ FRAT FILED FOR THIS AIRCRAFT THIS SHIFT</span>':'<span class="chip c-crit" style="font-size:10px;padding:6px 10px">✖ NO FRAT FILED FOR THIS AIRCRAFT SINCE 0600</span>'}</div>
   </div>
   <label class="lab">Notes</label><textarea rows="2" onchange="pfSet('notes',this.value)">${PF.notes}</textarea>
   <div style="margin-top:12px"><button class="btn" onclick="pfSubmit()">Submit ${PF.check.toLowerCase()} check</button> <span id="pfmsg" style="font-size:13px;margin-left:8px"></span></div></div>`;
@@ -1319,6 +1320,14 @@ function lastUpd(a){
  PREFLIGHTS.filter(x=>x.ac===a.n).forEach(x=>{const t=parseD(x.d);if(!best||t>best.t)best={t,d:x.d,by:x.by,what:"preflight"}});
  FLIGHTS.filter(x=>x.ac===a.n).forEach(x=>{const t=parseD(x.d);if(!best||t>best.t)best={t,d:x.d,by:x.pic,what:"flight log"}});
  return best;
+}
+function fratThisShift(acN){
+ const now=new Date();const s=new Date(now);s.setHours(6,0,0,0);if(now<s)s.setDate(s.getDate()-1);
+ return (FRAT_LOG||[]).some(r=>{
+  if(!r.acs||!Object.keys(r.acs).includes(acN))return false;
+  const dp=String(r.d||"").split(" · ");const dd=parseD(dp[0]);if(!dd)return false;
+  if(dp[1]){const t=dp[1].split(":");dd.setHours(+t[0]||12,+t[1]||0)}else dd.setHours(12);
+  return dd>=s});
 }
 function pgAircraft(){
  if(PF)return pfForm();
@@ -1365,6 +1374,36 @@ function pgAircraft(){
     <div><b class="cond" style="color:var(--silver);font-size:15px;letter-spacing:1px">${a.n}</b> <span style="font-size:11px;color:var(--muted)">· ${a.mk} · in service ${a.svc} — retired ${a.retDate||""}</span></div>
     <span><span class="chip c-gray" style="font-size:9px">RETIRED</span> <span style="font-size:11px;color:var(--muted)">${a.tach.toFixed(1)} hrs · ${a.landings.toLocaleString()} landings</span></span></div>`).join("")}</div>`:""}`;
 }
+function acSet(n,k,v){const a=AIRCRAFT.find(x=>x.n===n);if(!a)return;a[k]=v;render()}
+function acPhotoUpload(n,input){
+ const f=input.files&&input.files[0];if(!f)return;
+ const a=AIRCRAFT.find(x=>x.n===n);
+ const r=new FileReader();
+ r.onload=()=>{const img=new Image();img.onload=()=>{
+   const sc=Math.min(1,1100/Math.max(img.width,img.height));
+   const cv=document.createElement("canvas");cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);
+   cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+   a.photo=cv.toDataURL("image/jpeg",0.75);
+   toast("<b>✓ Aircraft photo saved.</b>");render()};img.src=r.result};
+ r.readAsDataURL(f)}
+function acEditPanel(a){
+ if(!(isMgr(user)||isAdmin(user))||a.ret)return "";
+ const txt=(k,label,ph)=>`<div><label class="lab">${label}</label><input value="${a[k]||""}" placeholder="${ph||""}" onchange="acSet('${a.n}','${k}',this.value)"></div>`;
+ return `<div class="panel"><h2>Aircraft details <span style="font-size:10px;color:#5BC97A;font-weight:400">· manager / supervisor edit — changes apply immediately</span></h2>
+  <div class="grid g3">
+   ${txt("cs","Call sign","Rescue 1 (R1)")}
+   ${txt("mk","Make / model","AW139")}
+   ${txt("sn","Serial number","31xxx")}
+   <div><label class="lab">Placed in service</label><input type="date" value="${a.svcDate||""}" onchange="acSet('${a.n}','svcDate',this.value)"></div>
+   ${txt("base","Base / station","Westridge Air Ops")}
+   ${txt("yr","Year","2021")}
+  </div>
+  <div class="grid g2" style="margin-top:10px;align-items:start">
+   <div><label class="lab">Aircraft photo</label><input type="file" accept="image/*" style="font-size:10px;width:100%" onchange="acPhotoUpload('${a.n}',this)">
+    <div style="font-size:10px;color:var(--muted);margin-top:4px">Shown on this detail page and stored with the aircraft record.</div></div>
+   ${a.photo?`<img src="${a.photo}" style="max-width:100%;max-height:160px;border:1px solid rgba(37,43,52,.8)">`:""}
+  </div></div>`;
+}
 function pgAcDetail(a){
   const sq=SQUAWKS[a.n]||[], mx=MX[a.n]||[];
   const fls=FLIGHTS.filter(f=>f.ac===a.n), pfs=PREFLIGHTS.filter(p=>p.ac===a.n);
@@ -1378,6 +1417,7 @@ function pgAcDetail(a){
   <div class="panel accent" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
     <div><h1 style="margin:0;cursor:pointer" title="Tap to collapse" onclick="acView=null;render()">${a.n} <span>${a.cs}</span> <span style="font-size:10px;color:var(--muted);font-weight:400">▲</span>${a.down?' <span class="chip c-crit" style="font-size:10px;vertical-align:middle">🔧 DOWN — MAINTENANCE</span>':""}</h1><div style="font-size:13px;color:var(--muted)">${a.mk} · ${a.base} · placed into service ${a.svc}${a.ret?" · retired "+(a.retDate||""):""}</div>${mgr&&!a.ret?`<button class="btn2" style="font-size:10px;padding:4px 10px;margin-top:6px" onclick="acSetDown('${a.n}')">${a.down?"↩ Return to service":"🔧 Mark DOWN for maintenance"}</button>`:""}${(x=>x?`<div style="font-size:12px;margin-top:3px;color:var(--silver)">Last updated <b>${x.d}</b> by <b style="color:var(--silver-light)">${x.by}</b> (${x.what})</div>`:"")(lastUpd(a))}</div>
     ${acPhoto(a,280,150)}</div><div style="font-size:9px;color:var(--muted);text-align:right;margin-top:4px">Generic type photo — Wikimedia Commons · replaced with your fleet's photos at onboarding</div></div>
+  ${acEditPanel(a)}
   <div class="grid g4">
     <div class="panel tile"><div class="lab">Flight tach</div><div class="val">${a.tach.toFixed(1)}</div></div>
     <div class="panel tile"><div class="lab">Maintenance tach</div><div class="val">${a.mtach.toFixed(1)}</div></div>
@@ -1761,6 +1801,26 @@ function wxCard(where,w,t){
   <span class="chip ${t.cls}">${t.label}</span><div style="font-size:10px;color:var(--muted);margin-top:4px">${t.desc}</div>
   ${w.raw?`<div style="font-size:9px;color:var(--muted);margin-top:4px;font-family:monospace">${w.raw}</div>`:""}</div>`;
 }
+let FRA_PDF={};
+function fratPdfDoc(w,f){
+ return `<div class="frat" style="page-break-after:always"><h1>FRAT #${f.id} — ${f.risk||"—"} · score ${f.score??"—"}</h1>
+  <div class="meta">Filed by ${lfStr(f.by)||"—"} · ${f.d} · status: ${f.status}${f.inc?" · "+f.inc:""}</div>
+  <table>${(f.snap||[]).map(l=>`<tr><td class="k">${l.k}</td><td>${l.v}</td><td class="p">${l.p||""}</td></tr>`).join("")}</table>
+  <div class="audit"><b>Audit trail</b><br>Submitted by ${lfStr(f.by)||"—"} on ${f.d}${f.decision?`<br>${f.decision.ok?"APPROVED":"REJECTED"} by ${f.decision.by} on ${f.decision.when||""}${f.decision.mit?" · mitigation: "+f.decision.mit:""}${f.decision.notes?" · notes: "+f.decision.notes:""}`:f.status==="PENDING SUPERVISOR"?"<br>Awaiting supervisor decision.":""}</div></div>`}
+function fratPdf(ids){
+ const recs=ids.map(id=>FRAT_LOG.find(f=>f.id===id)).filter(Boolean);
+ if(!recs.length){toast("<b>Select at least one FRAT first</b> — use the checkboxes in the archive table.","warn");return}
+ const w=window.open("","_blank");
+ w.document.write(`<html><head><title>FRAT audit — ${recs.length} record${recs.length>1?"s":""}</title><style>
+  body{font-family:Arial;padding:28px;color:#111}h1{font-size:17px;margin:0 0 2px}
+  .meta{font-size:12px;color:#444;margin-bottom:10px}
+  table{border-collapse:collapse;width:100%;margin-bottom:12px}td{border:1px solid #999;padding:4px 8px;font-size:11px;vertical-align:top}
+  td.k{width:26%;color:#555}td.p{width:14%;text-align:right;font-weight:700}
+  .audit{font-size:11px;border:1px solid #999;padding:8px;background:#f6f6f6}
+  .hdr{font-size:11px;color:#666;margin-bottom:16px}</style></head><body>
+  <div class="hdr">${OPERATOR&&OPERATOR.name?OPERATOR.name:"Air Operations"} — FRAT audit package · generated ${new Date().toLocaleString()} · ${recs.length} record(s) · powered by HERO Ops</div>
+  ${recs.map(f=>fratPdfDoc(w,f)).join("")}</body></html>`);
+ w.document.close();w.print()}
 function fratArchView(){
  const isSup=user.role==="SUPERVISOR";
  if(!isSup)return `<h1>FRAT <span>Archive</span></h1><div class="panel"><div class="lock">The FRAT archive is a supervisor function. Sign in as ${gateNameStr()} to view it.</div></div><button class="btn2" onclick="FR_PAGE='form';render()">← Back to FRAT</button>`;
@@ -1785,11 +1845,14 @@ function fratArchView(){
   <div><label class="lab">Risk</label><select onchange="FRA.risk=this.value;render()"><option value="">All</option>${["LOW","MODERATE","HIGH"].map(r=>`<option ${FRA.risk===r?'selected':''}>${r}</option>`).join("")}</select></div>
   <div><label class="lab">Status</label><select onchange="FRA.status=this.value;render()"><option value="">All</option>${["FILED","PENDING SUPERVISOR","APPROVED","REJECTED"].map(s=>`<option ${FRA.status===s?'selected':''}>${s}</option>`).join("")}</select></div>
  </div><div style="font-size:11px;color:var(--muted);margin-top:6px">${list.length} FRAT${list.length===1?"":"s"} match · records older than 2 years purge automatically from the archive (production backend enforces retention).</div></div>
- <div class="panel"><table class="fit-table"><thead><tr><th>FRAT</th><th>Date</th><th>Filed by</th><th>Aircraft</th><th>Score</th><th>Status</th></tr></thead><tbody>
-  ${list.map(f=>`<tr onclick="FRA_SEL=FRA_SEL===${f.id}?null:${f.id};render()" style="cursor:pointer"><td style="color:var(--red-bright);font-weight:700">#${f.id} →</td><td style="white-space:nowrap">${f.d}</td><td>${lfStr(f.by)||"—"}</td><td style="font-size:11px">${Object.keys(f.acs||{}).join(" / ")}</td><td><span class="chip ${f.risk==="HIGH"?"c-crit":f.risk==="MODERATE"?"c-warn":"c-good"}">${f.score??"—"}</span></td><td><span class="chip ${f.status==="REJECTED"?"c-crit":f.status==="APPROVED"?"c-good":f.status==="PENDING SUPERVISOR"?"c-warn":"c-gray"}" style="font-size:9px">${f.status||"FILED"}</span></td></tr>`).join("")||'<tr><td colspan="6" style="color:var(--muted);font-size:12px">No FRATs match these filters.</td></tr>'}
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
+  <button class="btn2" onclick="fratPdf(Object.keys(FRA_PDF).filter(k=>FRA_PDF[k]).map(Number))">🖨 Create audit PDF — ${Object.values(FRA_PDF).filter(Boolean).length} selected (one FRAT per page)</button>
+  <span style="font-size:10px;color:var(--muted)">tick the boxes to build a multi-FRAT audit package, or open any record for a single-record PDF</span></div>
+ <div class="panel"><table class="fit-table"><thead><tr><th></th><th>FRAT</th><th>Date</th><th>Filed by</th><th>Aircraft</th><th>Score</th><th>Status</th></tr></thead><tbody>
+  ${list.map(f=>`<tr onclick="FRA_SEL=FRA_SEL===${f.id}?null:${f.id};render()" style="cursor:pointer"><td onclick="event.stopPropagation()"><input type="checkbox" style="width:auto" ${FRA_PDF[f.id]?'checked':''} onchange="FRA_PDF[${f.id}]=this.checked;render()"></td><td style="color:var(--red-bright);font-weight:700">#${f.id} →</td><td style="white-space:nowrap">${f.d}</td><td>${lfStr(f.by)||"—"}</td><td style="font-size:11px">${Object.keys(f.acs||{}).join(" / ")}</td><td><span class="chip ${f.risk==="HIGH"?"c-crit":f.risk==="MODERATE"?"c-warn":"c-good"}">${f.score??"—"}</span></td><td><span class="chip ${f.status==="REJECTED"?"c-crit":f.status==="APPROVED"?"c-good":f.status==="PENDING SUPERVISOR"?"c-warn":"c-gray"}" style="font-size:9px">${f.status||"FILED"}</span></td></tr>`).join("")||'<tr><td colspan="6" style="color:var(--muted);font-size:12px">No FRATs match these filters.</td></tr>'}
  </tbody></table></div>
  ${sel?`<div class="panel accent" style="border-left:3px solid var(--gold)">
-  <h2 style="margin:0 0 4px;cursor:pointer" onclick="FRA_SEL=null;render()">FRAT #${sel.id} — full record <span style="font-size:10px;color:var(--muted);font-weight:400">▲ tap to collapse</span></h2>
+  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><h2 style="margin:0 0 4px;cursor:pointer" onclick="FRA_SEL=null;render()">FRAT #${sel.id} — full record <span style="font-size:10px;color:var(--muted);font-weight:400">▲ tap to collapse</span></h2><button class="btn2" onclick="fratPdf([${sel.id}])">🖨 Create PDF — audit copy</button></div>
   <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Filed by <b style="color:var(--silver-light)">${lfStr(sel.by)||"—"}</b> · ${sel.d} · score ${sel.score??"—"} (${sel.risk||"—"})${sel.inc?" · "+sel.inc:""}</div>
   ${(sel.snap||[]).map(l=>`<div style="display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid rgba(37,43,52,.5);padding:5px 0;font-size:12px"><span style="color:var(--muted);min-width:120px">${l.k}</span><span style="color:var(--silver-light);flex:1">${l.v}</span><b style="color:var(--warn);white-space:nowrap">${l.p}</b></div>`).join("")||'<div style="font-size:12px;color:var(--muted)">Line-by-line selections unavailable for this legacy record.</div>'}
   <div class="panel" style="margin-top:10px"><h2 style="font-size:13px">Audit trail</h2>
@@ -1807,7 +1870,7 @@ function pgFrat(){
   return `<h1>Flight Risk <span>Assessment</span></h1>
   <div class="sub">Nearly everything below scores itself — live weather by sector, crew readiness from the crew’s wearables, currency from the flight logs, aircraft status from maintenance. <b style="color:var(--gold)">HERO informs — it never decides:</b> every flight decision remains with your unit’s personnel, procedures and chain of command. The pilot picks the mission, the machine surfaces the risk. Filed by: <b style="color:var(--silver-light)">${user.full}</b> for the unit walking out the door.</div>
 
-  <div class="panel accent"><h2>1 · Deployment & flight type</h2>
+  <div class="panel accent" style="${FRAT_ERR.some(e=>e[0]==='ft')?'outline:2px solid var(--warn);outline-offset:2px':''}"><h2>1 · Deployment & flight type</h2>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
       <button class="btn2 ${FR.dep==='MISSION'?'on':''}" onclick="frDep('MISSION')">Mission / Deployment</button>
       <button class="btn2 ${FR.dep==='TRAINING'?'on':''}" onclick="frDep('TRAINING')">Training</button>
@@ -1815,7 +1878,7 @@ function pgFrat(){
     <div class="grid g2">
       <div><label class="lab">Flight type</label>
         <select onchange="frSet('ft',this.value||null)"><option value="">Select…</option>
-        ${FLIGHT_TYPES.map(f=>`<option value="${f.id}" ${FR.ft===f.id?'selected':''}>${f.name} (complexity +${f.cx})</option>`).join("")}</select></div>
+        ${[...FLIGHT_TYPES].sort((a,b)=>a.name.localeCompare(b.name)).map(f=>`<option value="${f.id}" ${FR.ft===f.id?'selected':''}>${f.name} (complexity +${f.cx})</option>`).join("")}</select></div>
       <div><label class="lab">Departure time (base local) ${timeStr?`· ${timeStr}`:""}</label>
         <input type="datetime-local" value="${FR.time}" onchange="frSet('time',this.value)">
         <div style="font-size:11px;margin-top:4px;color:${sc.np.phase==='DAY'?'#5BC97A':sc.np.phase==='TWILIGHT'?'var(--warn)':'#F27B7B'}">Auto: ${sc.np.phase} at ${OPERATOR.baseIcao}</div></div>
@@ -1825,7 +1888,7 @@ function pgFrat(){
     </div>
   </div>
 
-  <div class="panel accent"><h2>2 · Route & live weather</h2>
+  <div class="panel accent" style="${FRAT_ERR.some(e=>e[0]==='dest')?'outline:2px solid var(--warn);outline-offset:2px':''}"><h2>2 · Route & live weather</h2>
     <div class="grid g2">
       <div><label class="lab">Departing</label><div style="font-size:14px;color:var(--silver-light);padding:9px 0">${OPERATOR.baseName}</div></div>
       <div><label class="lab">Destination / incident sector</label>
@@ -1860,7 +1923,7 @@ function pgFrat(){
       ${TERRAIN_MANUAL.map((t,i)=>`<option value="${i}" ${FR.terrManual===i?'selected':''}>${t[0]} (+${t[1]})</option>`).join("")}</select>`:""}
   </div>
 
-  <div class="panel accent"><h2>3 · Aircraft & crews ${FR.acIds.length>1?`<span class="chip c-red">${FR.acIds.length}-SHIP DEPLOYMENT</span>`:""}</h2>
+  <div class="panel accent" style="${FRAT_ERR.some(e=>e[0]==='ac')?'outline:2px solid var(--warn);outline-offset:2px':''}"><h2>3 · Aircraft & crews ${FR.acIds.length>1?`<span class="chip c-red">${FR.acIds.length}-SHIP DEPLOYMENT</span>`:""}</h2>
     <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Select one aircraft — or several for a multi-ship deployment (e.g., Air 1 / Air 2 / Air 3 to a brush fire). Each aircraft gets its own crew and its own score.</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
       ${ACTIVE().filter(a=>!a.down||(sc.ft&&sc.ft.id==="maint")||FR.acIds.includes(a.n)).map(a=>`<button class="btn2 ${FR.acIds.includes(a.n)?'on':''}" ${a.down?'style="border-color:rgba(232,50,62,.7)"':''} onclick="frToggleAc('${a.n}')">${a.n} · ${a.cs}${a.down?' · 🔧 DOWN-MX':''}</button>`).join("")}
@@ -1911,7 +1974,8 @@ function pgFrat(){
     <div style="text-align:right;font-size:11px;color:var(--muted)">Medium ≥ ${TH.med} · High ≥ ${TH.high}<br>
     ${sc.nogo?'<b style="color:#F27B7B">⛔ Weather NO-GO — cannot submit</b>':sc.sup?'<b style="color:var(--warn)">⚠ Supervisor approval required (any aircraft ≥ '+TH.sup+')</b>':'<b style="color:#5BC97A">✓ No supervisor review needed</b>'}</div>
   </div>
-  <div class="panel"><button class="btn" ${sc.nogo||sc.mxNogo||!ready?"disabled":""} onclick="submitFrat()">Submit FRAT — filed by ${lf(user)}</button>
+  <div class="panel"><button class="btn" ${sc.nogo||sc.mxNogo?"disabled":""} onclick="submitFrat()">Submit FRAT — filed by ${lf(user)}</button>
+  ${FRAT_ERR.length?`<div class="banner b-warn" style="margin-top:10px;font-size:12px"><b>Complete these before submitting:</b><br>${FRAT_ERR.map(e=>"• "+e[1]).join("<br>")}</div>`:""}
   <button class="btn2" style="margin-left:10px" onclick="notifAsk()">🔔 Enable push on this device</button>
   ${isSup?`<button class="btn2" style="margin-left:10px" onclick="FR_PAGE='arch';render()">📁 FRAT Archive — all submitted FRATs</button>`:""}
   <span id="fratmsg" style="font-size:13px;margin-left:10px"></span></div>
@@ -1967,8 +2031,13 @@ function fratSnap(sc){
 }
 function submitFrat(){const sc=scoreFrat2();
   if(sc.nogo||sc.mxNogo)return;
+  FRAT_ERR=[];
+  if(!FR.ft)FRAT_ERR.push(["ft","Deployment & flight type (section 1) — choose a flight type"]);
+  if(!FR.dest)FRAT_ERR.push(["dest","Route & live weather (section 2) — set the destination"]);
+  if(!FR.acIds.length)FRAT_ERR.push(["ac","Aircraft & crews (section 3) — select at least one aircraft"]);
+  if(FRAT_ERR.length){toast("<b>⛔ FRAT not submitted</b> — required areas are highlighted in yellow below the button.","warn");render();return}
   const desc=(FR.inc?FR.inc+" · ":"")+(sc.ft?sc.ft.name:"Flight")+" → "+(FR.dest==="outside"?"outside district":(sc.destSec?sc.destSec.name:""))+(FR.acIds.length>1?" · "+FR.acIds.length+" aircraft":"");
-  const newId=58+FRAT_LOG.length;
+  const newId=Math.max(0,...FRAT_LOG.map(f=>f.id))+1;
   FRAT_LOG.unshift({id:newId,by:lf(user),score:sc.worst,risk:sc.worst>=TH.high?"HIGH":sc.worst>=TH.med?"MODERATE":"LOW",status:sc.sup?"PENDING SUPERVISOR":"FILED",snap:fratSnap(sc),d:fmt(new Date(FR.time))+" · "+new Date(FR.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),inc:FR.inc||"",ft:FR.ft||"",acs:Object.fromEntries(FR.acIds.map(id=>{
     const cr=crewOf(id);const scores=cr.map(p=>READINESS[p.id].score);
     const stamp=cr.map(p=>p.full.split(" ").slice(-1)[0]+" "+READINESS[p.id].score).join(" · ");
@@ -2012,11 +2081,11 @@ const SEAT_TASKS={
  sic:["PILOT-IN-COMMAND","NIGHT PROFICIENCY","NIGHT VISION GOGGLES","INSTRUMENT FLIGHT RULES"],
  hoist:["HOIST OPERATOR","AW-139 DAY HOIST","AW-139 NIGHT HOIST","TRAIL LINE OPERATION"],
  rescuer:["RESCUER POSITION","LAND CAPTURE RESCUE","SWIFTWATER CAPTURE RESCUE"],
- safety:["SAFETY POSITION"],
+ safety:["SAFETY POSITION","SECOND RESCUER DOWN"],
  helitac:["HELITAC CREW MEMBER"]};
 const SEATS=[["pic","PIC"],["sic","SIC / Copilot"],["hoist","Crew Chief / Hoist Operator"],["rescuer","Rescuer"],["safety","Safety Member"]];
 let FL=null;
-function newFlight(){FL={dep:"MISSION",inc:"",ac:null,ft:"",fratSel:"",prefillNote:"",timeOut:defaultTimeLocal(),timeIn:defaultTimeLocal(),
+function newFlight(){FL={dep:"MISSION",inc:"",ac:null,ft:"",cxlWhere:"Cancelled on ramp",fratSel:"",prefillNote:"",timeOut:defaultTimeLocal(),timeIn:defaultTimeLocal(),
  tachS:"",tachE:"",mtachS:"",mtachE:"",crew:{},acts:{},curr:{},
  c:{ldD:0,ldN:0,hook:0,drops:0,hoistCy:0,hoistLen:0,cond:false,e1:0,e2:0,nvg:0,ifr:0,mtn:0},
  pax:{fd:0,ess:0,civ:0,trauma:0,med:0,nonmed:0},
@@ -2148,7 +2217,7 @@ function flDetView(){
     const iso=(typeof d.d==="string"&&/^\d{4}-/.test(d.d))?d.d:us2iso(d.d||f.d);
     return `<div><label class="lab">Date</label><input type="date" value="${iso}" onchange="FL_DRAFT['d']=this.value"></div>
     <div><label class="lab">Time</label><input type="time" value="${d.tm??f.tm??""}" onchange="FL_DRAFT['tm']=this.value"></div>`})()}
-   ${e?`<div><label class="lab">Flight type</label><select onchange="FL_DRAFT['type']=this.value">${[...new Set([f.type,...FLIGHT_TYPES.map(t=>t.name)])].filter(Boolean).map(t=>`<option ${((d.type??f.type)===t)?'selected':''}>${t}</option>`).join("")}</select></div>
+   ${e?`<div><label class="lab">Flight type</label><select onchange="FL_DRAFT['type']=this.value">${[...new Set([f.type,...FLIGHT_TYPES.map(t=>t.name)])].filter(Boolean).sort((a,b)=>a.localeCompare(b)).map(t=>`<option ${((d.type??f.type)===t)?'selected':''}>${t}</option>`).join("")}</select></div>
    <div><label class="lab">Mission / Training</label><select onchange="FL_DRAFT['dep']=this.value">${["MISSION","TRAINING"].map(t=>`<option ${((d.dep??f.dep)===t)?'selected':''}>${t}</option>`).join("")}</select></div>`
    :fld("type","Flight type")}
    ${fld("inc","Incident #")}
@@ -2204,7 +2273,7 @@ function pgFlights(){
  <div class="panel accent"><h2>1 · Aircraft &amp; classification</h2>
   <div class="grid g3">
    <div><label class="lab">Aircraft</label><select onchange="flAc(this.value)"><option value="">Select aircraft…</option>${ACTIVE().map(x=>`<option value="${x.n}" ${FL.ac===x.n?'selected':''}>${x.n} · ${x.cs}</option>`).join("")}</select></div>
-   <div><label class="lab">Flight type</label><select onchange="flSet('ft',this.value)"><option value="">Select…</option>${FLIGHT_TYPES.map(f=>`<option value="${f.id}" ${FL.ft===f.id?'selected':''}>${f.name}</option>`).join("")}</select></div>
+   <div><label class="lab">Flight type</label><select onchange="flSet('ft',this.value)"><option value="">Select…</option>${[...FLIGHT_TYPES].sort((a,b)=>a.name.localeCompare(b.name)).map(f=>`<option value="${f.id}" ${FL.ft===f.id?'selected':''}>${f.name}</option>`).join("")}</select></div>
    <div><label class="lab">Linked FRAT</label><select onchange="flFrat(this.value)"><option value="">— none —</option>${FRAT_LOG.map(f=>`<option value="${f.id}" ${FL.fratSel==f.id?'selected':''}>FRAT #${f.id}${f.d?" · "+f.d:""} · ${Object.keys(f.acs||{}).join(" / ")}${f.inc?" · "+f.inc:""}${FL.ac&&f.acs&&!f.acs[FL.ac]?" (no "+FL.ac+" on this FRAT)":""}</option>`).join("")}</select></div>
   </div>
   ${FL.prefillNote?`<div class="banner b-good" style="font-size:12px">✓ ${FL.prefillNote}</div>`:""}
@@ -2215,9 +2284,9 @@ function pgFlights(){
   </div></div>
 
  ${a?`<div class="panel accent"><h2>2 · Times &amp; tach ${sunStr?`<span style="font-size:11px;color:var(--muted);font-weight:400">· ${sunStr}</span>`:""}</h2>
-  <div class="grid g2">
+  <div style="max-width:340px">
    <div><label class="lab">Time out</label><input type="datetime-local" value="${FL.timeOut}" onchange="flSet('timeOut',this.value)"></div>
-   <div><label class="lab">Time in</label><input type="datetime-local" value="${FL.timeIn}" onchange="flSet('timeIn',this.value)"></div>
+   <div style="margin-top:10px"><label class="lab">Time in</label><input type="datetime-local" value="${FL.timeIn}" onchange="flSet('timeIn',this.value)"></div>
   </div>
   ${sp.bad?'<div class="banner b-warn" style="font-size:12px">Set time in after time out to compute the day/night split.</div>':`<div class="banner ${sp.hasNight?'b-warn':'b-good'}" style="font-size:12px">Auto day/night split: <b>${sp.day} day</b> · <b>${sp.night} night</b></div>`}
   <table class="tachtab" style="margin-top:12px"><thead><tr><th></th><th>Current (aircraft)</th><th>Start</th><th>End</th><th>Total</th></tr></thead><tbody>
@@ -2231,7 +2300,10 @@ function pgFlights(){
     <td class="cond" style="font-size:18px;color:${mtachTot>0?'#5BC97A':'var(--muted)'}">${mtachTot!=null?mtachTot.toFixed(1):"—"}</td></tr>
   </tbody></table>
   ${oosWarn?`<div class="banner b-warn" style="font-size:12px">⏪ These tach times are behind the aircraft's current reading — this files as an <b>out-of-sequence (backfill) entry</b>: inserted in tach order, aircraft totals and other pilots' logs untouched.</div>`:""}
-  <label class="opt ${FL.cancelled?'sel':''}" style="cursor:pointer;margin-top:12px;max-width:420px"><span><b style="color:${FL.cancelled?'#F27B7B':'var(--text)'}">CANCELLED</b> — incident/flight cancelled before or during launch</span><input type="checkbox" style="width:auto" ${FL.cancelled?'checked':''} onchange="flSet('cancelled',this.checked)"></label>
+  <div style="margin-top:12px;max-width:420px">
+   <label class="opt ${FL.cancelled?'sel':''}" style="cursor:pointer;border:1px solid var(--warn);background:${FL.cancelled?'rgba(232,185,59,.16)':'rgba(232,185,59,.06)'}"><span><b style="color:var(--warn)">CANCELLED?</b> — incident/flight cancelled before or during launch</span><input type="checkbox" style="width:auto" ${FL.cancelled?'checked':''} onchange="flSet('cancelled',this.checked)"></label>
+   ${FL.cancelled?`<div style="margin-top:8px"><label class="lab">Where was it cancelled?</label><select onchange="flSet('cxlWhere',this.value)">${["Cancelled on ramp","Cancelled en route","Cancelled on scene"].map(o=>`<option ${(FL.cxlWhere||"Cancelled on ramp")===o?'selected':''}>${o}</option>`).join("")}</select></div>`:""}
+  </div>
  </div>`:""}
 
  <div class="panel accent"><h2>3 · Crew &amp; readiness stamp</h2>
@@ -2259,7 +2331,9 @@ function pgFlights(){
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
       <b class="cond" style="color:var(--silver-light);font-size:15px;letter-spacing:1px">${x.p.full}</b>
       <span style="font-size:11px;color:var(--red-bright);font-weight:600;text-transform:uppercase">${x.slot==="helitac"?"Helitac Member":SEATS.find(s=>s[0]===x.slot)[1]}</span></div>
-    <table class="currtab"><tbody>${(()=>{const tasks=SEAT_TASKS[x.slot].filter(t=>{const n=t.includes("NIGHT");const d=t.includes("DAY")&&!n;if(n&&!effNight)return false;if(d&&!effDay)return false;return true});let rows="";
+    <table class="currtab"><tbody>${(()=>{let baseTasks=SEAT_TASKS[x.slot];
+      if(x.slot==="safety"&&FL.curr[x.p.id+"|SECOND RESCUER DOWN"])baseTasks=[...baseTasks,...SEAT_TASKS.rescuer.filter(t=>!baseTasks.includes(t))];
+      const tasks=baseTasks.filter(t=>{const n=t.includes("NIGHT");const d=t.includes("DAY")&&!n;if(n&&!effNight)return false;if(d&&!effDay)return false;return true});let rows="";
       for(let i=0;i<tasks.length;i+=2){
         rows+="<tr>"+[tasks[i],tasks[i+1]].map(t=>t?`<td style="width:50%"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" style="width:auto" ${FL.curr[x.p.id+"|"+t]?'checked':''} onchange="flCurr('${x.p.id}','${t}')"><span>${t}</span></label></td>`:"<td></td>").join("")+"</tr>";}
       return rows})()}</tbody></table></div>`).join("")}
@@ -2337,7 +2411,7 @@ function pgFlights(){
 
  <div class="panel"><h2>Flight history <span style="font-size:10px;color:var(--muted);font-weight:400">· tap any flight to open the full record & audit trail</span></h2>
   <table><thead><tr><th>ID</th><th>Date</th><th>Aircraft</th><th>Type</th><th>Mission</th><th>PIC</th><th>D/N hrs</th><th>Ldg D/N</th><th>Tach</th><th>Safety</th></tr></thead><tbody>
-  ${FLIGHTS.map(f=>`<tr onclick="FL_VIEW='det';FL_DET=${f.id};FL_EDIT=false;render()" style="cursor:pointer"><td>#${f.id}${f.oos?' <span class="chip c-blue" style="font-size:8px">OOS</span>':''}${f.sync==="PENDING"?' <span class="chip c-warn" style="font-size:8px">⟳ SYNC PENDING</span>':''}${f.cancelled?' <span class="chip c-crit" style="font-size:8px">CANCELLED</span>':''}</td><td style="white-space:nowrap">${f.d}${f.tm?'<br><span style="font-size:10px;color:var(--muted)">'+f.tm+'</span>':''}</td><td>${f.ac}</td><td style="font-size:11px">${f.dep==="MISSION"?(f.inc||"MISSION — no incident #"):"TRAINING"}</td><td style="font-size:12px">${f.type}</td><td>${lfStr(f.pic)}</td><td>${(f.hrs-f.night).toFixed(1)} / ${f.night.toFixed(1)}</td><td>${f.ldD??"—"} / ${f.ldN??"—"}</td><td style="font-size:11px">${f.tachS?.toFixed?f.tachS.toFixed(1):f.tachS}→${f.tachE?.toFixed?f.tachE.toFixed(1):f.tachE}</td>
+  ${FLIGHTS.map(f=>`<tr onclick="FL_VIEW='det';FL_DET=${f.id};FL_EDIT=false;render()" style="cursor:pointer"><td>#${f.id}${f.oos?' <span class="chip c-blue" style="font-size:8px">OOS</span>':''}${f.sync==="PENDING"?' <span class="chip c-warn" style="font-size:8px">⟳ SYNC PENDING</span>':''}${f.cancelled?` <span class="chip c-crit" style="font-size:8px">CANCELLED${f.cxlWhere?" · "+f.cxlWhere.replace("Cancelled ","").toUpperCase():""}</span>`:''}</td><td style="white-space:nowrap">${f.d}${f.tm?'<br><span style="font-size:10px;color:var(--muted)">'+f.tm+'</span>':''}</td><td>${f.ac}</td><td style="font-size:11px">${f.dep==="MISSION"?(f.inc||"MISSION — no incident #"):"TRAINING"}</td><td style="font-size:12px">${f.type}</td><td>${lfStr(f.pic)}</td><td>${(f.hrs-f.night).toFixed(1)} / ${f.night.toFixed(1)}</td><td>${f.ldD??"—"} / ${f.ldN??"—"}</td><td style="font-size:11px">${f.tachS?.toFixed?f.tachS.toFixed(1):f.tachS}→${f.tachE?.toFixed?f.tachE.toFixed(1):f.tachE}</td>
   <td>${f.hazNeeded?(f.hazFiled?'<span class="chip c-good" style="font-size:9px">✓ HAZARD/SAFETY REPORT FILED</span>':'<span class="chip c-crit" style="font-size:9px">⚠ REPORT REQUIRED — NOT FILED</span>'):'<span class="chip c-gray" style="font-size:9px">—</span>'}</td></tr>
   <tr><td></td><td colspan="9" style="font-size:10px;color:var(--muted);padding-top:0">Readiness — start${f.avgS!=null?" (avg "+f.avgS+")":""}: ${f.stamp||"—"}${f.stampEnd?" · end (avg "+f.avgE+"): "+f.stampEnd+" · Δ "+(f.avgE-f.avgS):""}${f.currLog?" · Currencies stamped: "+f.currLog:""}</td></tr>`).join("")}
   </tbody></table></div>`;
@@ -2369,7 +2443,7 @@ function submitFlight(){
   pic:picP?picP.full:user.full,hrs:sp.day+sp.night,night:sp.night,
   ldD:(sp.hasDay||sp.bad)?FL.c.ldD:null,ldN:(sp.hasNight||sp.bad)?FL.c.ldN:null,
   tachS:s,tachE:e,appr:+FL.c.appr||0,holds:+FL.c.holds||0,aar:!!(FL.brief.post&&FL.what.trim()),hazNeeded:FL.hazNeeded,hazFiled:false,oos,sync:netOnline()?"SYNCED":"PENDING",
-  stamp,stampEnd,avgS,avgE,cancelled:FL.cancelled,audit:[{by:lf(user),when:new Date().toLocaleString(),act:"SUBMITTED"}],crewIds:{...FL.crew},paxTotal:(FL.pax.fd+FL.pax.ess+FL.pax.civ+FL.pax.trauma+FL.pax.med+FL.pax.nonmed),currLog:currList.length?currList.length+" item(s) across "+new Set(currList.map(k=>k.split("|")[0])).size+" crew":""});
+  stamp,stampEnd,avgS,avgE,cancelled:FL.cancelled,cxlWhere:FL.cancelled?(FL.cxlWhere||"Cancelled on ramp"):"",audit:[{by:lf(user),when:new Date().toLocaleString(),act:"SUBMITTED"}],crewIds:{...FL.crew},paxTotal:(FL.pax.fd+FL.pax.ess+FL.pax.civ+FL.pax.trauma+FL.pax.med+FL.pax.nonmed),currLog:currList.length?currList.length+" item(s) across "+new Set(currList.map(k=>k.split("|")[0])).size+" crew":""});
  FLIGHTS.sort((x,y)=>(y.tachS??0)-(x.tachS??0));
  a.tach=Math.max(a.tach,e);
  if(FL.mtachE)a.mtach=Math.max(a.mtach,+FL.mtachE);
