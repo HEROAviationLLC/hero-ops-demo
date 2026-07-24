@@ -187,7 +187,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g8 — 2026-07-24 · all people, aircraft & records are fictional</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g9 — 2026-07-24 · all people, aircraft & records are fictional</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
@@ -619,14 +619,23 @@ function acRetire(n){const a=AIRCRAFT.find(x=>x.n===n);a.ret=true;a.retDate=fmt(
  toast("<b>"+a.n+" retired from the fleet.</b> Its complete history is preserved under Retired Aircraft (view-only); it can no longer be selected for FRATs, flights or preflights.","warn");render()}
 const SEVN={A:5,B:4,C:3,D:2,E:1};
 function hazRisk(P,S){if(!P||!S)return "UNSCORED";const sc=P*SEVN[S];return sc>=15?"HIGH":(sc>=8?"MEDIUM":"LOW")}
+/* SMS §3.8 definitions — surfaced as hover tooltips on every matrix tile */
+const PROB_DEF={5:"Frequent — likely to occur many times (has occurred frequently)",4:"Occasional — likely to occur sometimes (has occurred infrequently)",3:"Remote — unlikely to occur, but possible (has occurred rarely)",2:"Improbable — very unlikely to occur (not known to have occurred)",1:"Extremely improbable — almost inconceivable that the event will occur"};
+const SEV_DEF={A:"Catastrophic — equipment destroyed · fatal injury · property loss > $1M",B:"Critical — large reduction in safety margins; serious injury resulting in disability · major equipment damage · loss > $100k",C:"Major — significant reduction in safety margins / crew efficiency impaired · serious incident · lost-work-time injury · loss > $10k",D:"Minor — nuisance · no-lost-time injury · use of emergency procedures · minor incident",E:"Negligible — little consequences"};
+const TOL_ZONE={};
+[["RED — Unacceptable under the existing circumstances. The action or event must not be undertaken; imperative that risk be reduced to proceed.",["5A","5B","5C","4A","4B"]],
+ ["YELLOW — May only proceed with the approval of the Fire Chief (may be a standing approval tied to a previous risk assessment).",["5D","5E","4C","3A","3B","2A"]],
+ ["GREEN — May only proceed with management approval if no standing policy or procedure contains existing controls.",["4D","4E","3C","3D","3E","2B","2C","1A","1B"]],
+ ["BLUE — The action or event is acceptable.",["2D","2E","1C","1D","1E"]]].forEach(([txt,codes])=>codes.forEach(k=>TOL_ZONE[k]=txt));
+function riskTip(P,S){return "P"+P+" · "+PROB_DEF[P]+"\nSev "+S+" · "+SEV_DEF[S]+"\n\nTolerability "+P+S+": "+(TOL_ZONE[P+S]||"")}
 function hzScore(id,P,S){const h=HAZARDS.find(x=>x.id===id);h.P=P;h.S=S;toast("<b>✓ Risk assigned:</b> "+P+S+" — "+hazRisk(P,S));render()}
 function riskMatrix(h){/* clickable 5×5 per SMS §3.8 — Safety Officer only */
  let out='<table style="border-collapse:collapse;margin-top:8px"><tr><td></td>'+[1,2,3,4,5].map(p=>`<td style="font-size:9px;color:var(--muted);text-align:center;padding:2px 4px">P${p}</td>`).join("")+"</tr>";
  ["A","B","C","D","E"].forEach(S=>{out+=`<tr><td style="font-size:9px;color:var(--muted);padding:2px 4px">${S}</td>`+[1,2,3,4,5].map(P=>{
   const sc=P*SEVN[S];const bg=sc>=15?"rgba(208,59,59,.45)":sc>=8?"rgba(232,185,59,.4)":"rgba(47,168,79,.35)";
   const sel=h.P===P&&h.S===S;
-  return `<td onclick="hzScore(${h.id},${P},'${S}')" style="cursor:pointer;width:26px;height:22px;text-align:center;font-size:9px;font-weight:700;background:${bg};border:${sel?"2px solid #fff":"1px solid rgba(10,11,13,.6)"};color:var(--silver-light)">${P}${S}</td>`}).join("")+"</tr>"});
- return out+"</table>"}
+  return `<td onclick="hzScore(${h.id},${P},'${S}')" title="${riskTip(P,S)}" style="cursor:pointer;width:26px;height:22px;text-align:center;font-size:9px;font-weight:700;background:${bg};border:${sel?"2px solid #fff":"1px solid rgba(10,11,13,.6)"};color:var(--silver-light)">${P}${S}</td>`}).join("")+"</tr>"});
+ return out+'</table><div style="font-size:9px;color:var(--muted);margin-top:3px">Hover any tile for the SMS §3.8 probability / severity definitions and the tolerability decision requirement.</div>'}
 function riskColor(r){return r==="HIGH"?"c-crit":(r==="MEDIUM"?"c-warn":"c-good")}
 
 /* ================= STATE ================= */
@@ -2515,7 +2524,10 @@ function hzLinkInfo(v){const el=document.getElementById("hz-auto");if(!el)return
     if(g("hz-op")){g("hz-op").value=op;hzOpChange(op)}}
    /* crew, pilot, passengers from the flight's seat map */
    const nameOf=id=>{const p=PEOPLE.find(x=>x.id===id);return p?p.full:null};
-   const setSel=(elId,name)=>{const s=g(elId);if(!s)return;s.value="";if(name)[...s.options].forEach(o=>{if(o.textContent===name)s.value=o.value||o.textContent})};
+   const setSel=(elId,name)=>{const s=g(elId);if(!s)return;s.value="";if(!name)return;
+    const p=PEOPLE.find(x=>x.full===name||lf(x)===name||lfStr(name)===lf(x));
+    const wants=[name,p?lf(p):null,p?p.full:null,lfStr(name)].filter(Boolean);
+    [...s.options].forEach(o=>{if(wants.includes(o.textContent))s.value=o.value||o.textContent})};
    const c=f.crewIds||{};
    setSel("hz-pic",nameOf(c.pic)||f.pic);
    setSel("hz-sic",nameOf(c.sic));
@@ -2614,8 +2626,12 @@ function pgHaz(){
      <div style="flex:1;min-width:260px">
       <label class="opt ${h.committee?'sel':''}" style="cursor:pointer;margin-bottom:8px"><span><b>Safety Committee required</b><br><span style="font-size:11px;color:var(--muted)">Internal group convenes on this report — push notifies SUPERVISORS</span></span><input type="checkbox" style="width:auto" ${h.committee?'checked':''} onchange="hzFlag(${h.id},'committee',this.checked)"></label>
       <label class="opt ${h.sag?'sel':''}" style="cursor:pointer;margin-bottom:8px"><span><b>Safety Action Group required</b><br><span style="font-size:11px;color:var(--muted)">Beyond in-house — external agencies/manufacturer involved — push notifies UPPER MANAGEMENT + SUPERVISORS</span></span><input type="checkbox" style="width:auto" ${h.sag?'checked':''} onchange="hzFlag(${h.id},'sag',this.checked)"></label>
-      <button class="btn2" onclick="toggleRedact(${h.id})">${h.redacted?"Un-redact":"Redact (just culture)"}</button>
-     </div></div></div>`
+      <button class="btn2" onclick="toggleRedact(${h.id})">${h.redacted?"Un-redact":"🕶 Redact (just culture)…"}</button>
+      ${h.redacted?`<div class="banner b-good" style="font-size:11px;margin-top:8px"><b>Published de-identified summary</b> (what the crew sees):<br>${h.pub}</div>`:""}
+     </div></div>
+    ${RED_EDIT===h.id?`<div class="banner b-warn" style="margin-top:10px;font-size:12px"><b>Redact before publish — just culture.</b> Names, emails and phone numbers below were stripped automatically; review and edit, then publish. The full original stays untouched for the Safety Officer.
+     <textarea rows="4" style="margin-top:8px" oninput="HAZARDS.find(x=>x.id===${h.id})._redDraft=this.value">${h._redDraft||""}</textarea>
+     <div style="margin-top:8px"><button class="btn" onclick="redactPublish(${h.id})">Publish redacted version</button> <button class="btn2" onclick="redactCancel()">Cancel</button></div></div>`:""}</div>`
    :`<div class="panel"><div class="lock">Risk assignment, committee/action-group escalation, and redaction are Safety Officer functions.</div></div>`}
    ${(isSup||isMgr(user))?`
    <div class="panel"><h2>Corrective actions — report #${h.id}</h2>
@@ -2642,11 +2658,20 @@ function pgHaz(){
     ${(h.audit&&h.audit.length)?h.audit.map(a=>`<div style="font-size:12px;border-bottom:1px solid rgba(37,43,52,.5);padding:5px 0"><b style="color:var(--silver-light)">${a.by}</b> — ${a.act} <span style="color:var(--muted)">· ${a.when}</span></div>`).join(""):'<div style="font-size:12px;color:var(--muted)">No changes recorded yet — every edit, escalation, corrective action and closure will be logged here.</div>'}
    </div>`:""}`}
   }
-  const sorted=[...HAZARDS].sort((a,b)=>{if(!!a.opened!==!!b.opened)return a.opened?1:-1;return parseD(b.d)-parseD(a.d)});
+  let sorted=[...HAZARDS].sort((a,b)=>{if(!!a.opened!==!!b.opened)return a.opened?1:-1;return parseD(b.d)-parseD(a.d)});
   const unopened=sorted.filter(h=>!h.opened).length;
   if(HZ_ARCH)return hazArchView(isSup);
+  if(HLIST.status)sorted=sorted.filter(h=>HLIST.status==="OPENISH"?h.status!=="CLOSED":h.status===HLIST.status);
+  if(HLIST.from)sorted=sorted.filter(h=>parseD(h.d)>=new Date(HLIST.from+"T00:00"));
+  if(HLIST.to)sorted=sorted.filter(h=>parseD(h.d)<=new Date(HLIST.to+"T23:59"));
+  const filtBar=`<div class="panel" style="padding:10px 14px;margin-bottom:8px"><div class="grid g3">
+   <div><label class="lab">Status</label><select onchange="HLIST.status=this.value;render()"><option value="">All reports</option><option value="OPENISH" ${HLIST.status==="OPENISH"?'selected':''}>All open (not closed)</option>${[...new Set(HAZARDS.map(h=>h.status))].map(s=>`<option ${HLIST.status===s?'selected':''}>${s}</option>`).join("")}</select></div>
+   <div><label class="lab">From</label><input type="date" value="${HLIST.from}" onchange="HLIST.from=this.value;render()"></div>
+   <div><label class="lab">To</label><input type="date" value="${HLIST.to}" onchange="HLIST.to=this.value;render()"></div>
+  </div><div style="font-size:10px;color:var(--muted);margin-top:4px">${sorted.length} report${sorted.length===1?"":"s"} shown${HLIST.status||HLIST.from||HLIST.to?` · <span style="cursor:pointer;text-decoration:underline" onclick="HLIST={status:'',from:'',to:''};render()">clear filters</span>`:""}</div></div>`;
   return `<h1>Hazard <span>Reporting</span></h1><div class="sub">File below; tap any report summary to open the full detail — risk is assigned there. ${isSup&&unopened?`<b style="color:var(--warn)">${unopened} new report${unopened>1?"s":""} awaiting review (highlighted, pinned to top).</b>`:""} Opened reports sort by date, newest first.</div>
   ${hazForm}
+  ${filtBar}
   ${sorted.map(h=>{const r=hazRisk(h.P,h.S),red=h.redacted&&!isSup;
    return `<div class="panel" onclick="openHz(${h.id})" style="cursor:pointer;padding:11px 14px;margin-bottom:8px;${!h.opened?'border:1px solid var(--warn);background:rgba(232,185,59,.05)':''}">
     <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;align-items:center">
@@ -2655,7 +2680,7 @@ function pgHaz(){
     </div></div>`}).join("")}
   <div style="margin-top:14px"><button class="btn2" onclick="HZ_ARCH=true;render()">📁 Hazard Report Archive & Search — 5-year retention</button></div>`;
 }
-let HZ_ARCH=false,HZA={from:"",to:"",cat:"",sub:"",status:"",risk:"",q:""};
+let HZ_ARCH=false,HZA={from:"",to:"",cat:"",sub:"",status:"",risk:"",q:""},HLIST={status:"",from:"",to:""};
 function hazArchView(isSup){
  const cutoff=new Date();cutoff.setFullYear(cutoff.getFullYear()-5);
  let list=HAZARDS.filter(h=>parseD(h.d)>=cutoff);
@@ -2683,7 +2708,27 @@ function hazArchView(isSup){
   ${list.map(h=>{const r=hazRisk(h.P,h.S);return `<tr onclick="HZ_ARCH=false;openHz(${h.id})" style="cursor:pointer"><td style="color:var(--red-bright);font-weight:700">#${h.id} →</td><td style="white-space:nowrap">${h.d}</td><td style="font-size:11px">${h.cat}</td><td style="font-size:11px">${h.sub||"—"}</td><td><span class="chip ${r==="UNSCORED"?"c-gray":riskColor(r)}" style="font-size:9px">${r}</span></td><td><span class="chip ${h.status==="CLOSED"?"c-gray":"c-warn"}" style="font-size:9px">${h.status}</span></td></tr>`}).join("")||'<tr><td colspan="6" style="color:var(--muted);font-size:12px">No reports match these filters.</td></tr>'}
  </tbody></table><div style="font-size:11px;color:var(--muted);margin-top:6px">Tap any report to open the full record with its change history.</div></div>`;
 }
-function toggleRedact(id){const h=HAZARDS.find(x=>x.id===id);h.redacted=!h.redacted;render()}
+let RED_EDIT=null;
+function hzAutoRedact(h){
+ let t=String(h.desc||"");
+ PEOPLE.forEach(p=>{const roleTag=p.so?"[SAFETY OFFICER]":p.pilot?"[PILOT]":"[CREW MEMBER]";
+  const last=p.full.split(" ").slice(-1)[0];
+  [p.full,lf(p),last].filter(n=>n&&n.length>2).forEach(n=>{t=t.split(n).join(roleTag)});});
+ t=t.replace(/[\w.+-]+@[\w-]+\.[\w.]+/g,"[EMAIL REMOVED]").replace(/\b\(?\d{3}\)?[ .-]?\d{3}[ .-]?\d{4}\b/g,"[PHONE REMOVED]");
+ return t}
+function redactStart(id){const h=HAZARDS.find(x=>x.id===id);
+ h._redDraft=(h.pub&&h.pub!=="De-identified summary pending Safety Officer review.")?h.pub:hzAutoRedact(h);
+ RED_EDIT=id;render()}
+function redactPublish(id){const h=HAZARDS.find(x=>x.id===id);
+ const t=(h._redDraft||"").trim();
+ if(!t){toast("<b>⛔ The redacted summary can't be empty.</b>","warn");return}
+ h.pub=t;h.redacted=true;RED_EDIT=null;hzLog(id,"Redacted version published (just culture) — names & sensitive info removed");
+ toast("<b>✓ Redacted version published.</b> Crew now see the de-identified summary; the full report stays visible to the Safety Officer only.");render()}
+function redactCancel(){RED_EDIT=null;render()}
+function toggleRedact(id){const h=HAZARDS.find(x=>x.id===id);
+ if(!h.redacted){redactStart(id);return}
+ if(!confirm("Un-redact report #"+id+"? The full description and names become visible to all crew again."))return;
+ h.redacted=false;hzLog(id,"Un-redacted — full report visible to crew");render()}
 
 /* ============ SAFETY MGMT: corrective actions · meetings · documents ============ */
 let safView="ca";
@@ -2704,10 +2749,16 @@ let MEETINGS=[
    if(r<6)m.attend[p.id]={yes:true,mode:r%3===0?"ONLINE":"IN-PERSON",duty:r%2?"ON":"OFF"};
    else if(r<8)m.attend[p.id]={yes:false};});});})();
 let DOCS=[
- {name:"General Operating Manual (GOM)",ver:"—",eff:"—",by:"Joel Smith",ack:{}},
- {name:"SMS Manual",ver:"—",eff:"—",by:"Joel Smith",ack:{}},
- {name:"Emergency Response Plan",ver:"—",eff:"—",by:"Joel Smith",ack:{}}
+ {name:"General Operating Manual (GOM)",ver:"—",eff:"—",by:"Joel Smith",ack:{},views:{},aud:"ALL",file:null},
+ {name:"SMS Manual",ver:"—",eff:"—",by:"Joel Smith",ack:{},views:{},aud:"ALL",file:null},
+ {name:"Emergency Response Plan",ver:"—",eff:"—",by:"Joel Smith",ack:{},views:{},aud:"ALL",file:null}
 ];
+let NOTAPS=[],NP_NEW={name:"",aud:"ALL"};
+const DOC_AUDS={ALL:"Entire unit",PILOTS:"Pilots only",HT:"Helitac",MGRS:"Managers / Safety"};
+function docAudience(aud){const ppl=PEOPLE.filter(p=>!p.display);
+ return aud==="PILOTS"?ppl.filter(p=>p.pilot):aud==="HT"?ppl.filter(p=>p.ht1||p.ht2):aud==="MGRS"?ppl.filter(p=>p.mgr||p.so):ppl}
+function docOf(kind,i){return kind==="np"?NOTAPS[i]:DOCS[i]}
+function rankStr(p){return p.pilot&&p.rank?"Pilot "+p.rank:(p.pos||"—")}
 function caAdvance(id){const c=CACTIONS.find(x=>x.id===id);c.status=c.status==="OPEN"?"IN PROGRESS":"COMPLETED";hzLog(c.haz,"Corrective action CA-"+c.id+" advanced → "+c.status);render()}
 const AGENDA_FIELDS=[["when","Date & time","datetime-local"],["fac","Facilitator",null],["loc","Location",null],["aero","Aeromedic update — presenter & topics",null],["pilot","Pilot update — presenter & topics",null],["crash","Crash update — presenter & topics",null],["helitac","Helitac update — presenter & topics",null],["training","Training topics",null]];
 let MTG_NEW={when:"",fac:lf(PEOPLE.find(p=>p.so&&!p.display)||{})||"",loc:"Air Operations Section - Main Conference Room",aud:{all:true},aero:"",pilot:"",crash:"",helitac:"",training:""};
@@ -2775,6 +2826,16 @@ function attRoster(m){
    ${L.no.map(p=>`<div style="font-size:12px;color:#F27B7B;padding:3px 0">${lf(p)} — <b>NO</b></div>`).join("")}
    ${L.none.map(p=>`<div style="font-size:12px;color:var(--muted);padding:3px 0">${lf(p)}</div>`).join("")}</div></div>
  <div style="font-size:10px;color:var(--muted);margin-top:6px">Attendance is captured for payroll: in-person vs online and on-duty vs off-duty pay different rates. Lists are alphabetical by last name.</div>`}
+function mtgHazList(){
+ const open=HAZARDS.filter(h=>h.status!=="CLOSED");
+ if(!open.length)return "";
+ return `<div style="margin-top:12px;border-top:1px solid rgba(37,43,52,.6);padding-top:10px"><div class="lab">Hazard reports attached to this meeting (${open.length})</div>
+  ${open.map(h=>`<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;border-bottom:1px solid rgba(37,43,52,.4);padding:4px 0">
+   <span>${h.redacted
+    ?`<b style="color:var(--silver-light)">#${h.id} · ${h.cat}</b> — ${h.pub}`
+    :`<b style="color:var(--silver-light)">#${h.id} · ${h.cat}</b><span style="color:var(--muted)"> — ${h.sub||"nature on file"} · <i>details withheld pending Safety Officer redaction (just culture)</i></span>`}</span>
+   <span class="chip ${h.status==="CLOSED"?"c-gray":"c-warn"}" style="font-size:8px">${h.status}</span></div>`).join("")}
+  <div style="font-size:10px;color:var(--muted);margin-top:4px">Un-redacted reports surface only their nature and status here — full details enter the meeting record after the Safety Officer publishes the redacted version.</div></div>`}
 function attYtd(){
  const held=MEETINGS.filter(m=>m.status!=="UPCOMING");
  if(!held.length)return "";
@@ -2786,11 +2847,61 @@ function attYtd(){
    const miss=held.length-a;
    return `<tr><td style="color:var(--silver-light)">${lf(p)}</td><td><b style="color:${a===held.length?'#5BC97A':a?'var(--warn)':'#F27B7B'}">${a} / ${held.length}</b></td><td>${ip}</td><td>${ol}</td><td>${miss||"—"}</td></tr>`}).join("")}
   </tbody></table></div>`}
-function docAck(i){DOCS[i].ack[user.id]=1;render()}
-function docUpload(i){const inp=document.getElementById("docrev-"+i);const v=inp?inp.value.trim():"";if(!v)return;
- DOCS[i].ver=v;DOCS[i].eff=fmt(TODAY);DOCS[i].by=user.full;DOCS[i].ack={};
- toast("<b>✓ "+DOCS[i].name+"</b> updated to "+v+" — prior revision archived, crew notified.");render();
+function docAck(kind,i){const d=docOf(kind,i);
+ d.ack[user.id]={when:new Date().toLocaleString(),name:user.full,rank:rankStr(user)};
+ if(!d.views[user.id])d.views[user.id]={when:new Date().toLocaleString()};
+ toast("<b>✓ Signed:</b> "+d.name+" — acknowledgment recorded with your name, rank and timestamp. You can undo this until the Safety Officer locks the revision.");render()}
+function docUnack(kind,i){const d=docOf(kind,i);
+ if(!d.ack[user.id])return;
+ if(!confirm("Withdraw your signed acknowledgment of \""+d.name+"\"? The Safety Officer will see it as unsigned again."))return;
+ delete d.ack[user.id];toast("Acknowledgment withdrawn for "+d.name+".");render()}
+function docOpen2(kind,i){const d=docOf(kind,i);
+ d.views[user.id]=d.views[user.id]||{when:new Date().toLocaleString()};
+ if(!d.file){toast("<b>No file uploaded yet</b> for "+d.name+" — the Safety Officer attaches the PDF with Upload revision.","warn");render();return}
+ const win=window.open("","_blank");
+ if(d.file.type==="application/pdf"){const bin=atob(d.file.data.split(",")[1]);const arr=new Uint8Array(bin.length);for(let k=0;k<bin.length;k++)arr[k]=bin.charCodeAt(k);
+  win.location=URL.createObjectURL(new Blob([arr],{type:"application/pdf"}))}
+ else win.document.write('<body style="margin:0;background:#111"><img src="'+d.file.data+'" style="max-width:100%"></body>');
+ render()}
+function docFileAttach(kind,i,input){const f=input.files&&input.files[0];if(!f)return;const d=docOf(kind,i);
+ const done=(data,type)=>{d.file={name:f.name,data,type,up:fmt(TODAY)};toast("<b>✓ File attached:</b> "+f.name+" — crew can open it with View.");render()};
+ if(f.type==="application/pdf"){
+  if(f.size>400*1024){toast("<b>⛔ PDF too large</b> (max 400 KB in this build) — compress it or upload a key-page image.","warn");input.value="";return}
+  const r=new FileReader();r.onload=()=>done(r.result,"application/pdf");r.readAsDataURL(f)}
+ else if(f.type.startsWith("image")){
+  const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{
+   const sc=Math.min(1,1100/Math.max(img.width,img.height));
+   const cv=document.createElement("canvas");cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);
+   cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);done(cv.toDataURL("image/jpeg",0.72),"image/jpeg")};img.src=r.result};r.readAsDataURL(f)}
+ else toast("<b>⛔ Unsupported file type</b> — upload a PDF or an image.","warn");
+ input.value=""}
+function docRevUpload(i){const inp=document.getElementById("docrev-"+i);const v=inp?inp.value.trim():"";if(!v)return;
+ DOCS[i].ver=v;DOCS[i].eff=fmt(TODAY);DOCS[i].by=user.full;DOCS[i].ack={};DOCS[i].views={};
+ toast("<b>✓ "+DOCS[i].name+"</b> updated to "+v+" — prior revision archived, view/sign tracking reset, crew notified.");render();
  setTimeout(()=>{const n=document.getElementById("safmsg");if(n){n.textContent="✓ "+DOCS[i].name+" updated to "+v+" — crew read-acknowledgments reset and a notification went to all personnel.";n.style.color="#5BC97A"}},0)}
+function docAudSet(kind,i,v){const d=docOf(kind,i);d.aud=v;toast("Audience for "+d.name+" set to: "+DOC_AUDS[v]+" ("+docAudience(v).length+" members).");render()}
+function notapAdd(){const t=(NP_NEW.name||"").trim();
+ if(!t){toast("<b>⛔ A NOTAP needs a title.</b>","warn");return}
+ NOTAPS.unshift({id:NOTAPS.length?Math.max(...NOTAPS.map(n=>n.id))+1:1,name:t,ver:"—",eff:fmt(TODAY),added:new Date().toLocaleString(),by:user.full,ack:{},views:{},aud:NP_NEW.aud||"ALL",file:null});
+ NP_NEW={name:"",aud:"ALL"};
+ toast("<b>✓ NOTAP published</b> — audience notified; view/sign tracking is live. Attach the PDF with the 📎 button.");render()}
+function docCover(kind,i){const d=docOf(kind,i);
+ const aud=docAudience(d.aud).sort(byLastName);
+ const byPl={};aud.forEach(p=>{const k=(PLATOONS[p.pl]?PLATOONS[p.pl].name:"Unassigned");(byPl[k]=byPl[k]||[]).push(p)});
+ const w=window.open("","_blank");
+ w.document.write(`<html><head><title>${d.name} — read & sign cover page</title><style>
+  body{font-family:Arial;padding:28px;color:#111}h1{font-size:19px;margin:0 0 2px}h2{font-size:13px;margin:16px 0 4px;color:#8A1219;border-bottom:1px solid #ccc;padding-bottom:2px}
+  .sub{font-size:11px;color:#555}table{border-collapse:collapse;width:100%;margin-top:4px}
+  td,th{border:1px solid #999;padding:5px 8px;font-size:11px;text-align:left}th{background:#f2f2f2}
+  .sig{min-width:150px}</style></head><body>
+  <h1>${d.name}</h1>
+  <div class="sub">Revision <b>${d.ver}</b> · date issued <b>${d.eff}</b> · maintained by ${d.by} · audience: ${DOC_AUDS[d.aud]||d.aud} (${aud.length}) · cover page generated ${new Date().toLocaleString()} · powered by HERO Ops</div>
+  ${Object.entries(byPl).map(([pl,ppl])=>`<h2>${pl}</h2><table><tr><th>Member</th><th>Position</th><th>Viewed (in app)</th><th>Signed (in app)</th><th class="sig">Signature</th></tr>
+   ${ppl.map(p=>{const v=d.views[p.id],a=d.ack[p.id];
+    return "<tr><td>"+lf(p)+"</td><td>"+(p.pos||"—")+"</td><td>"+(v&&v.when?v.when:"—")+"</td><td>"+(a?(a.when||"signed")+(a.rank?" · "+a.rank:""):"—")+"</td><td></td></tr>"}).join("")}</table>`).join("")}
+  <div style="margin-top:16px;font-size:10px;color:#666">In-app view and acknowledgment timestamps are recorded automatically; the signature column is for wet-ink sign-off where required by unit policy.</div>
+  </body></html>`);
+ w.document.close();w.print()}
 function mtgSchedule(){
  const t=document.getElementById("mtg-topic"),w=document.getElementById("mtg-when");
  if(!t||!t.value.trim()||!w.value)return;
@@ -2890,10 +3001,15 @@ function catBars(){
  const counts={};HFL(true).forEach(h=>counts[h.cat]=(counts[h.cat]||0)+1);
  const cats=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
  const max=cats[0]?cats[0][1]:1;
- return `<div>${cats.map(([c,n])=>`<div onclick="HFILT.cat=HFILT.cat==='${c.replace(/'/g,"\\'")}'?null:'${c.replace(/'/g,"\\'")}';render()" style="display:flex;align-items:center;gap:8px;margin:5px 0;cursor:pointer;${HFILT.cat&&HFILT.cat!==c?'opacity:.35':''}">
+ const vals=cats.map(x=>x[1]);
+ const mu=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
+ const sd=Math.sqrt(vals.reduce((a,b)=>a+(b-mu)*(b-mu),0)/(vals.length||1))||1;
+ const col=n=>{const z=(n-mu)/sd;return z>1?"#D03B3B":z>0?"#E8B93B":"#2FA84F"};
+ return `<div>${cats.map(([c,n])=>{const z=((n-mu)/sd);return `<div onclick="HFILT.cat=HFILT.cat==='${c.replace(/'/g,"\\'")}'?null:'${c.replace(/'/g,"\\'")}';render()" title="${c}: ${n} report${n===1?"":"s"} · ${z>=0?"+":""}${z.toFixed(1)}σ vs the category mean (${mu.toFixed(1)})" style="display:flex;align-items:center;gap:8px;margin:5px 0;cursor:pointer;${HFILT.cat&&HFILT.cat!==c?'opacity:.35':''}">
   <div style="width:190px;font-size:11px;color:var(--text);text-align:right">${c}</div>
-  <div style="flex:1;background:var(--dark-4);height:16px;position:relative"><div style="width:${Math.round(n/max*100)}%;height:100%;background:${HFILT.cat===c?'var(--red-bright)':'#3987e5'}"></div></div>
-  <div style="width:24px;font-size:12px;font-weight:700;color:var(--silver-light)">${n}</div></div>`).join("")}</div>`;
+  <div style="flex:1;background:var(--dark-4);height:16px;position:relative"><div style="width:${Math.round(n/max*100)}%;height:100%;background:${HFILT.cat===c?'var(--red-bright)':col(n)}"></div></div>
+  <div style="width:44px;font-size:12px;font-weight:700;color:${col(n)}">${n} <span style="font-size:9px;font-weight:400">${z>=0?"+":""}${z.toFixed(1)}σ</span></div></div>`}).join("")}
+ <div style="font-size:10px;color:var(--muted);margin-top:4px">Bar color = where the category sits against the mean report count across categories: <span style="color:#2FA84F">■ at/below mean</span> · <span style="color:#E8B93B">■ within +1σ</span> · <span style="color:#D03B3B">■ beyond +1σ</span>.</div></div>`;
 }
 function heatMatrix(){
  const cells={};HFL().forEach(h=>{if(h.P&&h.S)cells[h.P+h.S]=(cells[h.P+h.S]||0)+1});
@@ -2901,7 +3017,7 @@ function heatMatrix(){
  ["A","B","C","D","E"].forEach(S=>{out+=`<tr><td style="font-size:10px;color:var(--muted);padding:2px 5px">${S}</td>`+[1,2,3,4,5].map(P=>{
   const sc=P*SEVN[S];const n=cells[P+S]||0;
   const bg=sc>=15?"rgba(208,59,59,"+(n?".55":".14")+")":sc>=8?"rgba(232,185,59,"+(n?".5":".12")+")":"rgba(47,168,79,"+(n?".45":".1")+")";
-  return `<td style="width:34px;height:26px;text-align:center;background:${bg};border:1px solid rgba(10,11,13,.6);font-size:12px;font-weight:800;color:${n?"var(--silver-light)":"transparent"}">${n||0}</td>`}).join("")+"</tr>"});
+  return `<td title="${riskTip(P,S)}" style="width:34px;height:26px;text-align:center;background:${bg};border:1px solid rgba(10,11,13,.6);font-size:12px;font-weight:800;color:${n?"var(--silver-light)":"transparent"}">${n||0}</td>`}).join("")+"</tr>"});
  return out+"</table></div>";
 }
 function sigColor(v,mu,sd){
@@ -2945,8 +3061,8 @@ function controlChart(){
    ${band(2,"rgba(208,59,59,.8)","2 5")}${band(1,"rgba(232,185,59,.8)","3 4")}
    <line x1="${pad}" x2="${w-8}" y1="${Y(mu)}" y2="${Y(mu)}" stroke="#7A8290" stroke-width="1.5"/>
    <text x="${w-8}" y="${Y(mu)-3}" fill="#7A8290" font-size="9" text-anchor="end">unit mean ${mu.toFixed(1)}</text>
-   <text x="${w-8}" y="${Y(mu+sd)-3}" fill="#E8B93B" font-size="8" text-anchor="end">+1σ</text>
-   <text x="${w-8}" y="${Y(mu+2*sd)-3}" fill="#F27B7B" font-size="8" text-anchor="end">+2σ</text>
+   <text x="${w-8}" text-anchor="end" y="${Y(mu+sd)-3}" fill="#E8B93B" font-size="9" font-weight="700">+1σ = ${(mu+sd).toFixed(1)}</text>
+   <text x="${w-8}" y="${Y(mu+2*sd)-3}" fill="#F27B7B" font-size="9" font-weight="700" text-anchor="end">+2σ = ${(mu+2*sd).toFixed(1)}</text>
    ${reports.map(h=>{const v=riskScore(h);return glossyDot(X(h.m),Y(v),sigColor(v,mu,sd),5)+`<text x="${X(h.m)}" y="${Y(v)-10}" fill="#C3C2B7" font-size="9" text-anchor="middle">#${h.id} · ${v}</text>`}).join("")}
    ${MN.map((m,i)=>`<text x="${X(i)}" y="${hh-4}" fill="#7A8290" font-size="9" text-anchor="middle">${m}</text>`).join("")}
   </svg><div style="font-size:10px;color:var(--muted);margin-top:4px">Too few reports for category-specific bands — showing this category's individual reports against the unit-wide baseline (mean ±1σ/±2σ). Bands become category-specific as reports accumulate.</div>`;
@@ -2961,8 +3077,8 @@ function controlChart(){
   ${band(2,"rgba(208,59,59,.8)","2 5")}${band(1,"rgba(232,185,59,.8)","3 4")}
   <line x1="${pad}" x2="${w-8}" y1="${Y(mu)}" y2="${Y(mu)}" stroke="#7A8290" stroke-width="1.5"/>
   <text x="${w-8}" y="${Y(mu)-3}" fill="#7A8290" font-size="9" text-anchor="end">mean ${mu.toFixed(1)}</text>
-  <text x="${w-8}" y="${Y(mu+sd)-3}" fill="#E8B93B" font-size="8" text-anchor="end">+1σ</text>
-  <text x="${w-8}" y="${Y(mu+2*sd)-3}" fill="#F27B7B" font-size="8" text-anchor="end">+2σ</text>
+  <text x="${w-8}" text-anchor="end" y="${Y(mu+sd)-3}" fill="#E8B93B" font-size="9" font-weight="700">+1σ = ${(mu+sd).toFixed(1)}</text>
+  <text x="${w-8}" y="${Y(mu+2*sd)-3}" fill="#F27B7B" font-size="9" font-weight="700" text-anchor="end">+2σ = ${(mu+2*sd).toFixed(1)}</text>
   <defs>
    <linearGradient id="ccLine" gradientUnits="userSpaceOnUse" x1="${pts[0][0]}" y1="0" x2="${pts[pts.length-1][0]}" y2="0">
     ${pts.map(p=>`<stop offset="${(((p[0]-pts[0][0])/(pts[pts.length-1][0]-pts[0][0]))*100).toFixed(1)}%" stop-color="${sigColor(p[2],mu,sd)}"/>`).join("")}
@@ -2973,8 +3089,8 @@ function controlChart(){
    <filter id="ccGlow" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="2.6"/></filter>
   </defs>
   <path d="${smoothPath(pts)} L${pts[pts.length-1][0]},${hh-18} L${pts[0][0]},${hh-18} Z" fill="url(#ccFill)"/>
-  <path d="${smoothPath(pts)}" fill="none" stroke="url(#ccLine)" stroke-width="5" filter="url(#ccGlow)" opacity=".5"/>
-  <path d="${smoothPath(pts)}" fill="none" stroke="url(#ccLine)" stroke-width="2.6" stroke-linecap="round" opacity=".9"/>
+  <path d="${smoothPath(pts)}" fill="none" stroke="url(#ccLine)" stroke-width="4" filter="url(#ccGlow)" opacity=".3"/>
+  <path d="${smoothPath(pts)}" fill="none" stroke="url(#ccLine)" stroke-width="2.8" stroke-linecap="round"/>
   ${pts.map(p=>glossyDot(p[0],p[1],sigColor(p[2],mu,sd),4.5)+`<text x="${p[0]}" y="${p[1]-10}" fill="#E4E7EC" font-size="9.5" font-weight="700" text-anchor="middle">${p[2].toFixed(1)}</text>`).join("")}
   ${MN.map((m,i)=>`<text x="${X(i)}" y="${hh-4}" fill="#7A8290" font-size="9" text-anchor="middle">${m}</text>`).join("")}
  </svg>`;
@@ -3032,7 +3148,7 @@ function pgSafety(){
      ${m.deck?(m.deck.status==="ACCEPTED"?`<a href="${m.deck.url||"#"}" target="_blank" class="btn2" style="text-decoration:none;color:var(--gold);border-color:var(--gold)">▶ Safety Meeting Slideshow ↗</a>`
       :m.deck.status==="REVIEW"?(isSup?`<span class="chip c-warn" style="font-size:9px">DECK READY — REVIEW</span> ${m.deck.url?`<a href="${m.deck.url}" target="_blank" class="btn2" style="text-decoration:none">Preview deck ↗</a>`:""} <button class="btn" style="font-size:10px;padding:6px 12px" onclick="mtgAcceptDeck(${m.id})">Accept & publish</button>`:'<span class="chip c-gray" style="font-size:9px">DECK IN FINAL REVIEW</span>')
       :`<span class="chip c-gray" style="font-size:9px">SLIDESHOW QUEUED — auto-builds from safety data; SO emailed for review 1 day prior</span>`):""}
-     <span style="font-size:12px;color:var(--muted)">${Object.values(m.attend||{}).filter(a=>a.yes===true).length} of ${(m.audIds?m.audIds.length:PEOPLE.filter(p=>!p.display).length)} confirmed${m.loc?" · 📍 "+m.loc:""} · room: meet.google.com/xxx-demo-xxx</span></div>${(user.so||isMgr(user))?`<div style="margin-top:8px"><button class="btn2" style="font-size:10px;padding:5px 12px" onclick="mtgAttPdf(${m.id})">🖨 Expected-attendance report <span style="color:var(--muted)">· auto-emails the facilitator 30 min before start</span></button></div>`:""}${attRoster(m)}`
+     <span style="font-size:12px;color:var(--muted)">${Object.values(m.attend||{}).filter(a=>a.yes===true).length} of ${(m.audIds?m.audIds.length:PEOPLE.filter(p=>!p.display).length)} confirmed${m.loc?" · 📍 "+m.loc:""} · room: meet.google.com/xxx-demo-xxx</span></div>${(user.so||isMgr(user))?`<div style="margin-top:8px"><button class="btn2" style="font-size:10px;padding:5px 12px" onclick="mtgAttPdf(${m.id})">🖨 Expected-attendance report <span style="color:var(--muted)">· auto-emails the facilitator 30 min before start</span></button></div>`:""}${attRoster(m)}${mtgHazList()}`
    :`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center">
      ${m.minutesUrl?`<a class="btn2" style="text-decoration:none" target="_blank" href="${m.minutesUrl}">📄 Minutes ↗</a>`:""}
      ${m.agendaUrl?`<a class="btn2" style="text-decoration:none" target="_blank" href="${m.agendaUrl}">Agenda ↗</a>`:""}
@@ -3098,17 +3214,35 @@ function pgSafety(){
    <div style="font-size:11px;color:var(--muted);margin-top:10px">At quarter close this summary emails + pushes to every member automatically. At year end, the four quarters compile into an annual report with recommendations on operations and equipment needing attention. The <b style="color:var(--silver)">annual SMS survey</b> (with the "Where do you think our next accident will happen?" question) opens for 2 weeks, and the consensus + per-category health scores go to management and the operator's Drive. Operators never build a report — the system works for them.</div>
   </div>`;
  }
- return `<h1>Safety <span>Management</span></h1><div class="sub">Controlled company documents — GOM, SMS Manual, Emergency Response Plan, SOPs — maintained by the operator's Safety Officer, read-acknowledged by the crew. Old revisions are archived automatically, never lost.</div>${hdr}
- <div class="panel"><table><thead><tr><th>Document</th><th>Revision</th><th>Effective</th><th>Maintained by</th><th>Crew read</th><th></th></tr></thead><tbody>
- ${DOCS.map((d,i)=>{const acks=Object.keys(d.ack).length;const mine=!!d.ack[user.id];
-  return `<tr><td style="color:var(--silver-light);font-weight:600">${d.name}</td><td>${d.ver}</td><td>${d.eff}</td><td>${d.by}</td>
-   <td><span class="chip ${acks>=PEOPLE.length?'c-good':acks>=4?'c-warn':'c-crit'}">${acks} / ${PEOPLE.length}</span></td>
-   <td style="white-space:nowrap"><button class="btn2" style="font-size:10px;padding:4px 10px">View</button>
-    ${mine?'<span class="chip c-good" style="font-size:9px;margin-left:6px">✓ READ</span>':`<button class="btn2" style="font-size:10px;padding:4px 10px;margin-left:6px" onclick="docAck(${i})">Acknowledge read</button>`}
-    ${isSup?`<span style="display:inline-flex;gap:6px;margin-left:10px"><input id="docrev-${i}" placeholder="Rev ${parseInt(d.ver.replace(/\D/g,""))+1}" style="width:80px;padding:4px 8px;font-size:11px"><button class="btn2" style="font-size:10px;padding:4px 10px" onclick="docUpload(${i})">Upload revision</button></span>`:""}
-   </td></tr>`}).join("")}
+ const docRow=(d,i,kind)=>{const aud=docAudience(d.aud||"ALL");const N=aud.length;
+  const views=aud.filter(p=>d.views&&d.views[p.id]).length;
+  const acks=aud.filter(p=>d.ack&&d.ack[p.id]).length;
+  const mineA=d.ack&&d.ack[user.id];
+  return `<tr><td style="color:var(--silver-light);font-weight:600">${d.name}${d.file?` <span class="chip c-blue" style="font-size:8px">${d.file.type==="application/pdf"?"PDF":"IMG"}</span>`:' <span class="chip c-gray" style="font-size:8px">NO FILE</span>'}</td>
+   <td>${d.ver}</td><td>${kind==="np"?(d.added||d.eff):d.eff}</td>
+   <td>${isSup?`<select style="font-size:10px;padding:2px 4px" onchange="docAudSet('${kind}',${i},this.value)">${Object.entries(DOC_AUDS).map(([k,l])=>`<option value="${k}" ${(d.aud||"ALL")===k?'selected':''}>${l}</option>`).join("")}</select>`:(DOC_AUDS[d.aud||"ALL"])}</td>
+   <td><span class="chip ${views>=N?'c-good':views?'c-warn':'c-gray'}" title="viewed">${views}/${N} 👁</span> <span class="chip ${acks>=N?'c-good':acks?'c-warn':'c-crit'}" title="signed">${acks}/${N} ✍</span></td>
+   <td style="white-space:nowrap"><button class="btn2" style="font-size:10px;padding:4px 10px" onclick="docOpen2('${kind}',${i})">View</button>
+    ${mineA?`<span class="chip c-good" style="font-size:9px;margin-left:6px" title="${mineA.when||""}">✓ SIGNED${mineA.when?" "+mineA.when.split(",")[0]:""}</span><button class="btn2" style="font-size:9px;padding:3px 8px;margin-left:4px" onclick="docUnack('${kind}',${i})">undo</button>`
+     :`<button class="btn2" style="font-size:10px;padding:4px 10px;margin-left:6px" onclick="docAck('${kind}',${i})">✍ Sign — read & acknowledged</button>`}
+    ${isSup?`<label class="btn2" style="font-size:10px;padding:4px 8px;margin-left:6px;cursor:pointer">📎<input type="file" accept="application/pdf,image/*" style="display:none" onchange="docFileAttach('${kind}',${i},this)"></label>
+    <button class="btn2" style="font-size:10px;padding:4px 8px;margin-left:4px" onclick="docCover('${kind}',${i})">🖨 Cover page</button>`:""}
+    ${isSup&&kind==="doc"?`<span style="display:inline-flex;gap:6px;margin-left:8px"><input id="docrev-${i}" placeholder="Rev ${parseInt(d.ver.replace(/\D/g,""))+1||1}" style="width:70px;padding:4px 8px;font-size:11px"><button class="btn2" style="font-size:10px;padding:4px 10px" onclick="docRevUpload(${i})">Upload revision</button></span>`:""}
+   </td></tr>`};
+ return `<h1>Safety <span>Management</span></h1><div class="sub">Controlled company documents — GOM, SMS Manual, Emergency Response Plan, SOPs — maintained by the operator's Safety Officer, read-acknowledged by the crew with a timestamped signature. Old revisions are archived automatically, never lost.</div>${hdr}
+ <div class="panel"><h2>Controlled documents</h2><table><thead><tr><th>Document</th><th>Revision</th><th>Effective</th><th>Audience</th><th>Viewed · Signed</th><th></th></tr></thead><tbody>
+ ${DOCS.map((d,i)=>docRow(d,i,"doc")).join("")}
  </tbody></table>
- ${!isSup?'<div class="lock" style="margin-top:8px">Uploading revised documents requires the Safety Officer role — crew have read + acknowledge access.</div>':'<div style="font-size:11px;color:var(--muted);margin-top:8px">Uploading a revision archives the prior version, resets crew read-acknowledgments, and notifies all personnel.</div>'}</div>`;
+ ${!isSup?'<div class="lock" style="margin-top:8px">Uploading files/revisions, audiences and cover pages are Safety Officer functions — crew view + sign.</div>':'<div style="font-size:11px;color:var(--muted);margin-top:8px">📎 attaches the PDF (opens with View) · audience controls who is counted and notified · 🖨 prints a read-&-sign cover page listing the audience by shift and position with in-app view times and a signature line · uploading a revision archives the prior version and resets view/sign tracking.</div>'}</div>
+ <div class="panel"><h2>NOTAPs — Notices to Air Personnel <span style="font-size:10px;color:var(--muted);font-weight:400">· newest first</span></h2>
+  ${isSup?`<div class="grid g3" style="margin-bottom:10px;align-items:end">
+   <div><label class="lab">New NOTAP title</label><input value="${NP_NEW.name||""}" placeholder="e.g. NOTAP 26-04 — Hoist cable inspection change" onchange="NP_NEW.name=this.value"></div>
+   <div><label class="lab">Audience</label><select onchange="NP_NEW.aud=this.value">${Object.entries(DOC_AUDS).map(([k,l])=>`<option value="${k}" ${(NP_NEW.aud||"ALL")===k?'selected':''}>${l}</option>`).join("")}</select></div>
+   <div><button class="btn2" onclick="notapAdd()">＋ Publish NOTAP</button></div></div>`:""}
+  ${NOTAPS.length?`<table><thead><tr><th>NOTAP</th><th>Rev</th><th>Added</th><th>Audience</th><th>Viewed · Signed</th><th></th></tr></thead><tbody>
+   ${[...NOTAPS].map((d)=>({d,i:NOTAPS.indexOf(d)})).sort((a,b)=>new Date(b.d.added||0)-new Date(a.d.added||0)).map(({d,i})=>docRow(d,i,"np")).join("")}
+  </tbody></table>`:'<div style="font-size:12px;color:var(--muted)">No NOTAPs published yet.'+(isSup?' Publish one above — the audience is notified and view/sign tracking starts immediately.':'')+'</div>'}
+ </div>`;
 }
 
 /* ============ OURA CONSENT — each member controls their own data ============ */
