@@ -187,7 +187,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g6 — 2026-07-23 · all people, aircraft & records are fictional</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">general demo build g7 — 2026-07-24 · all people, aircraft & records are fictional</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
@@ -240,6 +240,86 @@ const TODAY=new Date();
 function fmt(d){return (d.getMonth()+1)+"/"+d.getDate()+"/"+String(d.getFullYear()).slice(2)}
 function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
 
+let ARCHIVE=[
+ {full:"Hollis Merritt",pos:"Pilot",rank:"III",role:"PILOT",em:"hollis.merritt@wcfr.example",dateIn:"4/2/23",dateOut:"5/30/26"},
+ {full:"June Ostrander",pos:"Helitac Level 2",rank:"",role:"CREW",em:"june.ostrander@wcfr.example",dateIn:"9/14/24",dateOut:"3/11/26"}
+];
+const RANKS={I:"Pilot I (Trainee)",II:"Pilot II (Trainee)",III:"Pilot III",IV:"Pilot IV (Lead Pilot)",V:"Pilot V (Chief Pilot)"};
+function canPIC(p,mk){if(!p||!p.pilot)return false;if(!mk)return true;
+ return /505/.test(mk)?true:["III","IV","V"].includes(p.rank||"")}
+function rankSet(id,r){const p=PEOPLE.find(x=>x.id===id);if(!p)return;p.rank=r;
+ if(r==="IV"||r==="V"){if(!p.mgr){p.mgr=true;p.role="SUPERVISOR";toast("<b>✓ "+p.full+" set to "+RANKS[r]+"</b> — manager authority granted automatically.")}else toast("<b>✓ "+p.full+" set to "+RANKS[r]+".</b>")}
+ else toast("<b>✓ "+p.full+" set to "+RANKS[r]+".</b>");
+ render()}
+function rankChip(p){return p.pilot&&p.rank?` <span class="chip c-gold" style="font-size:7px">P-${p.rank}</span>`:""}
+const DOC_SLOTS=[["med","Flight Medical","expires 1 year after issue",365],["cert","Pilot Certificate",null,null],["cfi","CFI Certificate","≈2-year validity — you set the exact date",730]];
+function docState(p,slot){const d=(p.docs||{})[slot[0]];if(!d||!slot[3])return null;
+ if(!d.exp)return {cls:"c-warn",label:"NO EXPIRY SET"};
+ const days=Math.ceil((new Date(d.exp)-new Date())/86400000);
+ if(days<0)return {cls:"c-crit",label:"EXPIRED "+d.exp};
+ if(days<=slot[3]*0.2)return {cls:"c-warn",label:"EXPIRES "+d.exp+" · "+days+"d left"};
+ return {cls:"c-good",label:"VALID → "+d.exp};}
+function docBadge(p){let worst=null;
+ DOC_SLOTS.forEach(s=>{const st=docState(p,s);if(!st)return;
+  if(st.cls==="c-crit")worst="c-crit";else if(st.cls==="c-warn"&&worst!=="c-crit")worst="c-warn"});
+ return worst?` <span class="chip ${worst}" style="font-size:7px">${worst==="c-crit"?"DOC EXPIRED":"DOC EXPIRING"}</span>`:""}
+function docUpload(id,slot,input){
+ const f=input.files&&input.files[0];if(!f)return;
+ const p=PEOPLE.find(x=>x.id===id);p.docs=p.docs||{};
+ const done=(data,type)=>{p.docs[slot]=Object.assign(p.docs[slot]||{},{img:data,type,name:f.name,up:fmt(TODAY)});
+  toast("<b>✓ Document saved</b> — visible to the member and supervisors/managers.");render()};
+ if(f.type==="application/pdf"){
+  if(f.size>400000){toast("<b>⛔ PDF too large</b> — keep credential PDFs under 400 KB, or photograph the document instead.","warn");input.value="";return}
+  const r=new FileReader();r.onload=()=>done(r.result,"pdf");r.readAsDataURL(f);return}
+ const r=new FileReader();
+ r.onload=()=>{const img=new Image();img.onload=()=>{
+   const sc=Math.min(1,900/Math.max(img.width,img.height));
+   const cv=document.createElement("canvas");cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);
+   cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+   done(cv.toDataURL("image/jpeg",0.72),"img")};img.src=r.result};
+ r.readAsDataURL(f)}
+function docSetExp(id,slot,v){const p=PEOPLE.find(x=>x.id===id);p.docs=p.docs||{};p.docs[slot]=p.docs[slot]||{};p.docs[slot].exp=v;render()}
+function docOpen(id,slot){const p=PEOPLE.find(x=>x.id===id);const d=(p.docs||{})[slot];if(!d||!d.img)return;
+ const parts=d.img.split(","),bin=atob(parts[1]),arr=new Uint8Array(bin.length);
+ for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+ const url=URL.createObjectURL(new Blob([arr],{type:d.type==="pdf"?"application/pdf":"image/jpeg"}));
+ window.open(url,"_blank")}
+function tomorrowISO(){const d=new Date();d.setDate(d.getDate()+1);return d.toISOString().slice(0,10)}
+function docsPanel(p){
+ const mine=user.id===p.id, allowed=mine||isMgr(user)||user.so;
+ if(!allowed)return "";
+ return `<div class="panel"><h2>Credential documents <span style="font-size:10px;color:var(--muted);font-weight:400">· visible to the member and supervisors/managers · expirations feed currency notifications at 20% remaining</span></h2>
+  <div class="grid g3">${DOC_SLOTS.map(s=>{const d=(p.docs||{})[s[0]]||{};const st=docState(p,s);
+   return `<div style="border:1px solid rgba(37,43,52,.8);padding:10px">
+    <div class="lab" style="margin:0 0 6px">${s[1]}${s[2]?` <span style="font-weight:400;text-transform:none">· ${s[2]}</span>`:""}</div>
+    ${d.img?(d.type==="pdf"?`<div style="font-size:12px;margin-bottom:6px">📄 <a href="#" onclick="event.preventDefault();docOpen('${p.id}','${s[0]}')" style="color:var(--gold)">${d.name||"document.pdf"}</a> · uploaded ${d.up}</div>`
+      :`<img src="${d.img}" style="max-width:100%;max-height:110px;display:block;margin-bottom:6px;border:1px solid rgba(37,43,52,.8);cursor:zoom-in" onclick="docOpen('${p.id}','${s[0]}')">`)
+      :'<div style="font-size:11px;color:var(--muted);margin-bottom:6px">No document on file.</div>'}
+    <input type="file" accept="image/*,application/pdf" style="font-size:10px;width:100%" onchange="docUpload('${p.id}','${s[0]}',this)">
+    ${s[3]?`<label class="lab" style="margin:8px 0 2px">Expiration date</label><input type="date" min="${tomorrowISO()}" value="${d.exp||""}" onchange="docSetExp('${p.id}','${s[0]}',this.value)">`:""}
+    ${st?`<div style="margin-top:6px"><span class="chip ${st.cls}" style="font-size:8px">${st.label}</span></div>`:""}
+   </div>`}).join("")}</div></div>`;}
+function _flDate(f){const m=String(f.d).split("/");return new Date(2000+(+m[2]%100),(+m[0])-1,+m[1])}
+function _eom(d,plus){return new Date(d.getFullYear(),d.getMonth()+plus+1,0,23,59,59)}
+function ifrStat(p){
+ const now=new Date();
+ const windowStart=new Date(now.getFullYear(),now.getMonth()-6,1);
+ const mine=FLIGHTS.filter(f=>!f.cancelled&&f.crewIds&&(f.crewIds.pic===p.id||f.crewIds.sic===p.id)&&_flDate(f)>=windowStart);
+ const apprEvents=[],holdEvents=[];
+ mine.forEach(f=>{const d=_flDate(f);for(let i=0;i<(f.appr||0);i++)apprEvents.push(d);for(let i=0;i<(f.holds||0);i++)holdEvents.push(d)});
+ apprEvents.sort((a,b)=>b-a);holdEvents.sort((a,b)=>b-a);
+ const needAppr=Math.max(0,6-apprEvents.length), needHold=holdEvents.length?0:1;
+ if(!needAppr&&!needHold){
+  const exp=new Date(Math.min(_eom(apprEvents[5],6),_eom(holdEvents[0],6)));
+  const days=Math.ceil((exp-now)/86400000);
+  return {ok:true,exp,days,label:"IFR CURRENT through "+fmt(exp),cls:days<=45?"c-warn":"c-good",
+   note:days<=45?"Currency lapses "+fmt(exp)+" ("+days+"d) — fly approaches/holds before then to extend.":""}
+ }
+ const parts=[];if(needAppr)parts.push(needAppr+" approach"+(needAppr>1?"es":""));if(needHold)parts.push("1 hold");
+ return {ok:false,label:"IFR NOT CURRENT — need "+parts.join(" + ")+" (61.57(c))",cls:apprEvents.length||holdEvents.length?"c-warn":"c-crit",
+  note:"Approaches logged in window: "+apprEvents.length+"/6 · holds: "+holdEvents.length+"/1. Log them in the flight log's Special hours section."}
+}
+function ifrCurrent(p){return ifrStat(p).ok}
 const PEOPLE=[
  {id:"joel",name:"J. SMITH",full:"Joel Smith",pos:"Safety Officer / Pilot",level:"V",role:"SUPERVISOR",onDuty:true,pilot:true,ifr:true,nvg:true,rtype:"pilot",dutyDay:2,prov:"home",em:"joel.smith@heroaviationusa.com",ph:"—",addr:"—",so:true,mgr:true,oura:"synced"},
  {id:"vale",name:"M. VALE",full:"Marcus Vale",pos:"Pilot",level:"—",role:"PILOT",onDuty:false,pilot:true,ifr:false,nvg:false,rtype:"pilot",em:"marcus.vale@wcfr.example",ph:"—",addr:"—",so:false,mgr:false,oura:"none"},
@@ -404,13 +484,13 @@ newFrat();
 
 /* ================= AIRCRAFT / FLIGHTS / HAZARDS ================= */
 const AIRCRAFT=[
- {n:"N701WR",cs:"Air 1 (H1)",mk:"Model — onboarding",base:"Air Ops (KBUR)",tach:1785.7,mtach:1785.7,to25:6.1,to100:11.5,landings:0,hoist:11,hoistT:11,tens:true,svc:"—",ret:false,down:false,squawks:"SIC float switch guard · AVCS INOP · LH searchlight INOP · NEW: swashplate boot tear"},
- {n:"N702WR",cs:"Air 2 (H2)",mk:"Model — onboarding",base:"Air Ops (KBUR)",tach:2906.3,mtach:2906.3,to25:16.6,to100:35.8,landings:0,hoist:10,hoistT:10,tens:true,svc:"—",ret:false,down:false,hoistInspNeeded:true,squawks:"Right strobe light intermittent"},
- {n:"N703WR",cs:"Air 3 (H3)",mk:"Model — onboarding",base:"Air Ops (KBUR)",tach:2997.6,mtach:2997.6,to25:9.3,to100:39.5,landings:0,hoist:2,hoistT:2,svc:"—",ret:false,down:false,squawks:"Central display · landing lights · hoist"},
- {n:"N704WR",cs:"Air 4 (H4)",mk:"Model — onboarding",base:"Air Ops (KBUR)",tach:2046.7,mtach:2046.7,to25:15.6,to100:66.3,landings:0,hoist:2,hoistT:2,svc:"—",ret:false,down:false,squawks:"PIC vent fail · replace pilot seat · fuel panel cross-feed noisy"},
- {n:"N705WR",cs:"Air 5 (H5)",mk:"Model — onboarding",base:"Air Ops (KBUR)",tach:3170.2,mtach:3170.2,to25:4.1,to100:8.1,landings:0,hoist:14,hoistT:14,svc:"—",ret:false,down:true,squawks:"Steerable searchlight removed · #2 HYD temp high · night sun L/R control INOP"},
- {n:"N706WR",cs:"Air 6 (H6)",mk:"Model — onboarding",base:"Air Ops (KBUR)",tach:1348.1,mtach:1348.1,to25:2.9,to100:29.5,landings:0,hoist:0,hoistT:0,svc:"—",ret:false,down:false,squawks:null},
- {n:"N707WR",cs:"Air 7 (H7)",mk:"Model — onboarding",base:"Air Ops (KBUR)",tach:1716.2,mtach:1716.2,to25:3.9,to100:63.8,landings:0,hoist:0,hoistT:0,svc:"—",ret:false,down:false,squawks:null}
+ {n:"N701WR",cs:"Air 1 (H1)",mk:"AW139",base:"Air Ops (KBUR)",tach:1785.7,mtach:1785.7,to25:6.1,to100:11.5,landings:0,hoist:11,hoistT:11,tens:true,svc:"—",ret:false,down:false,squawks:"SIC float switch guard · AVCS INOP · LH searchlight INOP · NEW: swashplate boot tear"},
+ {n:"N702WR",cs:"Air 2 (H2)",mk:"AW139",base:"Air Ops (KBUR)",tach:2906.3,mtach:2906.3,to25:16.6,to100:35.8,landings:0,hoist:10,hoistT:10,tens:true,svc:"—",ret:false,down:false,hoistInspNeeded:true,squawks:"Right strobe light intermittent"},
+ {n:"N703WR",cs:"Air 3 (H3)",mk:"AW139",base:"Air Ops (KBUR)",tach:2997.6,mtach:2997.6,to25:9.3,to100:39.5,landings:0,hoist:2,hoistT:2,svc:"—",ret:false,down:false,squawks:"Central display · landing lights · hoist"},
+ {n:"N704WR",cs:"Air 4 (H4)",mk:"AW139",base:"Air Ops (KBUR)",tach:2046.7,mtach:2046.7,to25:15.6,to100:66.3,landings:0,hoist:2,hoistT:2,svc:"—",ret:false,down:false,squawks:"PIC vent fail · replace pilot seat · fuel panel cross-feed noisy"},
+ {n:"N705WR",cs:"Air 5 (H5)",mk:"AW139",base:"Air Ops (KBUR)",tach:3170.2,mtach:3170.2,to25:4.1,to100:8.1,landings:0,hoist:14,hoistT:14,svc:"—",ret:false,down:true,squawks:"Steerable searchlight removed · #2 HYD temp high · night sun L/R control INOP"},
+ {n:"N706WR",cs:"Air 6 (H6)",mk:"Bell 505",base:"Air Ops (KBUR)",tach:1348.1,mtach:1348.1,to25:2.9,to100:29.5,landings:0,hoist:0,hoistT:0,svc:"—",ret:false,down:false,squawks:null},
+ {n:"N707WR",cs:"Air 7 (H7)",mk:"Bell 505",base:"Air Ops (KBUR)",tach:1716.2,mtach:1716.2,to25:3.9,to100:63.8,landings:0,hoist:0,hoistT:0,svc:"—",ret:false,down:false,squawks:null}
 ];
 let FLIGHTS=[
  {id:14,d:"07/13/26",tm:"13:58",ac:"N706WR",type:"Recon / Patrol",dep:"TRAINING",inc:"",pic:"Molly Ives",crewIds:{pic:"ives"},paxTotal:0,hrs:1.4,night:0,ldD:3,ldN:0,tachS:1346.7,tachE:1348.1,aar:true,hazNeeded:false,hazFiled:false,oos:false,stamp:"Ives 76"},
@@ -945,8 +1025,8 @@ function pgDash(){
       <div><div class="lab" style="margin:0">To 100 hr</div><b style="${mxHrsStyle(a.to100)}">${a.to100}h</b></div>
     </div>${a.squawks?`<div class="banner b-warn" style="font-size:11px">⚠ ${a.squawks}</div>`:""}</div>`).join("")}
   </div>`}
-  ${PLAN.flightlog?`<div class="panel"><h2>Recent flights</h2><table><thead><tr><th>ID</th><th>Date</th><th>Dep / Trng</th><th>Aircraft</th><th>Mission</th><th>PIC</th><th>Hrs</th><th class="hidephone">AAR</th></tr></thead>
-  <tbody>${FLIGHTS.map(f=>`<tr><td>#${f.id}</td><td style="white-space:nowrap">${f.d}${f.tm?'<br><span style="font-size:10px;color:var(--muted)">'+f.tm+'</span>':''}</td><td>${f.dep==="MISSION"?'<span class="chip c-red" style="font-size:8px">DEPLOYMENT</span>':'<span class="chip c-blue" style="font-size:8px">TRAINING</span>'}</td><td>${f.ac}</td><td>${f.type}</td><td>${lfStr(f.pic)}</td><td>${f.hrs.toFixed(1)}</td><td class="hidephone">${f.aar?'<span class="chip c-good">✓ Complete</span>':'<span class="chip c-crit">■ Required</span>'}</td></tr>`).join("")}</tbody></table></div>`:""}
+  ${PLAN.flightlog?`<div class="panel"><h2>Recent flights <span style="font-size:10px;color:var(--muted);font-weight:400">· tap a flight for full detail</span></h2><table><thead><tr><th>ID</th><th>Date</th><th>Dep / Trng</th><th>Aircraft</th><th>Mission</th><th>PIC</th><th>Hrs</th><th>Hazard</th><th class="hidephone">AAR</th></tr></thead>
+  <tbody>${FLIGHTS.map(f=>`<tr onclick="tab='flights';FL_VIEW='det';FL_DET=${f.id};FL_EDIT=false;render()" style="cursor:pointer"><td style="color:var(--red-bright);font-weight:700">#${f.id} →</td><td style="white-space:nowrap">${f.d}${f.tm?'<br><span style="font-size:10px;color:var(--muted)">'+f.tm+'</span>':''}</td><td>${f.dep==="MISSION"?'<span class="chip c-red" style="font-size:8px">DEPLOYMENT</span>':'<span class="chip c-blue" style="font-size:8px">TRAINING</span>'}</td><td>${f.ac}</td><td>${f.type}</td><td>${lfStr(f.pic)}</td><td>${f.hrs.toFixed(1)}</td><td>${f.hazFiled?'<span class="chip c-warn" style="font-size:8px">⚠ REPORT FILED</span>':f.hazNeeded?'<span class="chip c-crit" style="font-size:8px">⚠ REPORT REQUIRED</span>':'<span style="color:var(--muted);font-size:10px">—</span>'}</td><td class="hidephone">${f.aar?'<span class="chip c-good">✓ Complete</span>':'<span class="chip c-crit">■ Required</span>'}</td></tr>`).join("")}</tbody></table></div>`:""}
   ${upgradeCard()}`;
 }
 
@@ -1061,6 +1141,7 @@ function heroTrue(p){
  return p._true;
 }
 function wearDisconnect(){
+ if(!confirm("Disconnect your wearable?\n\nSyncing ends immediately and your data stays under your control. Sharing is voluntary — no reason asked, ever. The Safety Officer sees only the status change."))return;
  const p=user;p.oura="none";p.device=null;
  OURA_LOG.unshift({t:"DISCONNECTED",name:p.full,d:fmt(TODAY),note:"Member disconnected from the readiness page (voluntary — no reason required)"});
  toast("<b>Wearable disconnected — data transfer stopped immediately.</b> Sharing is voluntary; reconnect anytime. The Safety Officer sees only the status change.","warn");
@@ -1174,7 +1255,7 @@ function pfSet(k,v){PF[k]=v;render()}
 function pfSubmit(){
  const a=AIRCRAFT.find(x=>x.n===PF.ac);const m=$("pfmsg");
  if(!(+PF.ft>0&&+PF.mt>0)){if(m){m.textContent="⛔ Enter both tach readings.";m.style.color="#F27B7B"}return}
- PREFLIGHTS.unshift({id:Math.max(...PREFLIGHTS.map(p=>p.id))+1,d:fmt(TODAY),ac:PF.ac,by:user.full,ft:+PF.ft,mt:+PF.mt,aw:PF.aw.toUpperCase()});
+ PREFLIGHTS.unshift({id:Math.max(0,...PREFLIGHTS.map(p=>p.id))+1,d:fmt(TODAY),ac:PF.ac,by:user.full,ft:+PF.ft,mt:+PF.mt,aw:PF.aw.toUpperCase()});
  a.tach=Math.max(a.tach,+PF.ft);a.mtach=Math.max(a.mtach,+PF.mt);
  if(PF.hoistCy>0){a.hoist+=PF.hoistCy;a.hoistT+=PF.hoistCy}
  if(PF.m1t)a.to25=Math.round((+PF.m1t-a.mtach)*10)/10;
@@ -1367,6 +1448,22 @@ function pgTraining(){
    ["Level 2 task book (itemized sign-offs)","Prerequisite gating (Level 1 complete)","Skills evaluations & test forms","Certification print-out"])}
  <div style="font-size:11px;color:var(--muted)">Planned: evaluator e-sign with audit trail · expiration alerts feeding the Currency matrix · print/export for audits and legal discovery.</div>`;
 }
+function ifrPanel(){
+  const pilots=PEOPLE.filter(p=>p.pilot&&!p.display);
+  if(!pilots.length)return "";
+  return `<div class="panel"><h2>Instrument currency — FAA 61.57(c) <span style="font-size:10px;color:var(--muted);font-weight:400">· computed live from flight logs (approaches + holds, preceding 6 calendar months)</span></h2>
+   <table class="fit-table"><thead><tr><th>Pilot</th><th>Approaches (6 mo)</th><th>Hold</th><th>Status</th></tr></thead><tbody>
+   ${pilots.map(p=>{const s=ifrStat(p);
+     const apc=(s.note.match(/window: (\d+)\/6/)||[])[1];
+     return `<tr><td><b style="color:var(--silver-light)">${lf(p)}</b>${rankChip(p)}</td><td>${s.ok?"6+ ✓":(apc??"0")+" / 6"}</td><td>${s.ok?"✓":(/1 hold/.test(s.label)?"needed":"✓")}</td><td><span class="chip ${s.cls}" style="font-size:8px">${s.label}</span>${s.note?`<div style="font-size:10px;color:var(--muted);margin-top:3px">${s.note}</div>`:""}</td></tr>`}).join("")}
+   </tbody></table></div>`;
+}
+function ifrBannerFor(u){
+ if(!u||!u.pilot)return "";
+ const s=ifrStat(u);
+ if(s.ok&&s.cls==="c-good")return "";
+ return `<div class="banner ${s.cls==="c-crit"?"b-crit":"b-warn"}" style="font-size:12px"><b>${s.label}.</b> ${s.note||""}</div>`;
+}
 function pgCurr(){
   const pi=PEOPLE.findIndex(p=>p.id===currPerson);
   const header=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
@@ -1374,7 +1471,7 @@ function pgCurr(){
     <button class="btn2 ${currView==='matrix'?'on':''}" onclick="currView='matrix';render()">Unit matrix</button>
     <button class="btn2 ${currView==='list'?'on':''}" onclick="currView='list';render()">Filtered list</button>
     ${currView==='mine'?`<select style="width:auto" onchange="currPerson=this.value;render()">${PEOPLE.map(p=>`<option value="${p.id}" ${p.id===currPerson?'selected':''}>${lf(p)} — ${p.pos}</option>`).join("")}</select>`:""}
-  </div>`;
+  </div>`+ifrPanel();
   if(currView==='list'){
     let rows=[];
     PEOPLE.forEach((p,ppi)=>flatTasks.forEach((t,ti)=>{
@@ -1630,7 +1727,7 @@ function scoreFrat2(){
       night=allNvg?4:7;
       nightNote=allNvg?"Night — all pilots NVG current — +4":"Night — pilot(s) NOT NVG current — +7"}
     const st=acStatusPts(a);
-    const ifr2Fail=!!wx.ifr2&&pilots.filter(p=>p.ifr).length<2;
+    const ifr2Fail=!!wx.ifr2&&pilots.filter(p=>ifrCurrent(p)).length<2;
     const ifr2Pen=ifr2Fail?5:0;
     const total=Math.max(0,(wx.pts-wxCredit)+terr+night+cx+(ext-extCredit)+(fat-fatCredit)+(cur-curCredit)+st.pts+ifr2Pen);
     return{a,crew,pilots,fat,fatHint,fatCredit,checks,lapsed,cur,curCredit,night,nightNote,nvgLapsed,st,ifr2Fail,ifr2Pen,total,
@@ -1655,7 +1752,7 @@ function crewSelect(ac,slot,label,filter){
   const taken=Object.entries(FR.crews[ac]||{}).filter(([k,v])=>k!==slot&&v&&["pic","sic","hoist","rescuer","safety"].includes(k)).map(([k,v])=>v);
   const opts=PEOPLE.filter(p=>filter(p)&&(!taken.includes(p.id)||p.id===c)).sort(byLastName).map(p=>{
     const r=READINESS[p.id].score;
-    return `<option value="${p.id}" ${c===p.id?'selected':''}>${lf(p)} — ${r} ${band(r)==="g"?"GREEN":band(r)==="y"?"YELLOW":"RED"}${p.ifr?' · IFR':''}${p.nvg?' · NVG':''}</option>`}).join("");
+    return `<option value="${p.id}" ${c===p.id?'selected':''}>${lf(p)} — ${r} ${band(r)==="g"?"GREEN":band(r)==="y"?"YELLOW":"RED"}${ifrCurrent(p)?' · IFR':''}${p.nvg?' · NVG':''}</option>`}).join("");
   return `<div><label class="lab">${label}</label><select onchange="frCrew('${ac}','${slot}',this.value)"><option value="">—</option>${opts}</select></div>`;
 }
 function wxCard(where,w,t){
@@ -1778,7 +1875,7 @@ function pgFrat(){
         <span class="chip ${pa.risk==='HIGH'?'c-crit':pa.risk==='MEDIUM'?'c-warn':'c-good'}">${sc.nogo?"NO-GO":"Score "+pa.total+" · "+pa.risk}</span></div>
       <div style="font-size:11px;color:var(--muted);margin:2px 0 8px">Aircraft status (auto): ${pa.st.notes.join(" · ")}</div>
       <div class="grid g2">
-        ${crewSelect(id,"pic","PIC (pilot)",p=>p.pilot)}
+        ${crewSelect(id,"pic","PIC (pilot)",p=>canPIC(p,(AIRCRAFT.find(a=>a.n===id)||{}).mk))}
         ${crewSelect(id,"sic","SIC (pilot)",p=>p.pilot)}
         ${crewSelect(id,"hoist","Crew Chief / Hoist Operator",p=>p.rtype==="hoist"||p.rtype==="safety")}
         ${crewSelect(id,"safety","Safety Member",p=>p.rtype==="safety"||p.so)}
@@ -2055,7 +2152,7 @@ function flDetView(){
    <div><label class="lab">Mission / Training</label><select onchange="FL_DRAFT['dep']=this.value">${["MISSION","TRAINING"].map(t=>`<option ${((d.dep??f.dep)===t)?'selected':''}>${t}</option>`).join("")}</select></div>`
    :fld("type","Flight type")}
    ${fld("inc","Incident #")}
-   ${e?`<div><label class="lab">PIC</label><select onchange="FL_DRAFT['pic']=this.value"><option value="">—</option>${PEOPLE.filter(p=>p.pilot).sort(byLastName).map(p=>`<option value="${p.full}" ${((d.pic??f.pic)===p.full||lfStr(d.pic??f.pic)===lf(p))?'selected':''}>${lf(p)}</option>`).join("")}</select></div>`
+   ${e?`<div><label class="lab">PIC</label><select onchange="FL_DRAFT['pic']=this.value"><option value="">—</option>${PEOPLE.filter(p=>canPIC(p,(AIRCRAFT.find(a=>a.n===(d.ac??f.ac))||{}).mk)).sort(byLastName).map(p=>`<option value="${p.full}" ${((d.pic??f.pic)===p.full||lfStr(d.pic??f.pic)===lf(p))?'selected':''}>${lf(p)}</option>`).join("")}</select></div>`
    :`<div><div class="lab" style="margin:0">PIC</div><b style="color:var(--silver-light)">${lfStr(f.pic)||"—"}</b></div>`}
    ${fld("hrs","Total hrs","number","0.1")}${fld("night","Night hrs","number","0.1")}
    ${fld("ldD","Day landings","number")}${fld("ldN","Night landings","number")}
@@ -2101,7 +2198,7 @@ function pgFlights(){
  const oosWarn=a&&FL.tachE&&+FL.tachE<a.tach;
  const usedIds=slot=>Object.entries(FL.crew).filter(([k,v])=>k!==slot&&v).map(([k,v])=>v);
  const actGroups=FL.ft?FLIGHT_ACTS.filter(([g])=>(FT_ACTS[FL.ft]||[]).includes(g)):[];
- return `<h1>Flight <span>Log</span></h1><div style="margin:2px 0 10px"><button class="btn2" onclick="FL_VIEW='rpt';render()">📊 Reports — pilot hours · fleet totals · ForeFlight export</button></div>
+ return `<h1>Flight <span>Log</span></h1>${ifrBannerFor(user)}<div style="margin:2px 0 10px"><button class="btn2" onclick="FL_VIEW='rpt';render()">📊 Reports — pilot hours · fleet totals · ForeFlight export</button></div>
  <div class="sub">Pick the aircraft first — the log pulls the latest FRAT for it and prefills the incident number and crew (all editable). Out-of-sequence flights file in proper tach order without touching aircraft totals or anyone else's log.</div>
 
  <div class="panel accent"><h2>1 · Aircraft &amp; classification</h2>
@@ -2198,6 +2295,8 @@ function pgFlights(){
    ${numCell("NVG hours",FL.c.nvg,"flC('nvg',+this.value)","0.1")}
    ${numCell("IFR hours",FL.c.ifr,"flC('ifr',+this.value)","0.1")}
    ${numCell("Mountain hours",FL.c.mtn,"flC('mtn',+this.value)","0.1")}
+   ${numCell("Instrument approaches",FL.c.appr,"flC('appr',+this.value)")}
+   ${numCell("Holds",FL.c.holds,"flC('holds',+this.value)")}
   </div>
   <div class="sublab">Passengers</div>
   <div class="grid g3">
@@ -2265,11 +2364,11 @@ function submitFlight(){
  const currList=Object.keys(FL.curr).filter(k=>FL.curr[k]);
  const picP=FL.crew.pic?PEOPLE.find(p=>p.id===FL.crew.pic):null;
  const ftName=(FLIGHT_TYPES.find(f=>f.id===FL.ft)||{}).name;
- FLIGHTS.push({id:Math.max(...FLIGHTS.map(f=>f.id))+1,d:fmt(new Date(FL.timeOut)),tm:new Date(FL.timeOut).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hour12:false}),ac:FL.ac,
+ FLIGHTS.push({id:Math.max(0,...FLIGHTS.map(f=>f.id))+1,d:fmt(new Date(FL.timeOut)),tm:new Date(FL.timeOut).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hour12:false}),ac:FL.ac,
   type:ftName||Object.keys(FL.acts).filter(k=>FL.acts[k])[0]||(FL.dep==="TRAINING"?"Training":"Mission"),dep:FL.dep,inc:FL.inc,
   pic:picP?picP.full:user.full,hrs:sp.day+sp.night,night:sp.night,
   ldD:(sp.hasDay||sp.bad)?FL.c.ldD:null,ldN:(sp.hasNight||sp.bad)?FL.c.ldN:null,
-  tachS:s,tachE:e,aar:!!(FL.brief.post&&FL.what.trim()),hazNeeded:FL.hazNeeded,hazFiled:false,oos,sync:netOnline()?"SYNCED":"PENDING",
+  tachS:s,tachE:e,appr:+FL.c.appr||0,holds:+FL.c.holds||0,aar:!!(FL.brief.post&&FL.what.trim()),hazNeeded:FL.hazNeeded,hazFiled:false,oos,sync:netOnline()?"SYNCED":"PENDING",
   stamp,stampEnd,avgS,avgE,cancelled:FL.cancelled,audit:[{by:lf(user),when:new Date().toLocaleString(),act:"SUBMITTED"}],crewIds:{...FL.crew},paxTotal:(FL.pax.fd+FL.pax.ess+FL.pax.civ+FL.pax.trauma+FL.pax.med+FL.pax.nonmed),currLog:currList.length?currList.length+" item(s) across "+new Set(currList.map(k=>k.split("|")[0])).size+" crew":""});
  FLIGHTS.sort((x,y)=>(y.tachS??0)-(x.tachS??0));
  a.tach=Math.max(a.tach,e);
@@ -2381,7 +2480,7 @@ function fileHazard(){
   const seatVals=["hz-pic","hz-sic","hz-crew"].map(v).filter(Boolean);
   if(new Set(seatVals).size!==seatVals.length){if(m){m.textContent="⛔ The same person is selected in more than one seat — one seat per person.";m.style.color="#F27B7B"}return}
   const link=v("hz-link");
-  HAZARDS.unshift({id:Math.max(...HAZARDS.map(h=>h.id))+1,d:fmt(TODAY),by:user.full,
+  HAZARDS.unshift({id:Math.max(0,...HAZARDS.map(h=>h.id))+1,d:fmt(TODAY),by:user.full,
     desc:desc+(v("hz-loc")?" — Location: "+v("hz-loc"):"")+(link?" — Linked to "+(link==="INC"?"incident (number pending)":link):" — Standalone (non-flight)")+(v("hz-pic")?" — Pilot: "+v("hz-pic"):"")+(+v("hz-pax")>0?" — "+v("hz-pax")+" pax aboard":""),
     cat:v("hz-cat"),op:(document.getElementById("hz-oprow")&&document.getElementById("hz-oprow").style.display!=="none")?v("hz-op"):null,
     sub:((document.getElementById("hz-oprow")&&document.getElementById("hz-oprow").style.display!=="none")?v("hz-op")+" — ":"")+v("hz-sub"),
@@ -2621,7 +2720,7 @@ function docUpload(i){const inp=document.getElementById("docrev-"+i);const v=inp
 function mtgSchedule(){
  const t=document.getElementById("mtg-topic"),w=document.getElementById("mtg-when");
  if(!t||!t.value.trim()||!w.value)return;
- MEETINGS.unshift({id:Math.max(...MEETINGS.map(m=>m.id))+1,date:fmt(new Date(w.value))+" · "+new Date(w.value).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),topic:t.value.trim(),fac:user.full,status:"UPCOMING",rsvp:[user.id],rec:null,minutes:null});
+ MEETINGS.unshift({id:Math.max(0,...MEETINGS.map(m=>m.id))+1,date:fmt(new Date(w.value))+" · "+new Date(w.value).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),topic:t.value.trim(),fac:user.full,status:"UPCOMING",rsvp:[user.id],rec:null,minutes:null});
  toast("<b>✓ Meeting scheduled.</b> Calendar invite created with the room link, "+PEOPLE.length+" members emailed, push notification sent. Day-of reminder will push to confirmed attendees.");render()}
 let HFILT={cat:null,sev:"",status:"",from:"",to:""};
 let hzView=null, EMAILP=false;
@@ -2963,7 +3062,7 @@ function ouraStopAsk(id){const p=PEOPLE.find(x=>x.id===id);p._askStop=true;ouraR
 function ouraStopCancel(id){const p=PEOPLE.find(x=>x.id===id);p._askStop=false;render()}
 function ouraStop(id){const p=PEOPLE.find(x=>x.id===id);
  p.oura="stopped";p._askStop=false;
- OURA_LOG.unshift({t:"DISCONNECTED",name:p.full,d:fmt(TODAY),note:ouraReason.trim()||"No reason given (voluntary disconnect)"});
+ OURA_LOG.unshift({t:"DISCONNECTED",name:p.full,d:fmt(TODAY),note:"Voluntary disconnect — status change only, no reason asked."});
  toast("<b>Wearable disconnected — data transfer stopped immediately.</b> The Safety Officer is notified of the status change only. Your data stays yours; reconnect anytime.","warn");
  ouraReason="";render()}
 async function adminLinkOura(id){
@@ -3006,19 +3105,18 @@ function ouraPanel(p){
  return `<div class="panel"><h2>Wearable ${ouraChip(p)}</h2>
   <div style="font-size:12px;color:var(--muted)">Connected and syncing (every 30 min on duty, daily off duty). Token encrypted — never displayed, to anyone. Sync problems alert the Safety Officer immediately.</div>
   ${p._askStop?`<div class="banner b-crit" style="margin-top:10px"><b>Disconnect your wearable?</b><br>
-   <span style="font-size:12px">Your data stays under your control and syncing ends immediately. Sharing is voluntary — disconnect for any reason, no questions asked. Any reason you choose to give is emailed to the Safety Officer (${SAFETY_EMAIL}) with your name and today's date.</span>
-   <textarea rows="2" placeholder="Reason (optional — shared with the Safety Officer)…" style="margin-top:8px" oninput="ouraReason=this.value"></textarea>
-   <div style="margin-top:8px"><button class="btn" onclick="ouraStop('${p.id}')">Disconnect wearable</button> <button class="btn2" onclick="ouraStopCancel('${p.id}')">Cancel</button></div></div>`
+   <span style="font-size:12px">Syncing ends immediately and your data stays under your control. Sharing is voluntary — no reason asked, ever. The Safety Officer sees only the status change.</span>
+   <div style="margin-top:8px"><button class="btn" onclick="ouraStop('${p.id}')">Yes — disconnect</button> <button class="btn2" onclick="ouraStopCancel('${p.id}')">Cancel</button></div></div>`
   :`<div style="margin-top:10px"><button class="btn2" onclick="ouraStopAsk('${p.id}')">Disconnect wearable — stop sharing my data…</button></div>`}</div>`;
 }
 function ouraLedger(){
  const linked=PEOPLE.filter(p=>p.oura==="synced").length,none=PEOPLE.filter(p=>p.oura==="none"||p.oura==="stopped").length;
- return `<div class="panel accent"><h2>Oura notifications — Safety Officer</h2>
+ return `<div class="panel accent"><h2>Wearable notifications — Safety Officer</h2>
   <div class="grid g3" style="text-align:center;margin-bottom:8px">
    <div><div class="lab" style="margin:0">Connected</div><b style="color:#5BC97A;font-size:20px">${linked}</b></div>
    <div><div class="lab" style="margin:0">Not linked / stopped</div><b style="color:var(--warn);font-size:20px">${none}</b></div>
    <div><div class="lab" style="margin:0">Sync health</div><b style="color:#5BC97A;font-size:13px">● ALL HEALTHY</b></div></div>
-  <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Instant email to ${SAFETY_EMAIL} on any disconnect (name · date · reason) and on any sync failure. Daily 18:00 digest lists everyone who linked that day.</div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Instant email to ${SAFETY_EMAIL} on any disconnect (name · date — status change only, no reason asked) and on any sync failure. Daily 18:00 digest lists everyone who linked that day.</div>
   ${OURA_LOG.length?OURA_LOG.map(l=>`<div style="border-top:1px solid rgba(37,43,52,.6);padding:6px 0;font-size:12px"><span class="chip ${l.t==="LINKED"?"c-good":"c-crit"}" style="font-size:8px">${l.t}</span> <b style="color:var(--silver-light)">${l.name}</b> · ${l.d}<br><span style="color:var(--muted)">${l.note}</span></div>`).join(""):'<div style="font-size:12px;color:var(--muted);border-top:1px solid rgba(37,43,52,.6);padding-top:6px">No link/disconnect events yet today.</div>'}</div>`;
 }
 /* ============ PERSONNEL — self-edit own info; managers edit anyone + authority ============ */
@@ -3040,6 +3138,12 @@ function pplSet(id,k,v){const p=PEOPLE.find(x=>x.id===id);
  if(["pilot","hoistQ","rescQ","safeQ"].includes(k)){
   p.rtype=p.pilot?"pilot":p.hoistQ?"hoist":p.rescQ?"rescuer":p.safeQ?"safety":"crew"}
  render()}
+PEOPLE.filter(p=>p.pilot&&!p.display).forEach((p,i)=>{
+ p.rank=p.rank||(/(Chief)/i.test(p.pos)||p.so?"V":/(Lead)/i.test(p.pos)||p.mgr?"IV":["III","III","II","I","III"][i%5]);
+ if(p.rank==="IV"||p.rank==="V")p.mgr=true;
+ p.dateIn=p.dateIn||["3/12/24","7/1/25","10/15/23","1/8/26","5/20/24","11/2/22"][i%6]});
+PEOPLE.forEach(p=>{p.dateIn=p.dateIn||["2/4/23","8/19/24","6/7/25","12/1/23"][PEOPLE.indexOf(p)%4]});
+FLIGHTS.forEach((f,i)=>{if(f.dep==="TRAINING"){f.appr=2;f.holds=i%2?1:0}});
 PEOPLE.forEach(p=>{p.hoistQ=p.rtype==="hoist";p.rescQ=p.rtype==="rescuer";p.safeQ=p.rtype==="safety";p.ht1=p.ht1||p.pos==="Helitac Level 1";p.ht2=(!p.ht1&&p.ht2)||p.pos==="Helitac Level 2"});
 function pplAdd(){
  const f=PPL_NEW.full.trim(),e=PPL_NEW.em.trim().toLowerCase();
@@ -3047,22 +3151,47 @@ function pplAdd(){
  if(PEOPLE.some(p=>(p.em||"").toLowerCase()===e||p.full.toLowerCase()===f.toLowerCase())){toast("<b>⛔ Already on the roster</b> — duplicate name or email.","warn");return}
  const id="m"+Math.random().toString(36).slice(2,8);const parts=f.split(" ");
  const isP=PPL_NEW.pos==="Pilot";
- PEOPLE.push({id,name:parts[0][0]+". "+parts[parts.length-1].toUpperCase(),full:f,pos:PPL_NEW.pos,level:"—",role:isP?"PILOT":"CREW",onDuty:false,pilot:isP,ifr:false,nvg:false,rtype:isP?"pilot":"crew",em:e,ph:"—",addr:"—",so:false,mgr:false,oura:"none",ht1:PPL_NEW.pos==="Helitac Level 1",ht2:PPL_NEW.pos==="Helitac Level 2"});
+ PEOPLE.push({id,name:parts[0][0]+". "+parts[parts.length-1].toUpperCase(),full:f,pos:PPL_NEW.pos,level:"—",role:isP?"PILOT":"CREW",onDuty:false,pilot:isP,ifr:false,nvg:false,rtype:isP?"pilot":"crew",em:e,ph:"—",addr:"—",so:false,mgr:false,oura:"none",ht1:PPL_NEW.pos==="Helitac Level 1",ht2:PPL_NEW.pos==="Helitac Level 2",rank:isP?"I":"",dateIn:fmt(TODAY)});
  READINESS[id]={score:70};
  PPL_NEW={full:'',em:'',pos:'Crew Member',pilot:false};pplAddOpen=false;
  toast("<b>✓ "+f+" added to the unit.</b> They can now sign in, set their info, and link their Oura Ring.");render()}
 function pplRemove(id){const i=PEOPLE.findIndex(x=>x.id===id);const p=PEOPLE[i];
  if(p.admin){toast("<b>⛔ Administrators cannot be removed in-app.</b>","warn");pplRemoveAsk=null;render();return}
+ ARCHIVE.unshift({full:p.full,pos:p.pos,rank:p.rank||"",role:p.role||"",em:p.em||"",dateIn:p.dateIn||"—",dateOut:fmt(TODAY)});
  PEOPLE.splice(i,1);pplRemoveAsk=null;pplView=null;
- toast("<b>"+p.full+" removed from the unit roster</b> (transfer). Their historic flights, FRATs and reports are preserved in the record.","warn");render()}
+ toast("<b>"+p.full+" transferred out of the unit.</b> Added to the permanent Archived Unit Members record; historic flights, FRATs and reports are preserved.","warn");render()}
+function pplTransferAsk(id){const p=PEOPLE.find(x=>x.id===id);if(!p)return;
+ if(confirm("Transfer "+p.full+" OUT of the unit?\n\nThey move to the permanent Archived Unit Members record (date in / date out kept indefinitely). Historic flights, FRATs and reports are preserved."))pplRemove(id)}
 function dutySet(id){const p=PEOPLE.find(x=>x.id===id);if(p.display)return;p.onDuty=!p.onDuty;if(p.onDuty&&!p.prov)p.prov="home";
  toast("<b>"+p.full+"</b> placed "+(p.onDuty?"<b>ON duty</b> — Oura polling switches to every 30 min.":"<b>OFF duty</b> — Oura polling drops to daily."));render()}
 function pplRank(p){return p.admin?0:p.mgr?1:p.so?2:p.pilot?3:4}
 function pplSort(a,b){const r=pplRank(a)-pplRank(b);if(r)return r;
  const la=a.full.split(" ").slice(-1)[0],lb=b.full.split(" ").slice(-1)[0];
  return la.localeCompare(lb)||a.full.localeCompare(b.full)}
+let ARCH_Q={q:'',inFrom:'',inTo:'',outFrom:'',outTo:''};
+function parseMDY(s){if(!s||s==="—")return null;const m=String(s).split("/");if(m.length!==3)return null;return new Date(2000+(+m[2]%100),(+m[0])-1,+m[1])}
+function pgArchive(){
+ const inRange=(d,from,to)=>{const t=parseMDY(d);if(!t)return !(from||to);if(from&&t<new Date(from))return false;if(to&&t>new Date(to))return false;return true};
+ const q=(ARCH_Q.q||"").toLowerCase();
+ const list=ARCHIVE.filter(a=>
+   (!q||[a.full,a.pos,a.rank?("pilot "+a.rank):"",a.role,a.em,a.dateIn,a.dateOut].join(" ").toLowerCase().includes(q))
+   &&inRange(a.dateIn,ARCH_Q.inFrom,ARCH_Q.inTo)&&inRange(a.dateOut,ARCH_Q.outFrom,ARCH_Q.outTo))
+  .sort((x,y)=>(parseMDY(x.dateIn)||0)-(parseMDY(y.dateIn)||0));
+ return `<button class="btn2" onclick="pplView=null;render()">← Unit personnel</button>
+ <h1 style="margin-top:12px">Archived <span>Unit Members</span></h1>
+ <div class="sub">Permanent record of everyone who transferred into and out of the unit — ordered by date transferred in. Kept indefinitely.</div>
+ <div class="panel"><div class="grid g3">
+  <div><label class="lab">Search (name · role · rank · email)</label><input value="${ARCH_Q.q}" placeholder="e.g. Merritt, Pilot, Helitac…" oninput="ARCH_Q.q=this.value;render()"></div>
+  <div><label class="lab">Transferred IN — from / to</label><div style="display:flex;gap:6px"><input type="date" value="${ARCH_Q.inFrom}" onchange="ARCH_Q.inFrom=this.value;render()"><input type="date" value="${ARCH_Q.inTo}" onchange="ARCH_Q.inTo=this.value;render()"></div></div>
+  <div><label class="lab">Transferred OUT — from / to</label><div style="display:flex;gap:6px"><input type="date" value="${ARCH_Q.outFrom}" onchange="ARCH_Q.outFrom=this.value;render()"><input type="date" value="${ARCH_Q.outTo}" onchange="ARCH_Q.outTo=this.value;render()"></div></div>
+ </div></div>
+ <div class="panel">${list.length?`<table class="fit-table"><thead><tr><th>Member</th><th>Position / rank</th><th>Role</th><th>Transferred in</th><th>Transferred out</th></tr></thead><tbody>
+  ${list.map(a=>`<tr><td><b style="color:var(--silver-light)">${lfStr(a.full)}</b></td><td style="font-size:11px">${a.pos}${a.rank?" · Pilot "+a.rank:""}</td><td style="font-size:11px">${a.role||"—"}</td><td>${a.dateIn}</td><td>${a.dateOut}</td></tr>`).join("")}</tbody></table>`
+  :'<div style="font-size:12px;color:var(--muted)">No archived members'+(ARCHIVE.length?' match these filters.':' yet — members appear here when a manager transfers them out.')+'</div>'}</div>`;
+}
 function pgPeople(){
  const mgr=isMgr(user);
+ if(pplView==='__archive')return pgArchive();
  if(pplView){const p=PEOPLE.find(x=>x.id===pplView);
   const canContact=mgr||user.id===p.id;
   const txt=(k,label)=>`<div><label class="lab">${label}</label><input value="${p[k]||""}" ${canContact?`onchange="pplSet('${p.id}','${k}',this.value)"`:"disabled"}></div>`;
@@ -3076,8 +3205,13 @@ function pgPeople(){
   <div class="panel"><h2>Contact & personal ${canContact?'<span style="font-size:10px;color:#5BC97A;font-weight:400">· editable — '+(user.id===p.id?"this is your record":"manager access")+'</span>':'<span class="lock">· view only — members edit only their own info</span>'}</h2>
    <div class="grid g2">${txt("full","Full name (legal name changes, etc.)")}${txt("em","Email")}${txt("ph","Phone")}${txt("addr","Home address")}${txt("pos","Position / title")}<div><label class="lab">Platoon / shift</label><select ${mgr?`onchange="pplSet('${p.id}','pl',this.value)"`:"disabled"}>${Object.keys(PLATOONS).map(k=>`<option value="${k}" ${p.pl===k?"selected":""}>${PLATOONS[k].name}</option>`).join("")}</select></div></div></div>
   ${ouraPanel(p)}
+  ${docsPanel(p)}
   <div class="panel"><h2>Qualifications ${mgr?"":'<span class="lock">· manager only</span>'}</h2>
-   <div class="grid g3">${chk("pilot","Pilot",mgr)}${chk("ifr","IFR current",mgr)}${chk("nvg","NVG current",mgr)}${chk("hoistQ","Hoist operator",mgr)}${chk("rescQ","Rescuer",mgr)}${chk("safeQ","Safety member",mgr)}${chk("ht1","Helitac Level 1",mgr)}${chk("ht2","Helitac Level 2",mgr)}</div></div>
+   <div class="grid g3">${chk("pilot","Pilot",mgr)}${chk("hoistQ","Hoist operator",mgr)}${chk("rescQ","Rescuer",mgr)}${chk("safeQ","Safety member",mgr)}${chk("ht1","Helitac Level 1",mgr)}${chk("ht2","Helitac Level 2",mgr)}</div>
+   <div style="font-size:10px;color:var(--muted);margin-top:6px">IFR and NVG currency are no longer manual checkboxes — they are computed from logged flights (see Currency).</div>
+   ${p.pilot?`<div style="margin-top:12px"><label class="lab">Pilot rank <span style="font-weight:400;text-transform:none">· single selection${mgr?"":" · manager only"}</span></label>
+    <div class="grid g3">${Object.keys(RANKS).map(r=>`<label class="opt ${p.rank===r?'sel':''}" style="cursor:${mgr?'pointer':'default'};opacity:${mgr?1:.6}"><span>${RANKS[r]}</span><input type="radio" name="rank-${p.id}" style="width:auto" ${p.rank===r?'checked':''} ${mgr?`onchange="rankSet('${p.id}','${r}')"`:"disabled"}></label>`).join("")}</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:5px">Pilot IV and V are managers automatically. Aircraft authority: III/IV/V — all aircraft; I &amp; II — Bell 505 only (Pilot II AW139 conditions arrive with the training program).</div></div>`:""}</div>
   ${(isAdmin(user)&&user.id!==p.id)?`<div class="panel" style="border-left:3px solid var(--gold)"><h2>Oura — full visibility <span style="font-size:10px;color:var(--gold);font-weight:400">· administrator</span></h2><div style="font-size:12px;line-height:1.8">Connection: ${ouraChip(p)} · Current readiness: <b style="color:${bandColor(READINESS[p.id].score)}">${READINESS[p.id].score}</b> · Last sync: ${p.oura==="synced"?"within 30 min":"—"} · Token: stored encrypted (never displayed)<br><span style="color:var(--muted);font-size:11px">Admin visibility exists for troubleshooting. Members are told supervisors see scores only — granular biometric detail stays restricted to the member themselves.</span></div><div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">${p.oura!=='synced'?`<input type='password' id='adm-tok-${p.id}' placeholder='Paste ${p.full.split(" ")[0]}\u2019s access token…' style='max-width:300px'><button class='btn' onclick="adminLinkOura('${p.id}')">Link &amp; test live</button>`:`<button class='btn2' onclick="adminUnlinkOura('${p.id}')">Remove token / unlink</button>`}</div><div style="font-size:10px;color:var(--muted);margin-top:5px">Administrator-only. A successful test pulls their real readiness from Oura immediately; failures show the exact error. Every link/unlink is logged and appears in your notification emails.</div></div>`:""}
   <div class="panel accent"><h2>Authority / roles ${mgr?'<span style="font-size:10px;color:#5BC97A;font-weight:400">· manager only · multiple people may hold each</span>':'<span class="lock">· manager only</span>'}</h2>
    <div class="grid g2">${chk("so","SAFETY OFFICER — scores hazards, redaction, Safety Health, committees",mgr)}${chk("mgr","MANAGER — edits personnel & fleet, approves FRATs",mgr)}</div>
@@ -3096,14 +3230,16 @@ function pgPeople(){
 function pplRow(p){
  const st=p.oura==="synced"?`<span class="chip c-good" style="font-size:9px">● ${devName(p).toUpperCase()}</span>`:p.oura==="linked"?'<span class="chip c-warn" style="font-size:9px">▲ LINKING</span>':p.oura==="stopped"?'<span class="chip c-crit" style="font-size:9px">■ STOPPED</span>':'<span class="chip c-gray" style="font-size:9px">NOT CONNECTED</span>';
  const duty=(user.so||isMgr(user))?`<span style="display:inline-flex;align-items:center;gap:5px"><span class="tgl ${p.onDuty?'on':''}" title="${p.onDuty?'On duty — tap to place off':'Off duty — tap to place on'}" onclick="event.stopPropagation();dutySet('${p.id}')"></span><span style="font-size:9px;color:${p.onDuty?'#5BC97A':'var(--muted)'};letter-spacing:1px">${p.onDuty?'ON':'OFF'}</span></span>`:(p.onDuty?'<span class="chip c-good" style="font-size:9px">ON DUTY</span>':'<span class="chip c-gray" style="font-size:9px">OFF</span>');
- return `<tr onclick="pplView='${p.id}';render()" style="cursor:pointer"><td><b class="cond" style="color:var(--silver-light);letter-spacing:.5px">${lf(p)}</b>${p.so?' <span class="chip c-red" style="font-size:7px">SO</span>':''}${p.mgr?' <span class="chip c-blue" style="font-size:7px">MGR</span>':''}</td><td style="font-size:11px">${p.pos}</td><td>${st}</td><td>${duty}</td></tr>`}
+ const xfer=(isMgr(user)&&!p.admin&&p.id!==user.id)?`<button class="btn2" style="padding:3px 9px;font-size:9px" title="Transfer out of the unit" onclick="event.stopPropagation();pplTransferAsk('${p.id}')">⇄ TRANSFER OUT</button>`:"";
+ return `<tr onclick="pplView='${p.id}';render()" style="cursor:pointer"><td><b class="cond" style="color:var(--silver-light);letter-spacing:.5px">${lf(p)}</b>${p.so?' <span class="chip c-red" style="font-size:7px">SO</span>':''}${p.mgr?' <span class="chip c-blue" style="font-size:7px">MGR</span>':''}${rankChip(p)}${docBadge(p)}</td><td style="font-size:11px">${p.pos}</td><td>${st}</td><td>${duty}</td><td style="text-align:right">${xfer}</td></tr>`}
 function pplTable(list,empty){
- return `<table class="fit-table"><thead><tr><th>Name</th><th>Position</th><th>Status (Wearable)</th><th>Duty</th></tr></thead><tbody>${list.length?list.map(pplRow).join(""):`<tr><td colspan="4" style="color:var(--muted);font-size:12px">${empty}</td></tr>`}</tbody></table>`}
+ return `<table class="fit-table"><thead><tr><th>Name</th><th>Position</th><th>Status (Wearable)</th><th>Duty</th><th></th></tr></thead><tbody>${list.length?list.map(pplRow).join(""):`<tr><td colspan="5" style="color:var(--muted);font-size:12px">${empty}</td></tr>`}</tbody></table>`}
 function dutyTables(){
  const legend="";
  const on=[...PEOPLE].filter(p=>p.onDuty&&!p.display).sort(pplSort),off=[...PEOPLE].filter(p=>!p.onDuty&&!p.display).sort(pplSort);
  return `<div class="panel" style="border-left:3px solid var(--good)"><h2>On duty — ${on.length}</h2>${pplTable(on,"Nobody currently on duty.")}</div>
- <div class="panel"><h2>Off duty — ${off.length}</h2>${pplTable(off,"—")}</div>
+ <div class="panel"><h2>Off duty — ${off.length}</h2>${pplTable(off,"—")}
+  <div style="margin-top:10px"><button class="btn2" onclick="pplView='__archive';ARCH_Q={q:'',inFrom:'',inTo:'',outFrom:'',outTo:''};render()">🗄 Archived Unit Members — ${ARCHIVE.length}</button></div></div>
  <div style="font-size:10px;color:var(--muted)">Each table sorts by role — Administrator, Managers, Safety Officers, Pilots, Crew — then alphabetical by last name. Platoons: <b style="color:#F04E4E">A</b>/<b style="color:#4E8CF0">B</b>/<b style="color:#2FA84F">C</b>/<b style="color:#E6E9EF">Special Duty</b> (provisional round-robin until you assign real shifts).</div>`;
 }
 function _pplUnused(){return ""
