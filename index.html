@@ -187,7 +187,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">customer demo build g14 — 2026-07-25 · all people, aircraft &amp; records are fictional · full-platform parity with build v33</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">customer demo build g15 — 2026-07-25 · mixed US fleet: AW139 · H125 · Bell 407 · Bell 429 · H135 · Bell 505 · R44 · all people, aircraft &amp; records are fictional · full-platform parity with build v33</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
@@ -485,28 +485,28 @@ newFrat();
 /* ================= AIRCRAFT / FLIGHTS / HAZARDS ================= */
 const AIRCRAFT=[
  {n:"N701WR",cs:"Air 1 (H1)",mk:"AW139",base:"Air Ops (KBUR)",tach:1785.7,mtach:1785.7,to25:6.1,to100:11.5,landings:0,hoist:11,hoistT:11,tens:true,svc:"—",ret:false,down:false,squawks:"SIC float switch guard · AVCS INOP · LH searchlight INOP · NEW: swashplate boot tear"},
- {n:"N702WR",cs:"Air 2 (H2)",mk:"AW139",base:"Air Ops (KBUR)",tach:2906.3,mtach:2906.3,to25:16.6,to100:35.8,landings:0,hoist:10,hoistT:10,tens:true,svc:"—",ret:false,down:false,hoistInspNeeded:true,squawks:"Right strobe light intermittent"},
- {n:"N703WR",cs:"Air 3 (H3)",mk:"AW139",base:"Air Ops (KBUR)",tach:2997.6,mtach:2997.6,to25:9.3,to100:39.5,landings:0,hoist:2,hoistT:2,svc:"—",ret:false,down:false,squawks:"Central display · landing lights · hoist"},
- {n:"N704WR",cs:"Air 4 (H4)",mk:"AW139",base:"Air Ops (KBUR)",tach:2046.7,mtach:2046.7,to25:15.6,to100:66.3,landings:0,hoist:2,hoistT:2,svc:"—",ret:false,down:false,squawks:"PIC vent fail · replace pilot seat · fuel panel cross-feed noisy"},
- {n:"N705WR",cs:"Air 5 (H5)",mk:"AW139",base:"Air Ops (KBUR)",tach:3170.2,mtach:3170.2,to25:4.1,to100:8.1,landings:0,hoist:14,hoistT:14,svc:"—",ret:false,down:true,squawks:"Steerable searchlight removed · #2 HYD temp high · night sun L/R control INOP"},
+ {n:"N702WR",cs:"Air 2 (H2)",mk:"Airbus H125 (AS350 B3e)",base:"Air Ops (KBUR)",tach:2440.6,mtach:2440.6,to25:16.6,to100:35.8,landings:0,hoist:0,hoistT:0,svc:"—",ret:false,down:false,squawks:"Right strobe light intermittent"},
+ {n:"N703WR",cs:"Air 3 (H3)",mk:"Bell 407GXi",base:"Air Ops (KBUR)",tach:1890.2,mtach:1890.2,to25:9.3,to100:39.5,landings:0,hoist:0,hoistT:0,svc:"—",ret:false,down:false,squawks:"G1000H display flicker · landing light"},
+ {n:"N704WR",cs:"Air 4 (H4)",mk:"Bell 429 GlobalRanger",base:"Air Ops (KBUR)",tach:1544.8,mtach:1544.8,to25:15.6,to100:66.3,landings:0,hoist:0,hoistT:0,svc:"—",ret:false,down:false,squawks:"PIC vent fail · replace copilot seat cushion"},
+ {n:"N705WR",cs:"Air 5 (H5) · EMS",mk:"Airbus H135 P3H",base:"Air Ops (KBUR)",tach:3305.7,mtach:3305.7,to25:4.1,to100:8.1,landings:0,hoist:14,hoistT:14,svc:"—",ret:false,down:true,squawks:"Steerable searchlight removed · #2 HYD temp high"},
  {n:"N706WR",cs:"Air 6 (H6)",mk:"Bell 505",base:"Air Ops (KBUR)",tach:1348.1,mtach:1348.1,to25:2.9,to100:29.5,landings:0,hoist:0,hoistT:0,svc:"—",ret:false,down:false,squawks:null},
- {n:"N707WR",cs:"Air 7 (H7)",mk:"Bell 505",base:"Air Ops (KBUR)",tach:1716.2,mtach:1716.2,to25:3.9,to100:63.8,landings:0,hoist:0,hoistT:0,svc:"—",ret:false,down:false,squawks:null}
+ {n:"N707WR",cs:"Air 7 (H7) · Trainer",mk:"Robinson R44 Raven II",base:"Air Ops (KBUR)",tach:1610.8,mtach:1610.8,to25:3.9,to100:63.8,landings:0,hoist:0,hoistT:0,svc:"—",ret:false,down:false,squawks:null}
 ];
 let FLIGHTS=[
  {id:14,d:"07/13/26",tm:"13:58",ac:"N706WR",type:"Recon / Patrol",dep:"TRAINING",inc:"",pic:"Molly Ives",crewIds:{pic:"ives"},paxTotal:0,hrs:1.4,night:0,ldD:3,ldN:0,tachS:1346.7,tachE:1348.1,aar:true,hazNeeded:false,hazFiled:false,oos:false,stamp:"Ives 76"},
- {id:13,d:"07/12/26",tm:"10:41",ac:"N702WR",type:"SAR — Hoist rescue",dep:"MISSION",inc:"INC-26-104211",pic:"Cole Danvers",crewIds:{pic:"danvers",sic:"ashford"},paxTotal:1,hrs:1.8,night:0,ldD:2,ldN:0,tachS:2904.5,tachE:2906.3,aar:true,hazNeeded:false,hazFiled:false,oos:false,stamp:"Danvers 82 · Ashford 84",avgS:83,cancelled:false},
- {id:12,d:"07/11/26",tm:"07:24",ac:"N703WR",type:"Fire — Water drops",dep:"MISSION",inc:"INC-26-103877",pic:"Dana Ashford",crewIds:{pic:"ashford"},paxTotal:0,hrs:2.2,night:0.4,ldD:3,ldN:1,tachS:2995.4,tachE:2997.6,aar:true,hazNeeded:false,hazFiled:false,oos:false,stamp:"Ashford 84"},
- {id:11,d:"07/10/26",tm:"16:07",ac:"N705WR",type:"EMS / Medical",dep:"MISSION",inc:"INC-26-103542",pic:"Victor Redgrave",crewIds:{pic:"redgrave"},paxTotal:2,hrs:1.9,night:0.7,ldD:2,ldN:1,tachS:3168.3,tachE:3170.2,aar:true,hazNeeded:false,hazFiled:false,oos:false},
+ {id:13,d:"07/12/26",tm:"10:41",ac:"N702WR",type:"Fire — Water drops",dep:"MISSION",inc:"INC-26-104211",pic:"Cole Danvers",crewIds:{pic:"danvers",sic:"ashford"},paxTotal:1,hrs:1.8,night:0,ldD:2,ldN:0,tachS:2438.8,tachE:2440.6,aar:true,hazNeeded:false,hazFiled:false,oos:false,stamp:"Danvers 82 · Ashford 84",avgS:83,cancelled:false},
+ {id:12,d:"07/11/26",tm:"07:24",ac:"N703WR",type:"Fire — Water drops",dep:"MISSION",inc:"INC-26-103877",pic:"Dana Ashford",crewIds:{pic:"ashford"},paxTotal:0,hrs:2.2,night:0.4,ldD:3,ldN:1,tachS:1888.0,tachE:1890.2,aar:true,hazNeeded:false,hazFiled:false,oos:false,stamp:"Ashford 84"},
+ {id:11,d:"07/10/26",tm:"16:07",ac:"N705WR",type:"EMS / Medical",dep:"MISSION",inc:"INC-26-103542",pic:"Victor Redgrave",crewIds:{pic:"redgrave"},paxTotal:2,hrs:1.9,night:0.7,ldD:2,ldN:1,tachS:3303.8,tachE:3305.7,aar:true,hazNeeded:false,hazFiled:false,oos:false},
  {id:10,d:"07/09/26",tm:"13:50",ac:"N706WR",type:"Training — Pattern",dep:"TRAINING",inc:"",pic:"Marcus Vale",crewIds:{pic:"vale"},paxTotal:0,hrs:0.5,night:0.5,ldD:0,ldN:2,tachS:1346.2,tachE:1346.7,aar:true,hazNeeded:false,hazFiled:false,oos:false},
- {id:9,d:"07/08/26",tm:"10:33",ac:"N707WR",type:"Recon / Patrol",dep:"TRAINING",inc:"",pic:"Tyler Coburn",crewIds:{pic:"coburn"},paxTotal:0,hrs:2.6,night:1.1,ldD:2,ldN:1,tachS:1713.6,tachE:1716.2,aar:true,hazNeeded:false,hazFiled:false,oos:false},
- {id:8,d:"07/07/26",tm:"07:16",ac:"N702WR",type:"Fire — Water drops",dep:"MISSION",inc:"INC-26-102188",pic:"Tessa Bram",crewIds:{pic:"bram"},paxTotal:0,hrs:2.7,night:0.9,ldD:3,ldN:1,tachS:2901.8,tachE:2904.5,aar:true,hazNeeded:false,hazFiled:false,oos:false},
- {id:7,d:"07/06/26",tm:"16:59",ac:"N705WR",type:"SAR — Hoist rescue",dep:"MISSION",inc:"INC-26-101764",pic:"Andre Colter",crewIds:{pic:"colter"},paxTotal:1,hrs:2.1,night:0,ldD:2,ldN:0,tachS:3166.2,tachE:3168.3,aar:true,hazNeeded:false,hazFiled:false,oos:false},
+ {id:9,d:"07/08/26",tm:"10:33",ac:"N707WR",type:"Recon / Patrol",dep:"TRAINING",inc:"",pic:"Tyler Coburn",crewIds:{pic:"coburn"},paxTotal:0,hrs:2.6,night:1.1,ldD:2,ldN:1,tachS:1608.2,tachE:1610.8,aar:true,hazNeeded:false,hazFiled:false,oos:false},
+ {id:8,d:"07/07/26",tm:"07:16",ac:"N702WR",type:"Fire — Water drops",dep:"MISSION",inc:"INC-26-102188",pic:"Tessa Bram",crewIds:{pic:"bram"},paxTotal:0,hrs:2.7,night:0.9,ldD:3,ldN:1,tachS:2436.1,tachE:2438.8,aar:true,hazNeeded:false,hazFiled:false,oos:false},
+ {id:7,d:"07/06/26",tm:"16:59",ac:"N705WR",type:"SAR — Hoist rescue",dep:"MISSION",inc:"INC-26-101764",pic:"Andre Colter",crewIds:{pic:"colter"},paxTotal:1,hrs:2.1,night:0,ldD:2,ldN:0,tachS:3301.7,tachE:3303.8,aar:true,hazNeeded:false,hazFiled:false,oos:false},
  {id:6,d:"07/05/26",tm:"13:42",ac:"N706WR",type:"Fire — Water drops",dep:"MISSION",inc:"INC-26-101320",pic:"Molly Ives",crewIds:{pic:"ives"},paxTotal:0,hrs:3.2,night:0,ldD:4,ldN:0,tachS:1343.0,tachE:1346.2,aar:true,hazNeeded:false,hazFiled:false,oos:false},
- {id:5,d:"07/04/26",tm:"10:25",ac:"N703WR",type:"Recon / Patrol",dep:"MISSION",inc:"INC-26-100987",pic:"Priya Kettle",crewIds:{pic:"kettle"},paxTotal:0,hrs:1.9,night:0.8,ldD:1,ldN:1,tachS:2993.5,tachE:2995.4,aar:true,hazNeeded:false,hazFiled:false,oos:false},
- {id:4,d:"07/03/26",tm:"07:08",ac:"N707WR",type:"Training — Pattern",dep:"TRAINING",inc:"",pic:"Simone Okafor",crewIds:{pic:"okafor"},paxTotal:0,hrs:1.6,night:0.4,ldD:4,ldN:1,tachS:1712.0,tachE:1713.6,aar:true,hazNeeded:false,hazFiled:false,oos:false},
- {id:3,d:"07/02/26",tm:"16:51",ac:"N702WR",type:"EMS / Medical",dep:"MISSION",inc:"INC-26-100233",pic:"Cole Danvers",crewIds:{pic:"danvers"},paxTotal:1,hrs:2.2,night:0,ldD:2,ldN:0,tachS:2899.6,tachE:2901.8,aar:true,hazNeeded:false,hazFiled:false,oos:false},
- {id:2,d:"07/02/26",tm:"13:34",ac:"N705WR",type:"Training — Mountain ops",dep:"TRAINING",inc:"",pic:"Joel Smith",crewIds:{pic:"joel"},paxTotal:0,hrs:2.9,night:0,ldD:3,ldN:0,tachS:3163.3,tachE:3166.2,aar:true,hazNeeded:false,hazFiled:false,oos:false},
- {id:1,d:"07/01/26",tm:"10:17",ac:"N706WR",type:"SAR — Hoist rescue",dep:"MISSION",inc:"INC-26-099812",pic:"Elena Marsh",crewIds:{pic:"marsh"},paxTotal:1,hrs:2.3,night:0.6,ldD:2,ldN:1,tachS:1340.7,tachE:1343.0,aar:true,hazNeeded:false,hazFiled:false,oos:false}
+ {id:5,d:"07/04/26",tm:"10:25",ac:"N703WR",type:"Recon / Patrol",dep:"MISSION",inc:"INC-26-100987",pic:"Priya Kettle",crewIds:{pic:"kettle"},paxTotal:0,hrs:1.9,night:0.8,ldD:1,ldN:1,tachS:1886.1,tachE:1888.0,aar:true,hazNeeded:false,hazFiled:false,oos:false},
+ {id:4,d:"07/03/26",tm:"07:08",ac:"N707WR",type:"Training — Pattern",dep:"TRAINING",inc:"",pic:"Simone Okafor",crewIds:{pic:"okafor"},paxTotal:0,hrs:1.6,night:0.4,ldD:4,ldN:1,tachS:1606.6,tachE:1608.2,aar:true,hazNeeded:false,hazFiled:false,oos:false},
+ {id:3,d:"07/02/26",tm:"16:51",ac:"N702WR",type:"EMS / Medical",dep:"MISSION",inc:"INC-26-100233",pic:"Cole Danvers",crewIds:{pic:"danvers"},paxTotal:1,hrs:2.2,night:0,ldD:2,ldN:0,tachS:2433.9,tachE:2436.1,aar:true,hazNeeded:false,hazFiled:false,oos:false},
+ {id:2,d:"07/02/26",tm:"13:34",ac:"N705WR",type:"Training — Mountain ops",dep:"TRAINING",inc:"",pic:"Joel Smith",crewIds:{pic:"joel"},paxTotal:0,hrs:2.9,night:0,ldD:3,ldN:0,tachS:3298.8,tachE:3301.7,aar:true,hazNeeded:false,hazFiled:false,oos:false},
+ {id:1,d:"07/01/26",tm:"10:17",ac:"N706WR",type:"Recon / Patrol",dep:"MISSION",inc:"INC-26-099812",pic:"Elena Marsh",crewIds:{pic:"marsh"},paxTotal:1,hrs:2.3,night:0.6,ldD:2,ldN:1,tachS:1340.7,tachE:1343.0,aar:true,hazNeeded:false,hazFiled:false,oos:false}
 ];
 let HAZARDS=[
  {id:18,d:"07/12/26",by:"Felix Vance",desc:"Fuel truck staged inside rotor arc during hot refuel on the ramp.",cat:"Ground Operations",sub:"Rotor arc intrusion",P:null,S:null,status:"OPEN",m:6,dtc:null,opened:false,redacted:false,pub:"Ground-vehicle proximity during hot refuel."},
@@ -522,12 +522,12 @@ const PREFLIGHTS=[
 ];
 const MX={
  "N701WR":[["50-hr inspection","tach",1791.8],["100-hr inspection","tach",1795.4],["150-hr inspection","tach",1797.2],["Batt deep cycle / Mo hoist","date","07/31/26"]],
- "N702WR":[["25-hr inspection","tach",2922.9],["50-hr inspection","tach",2926.8],["150-hr inspection","tach",2942.1],["Batt deep cycle / hoist","date","07/31/26"]],
- "N703WR":[["25-hr inspection","tach",3006.9],["Eng 1 fuel nozzle","tach",3019.1],["100-hr inspection","tach",3037.1],["Main & aux batt","date","09/30/26"]],
- "N704WR":[["25-hr inspection","tach",2062.3],["50-hr inspection","tach",2063.0],["100/150-hr inspection","tach",2113.0],["Mo hoist","date","05/31/26"]],
- "N705WR":[["25-hr inspection","tach",3174.3],["50-hr inspection","tach",3177.1],["MGB leak check","tach",3178.3],["Mo hoist inspection","date","07/31/26"]],
- "N706WR":[["25-hr inspection","tach",1351.0],["50/100/150-hr inspection","tach",1376.1],["200-hr inspection","tach",1377.6],["6-month inspection","date","11/30/26"]],
- "N707WR":[["25-hr inspection","tach",1720.1],["50-hr inspection","tach",1730.0],["150/200/300-hr inspection","tach",1780.0],["Oil pressure hose","date","10/20/26"]]
+ "N702WR":[["100-hr inspection (ALS)","tach",2484.0],["Annual airframe","date","09/04/26"],["AD tail rotor sleeve","tach",2520.1]],
+ "N703WR":[["100-hr / annual","tach",1939.7],["Eng 300-hr (M250)","tach",1951.0],["ASB M/R yoke","tach",1900.0]],
+ "N704WR":[["HUMS download","date","08/07/26"],["600-hr package","tach",1722.4]],
+ "N705WR":[["400-hr / annual","tach",3410.0],["Hoist 6-mo / 100-lift","date","09/15/26"]],
+ "N706WR":[["100-hr inspection","tach",1369.1],["300-hr inspection","tach",1421.6],["Annual","date","03/25/27"]],
+ "N707WR":[["100-hr / annual","tach",1654.0],["50-hr oil change","tach",1630.9],["2,200-hr / 12-yr overhaul","tach",2200.0]]
 };
 const SQUAWKS={
  "N701WR":[{d:"07/06/26",txt:"SIC float switch guard",status:"DEFERRED"},{d:"07/06/26",txt:"AVCS INOP",status:"DEFERRED"},{d:"07/06/26",txt:"LH searchlight INOP",status:"DEFERRED"},{d:"07/06/26",txt:"Swashplate boot tear",status:"OPEN"}],
