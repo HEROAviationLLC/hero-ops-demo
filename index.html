@@ -187,7 +187,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">customer demo build g13 — 2026-07-25 · all people, aircraft &amp; records are fictional · full-platform parity with build v33</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">customer demo build g14 — 2026-07-25 · all people, aircraft &amp; records are fictional · full-platform parity with build v33</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
@@ -1016,7 +1016,7 @@ function checkinBanner(){
     </div></div>`}
 
 /* ================= PAGES ================= */
-const TABS=[["dash","Dashboard"],["ready","Readiness"],["ppl","Personnel"],["acft","Aircraft"],["mx","Maintenance"],["curr","Currency"],["trn","Training"],["frat","FRAT"],["flights","Flight Log"],["haz","Hazards"],["safety","Safety Mgmt"]];
+const TABS=[["dash","Dashboard"],["ready","Readiness"],["ppl","Personnel"],["acft","Aircraft"],["mx","Maintenance"],["equip","Equipment"],["curr","Currency"],["trn","Training"],["frat","FRAT"],["flights","Flight Log"],["haz","Hazards"],["safety","Safety Mgmt"]];
 
 function shell(content){
   return `<header>
@@ -1466,6 +1466,115 @@ function mxStrip(){
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
    <div style="font-size:12px"><b style="color:var(--silver-light)">🔧 Maintenance:</b> ${worst?`<span class="chip c-crit">${worst} SHIP${worst>1?"S":""} NEED ATTENTION</span>`:tolN?`<span class="chip c-warn">${tolN} IN TOLERANCE</span>`:'<span class="chip c-good">FLEET IN THE GREEN</span>'} <span style="font-size:10px;color:var(--muted)">live from HERO Maintenance</span></div>
    <span style="font-size:10px;color:var(--gold)">Full board → Maintenance tab</span></div></div>`}
+/* ===== EQUIPMENT INVENTORY (premium add-on) — signed, timestamped custody trail ===== */
+let EQUIP=[
+ {id:1,item:"Rescue hoist hook assembly",cat:"Hoist & Rescue",ident:"SN GH-4471",loc:"Air 1 — hoist",status:"IN SERVICE",svc:"2024-03-02",insp:"2026-08-15",notes:"",hist:[]},
+ {id:2,item:"Rescue strop (horse collar)",cat:"Hoist & Rescue",ident:"SN RS-112",loc:"Air 1 cabin",status:"OUT OF SERVICE",svc:"2022-06-10",insp:"2026-07-01",notes:"Frayed stitching found on preflight — do not use",hist:[{act:"OUT OF SERVICE — frayed stitching at thimble",by:"Vale, M.",when:"7/20/2026, 08:41",sig:null}]},
+ {id:3,item:"Carabiners, steel autolock (set of 12)",cat:"PPE & Harness",ident:"Lot C-2024-7",loc:"Rescue cage",status:"IN SERVICE",svc:"2024-07-15",insp:"2026-09-01",notes:"",hist:[]},
+ {id:4,item:"Medical trauma bag #2",cat:"Medical",ident:"MB-02",loc:"Air 2 cabin",status:"IN SERVICE",svc:"2023-01-05",insp:"2026-08-01",notes:"Monthly seal check",hist:[]},
+ {id:5,item:"Cardiac monitor / defib",cat:"Medical",ident:"SN ZX-88112",loc:"Biomed shop (out)",status:"OUT FOR MAINTENANCE",svc:"2021-11-20",insp:"2026-11-01",notes:"Annual calibration",hist:[{act:"OUT FOR MAINTENANCE — annual calibration at biomed",by:"Vale, M.",when:"7/18/2026, 14:02",sig:null}]},
+ {id:6,item:"Life raft, 8-man",cat:"Flotation",ident:"SN LR-2209",loc:"Air 5 cargo bay",status:"IN SERVICE",svc:"2022-04-01",insp:"2026-07-30",notes:"Repack due",hist:[]},
+ {id:7,item:"Rescue swimmer harness",cat:"PPE & Harness",ident:"SN H-556",loc:"Rescue cage",status:"IN SERVICE",svc:"2025-02-12",insp:"2027-01-15",notes:"",hist:[]},
+ {id:8,item:"Bauman bag",cat:"Hoist & Rescue",ident:"SN BB-3",loc:"Rescue cage",status:"IN SERVICE",svc:"2023-08-22",insp:"2026-12-01",notes:"",hist:[]},
+ {id:9,item:"NVG set, AN/AVS-9",cat:"Avionics support",ident:"SN NV-7712",loc:"NVG locker",status:"IN SERVICE",svc:"2024-10-02",insp:"2026-10-01",notes:"180-day inspection cycle",hist:[]},
+ {id:10,item:"Tagline kit",cat:"Hoist & Rescue",ident:"TL-4",loc:"Air 1 cabin",status:"IN SERVICE",svc:"2023-05-18",insp:"2026-09-20",notes:"",hist:[]},
+ {id:11,item:"Litter, break-apart",cat:"Hoist & Rescue",ident:"SN LT-9",loc:"Rescue cage",status:"IN SERVICE",svc:"2022-09-30",insp:"2026-08-25",notes:"",hist:[]},
+ {id:12,item:"Cargo/equipment bags (set of 6)",cat:"Bags & Cases",ident:"Lot B-2023-2",loc:"Loft shelf 3",status:"IN SERVICE",svc:"2023-03-11",insp:"",notes:"",hist:[]}
+];
+const EQ_STATUS={"IN SERVICE":["c-good","● IN SERVICE"],"OUT FOR MAINTENANCE":["c-warn","🔧 OUT FOR MAINTENANCE"],"OUT OF SERVICE":["c-crit","⛔ OUT OF SERVICE"],"RETIRED":["c-gray","RETIRED"]};
+let EQ={q:"",open:null,form:null,act:null,sig:null};
+function eqInspState(x){if(!x.insp)return 0;const dd=Math.round((new Date(x.insp)-new Date())/86400000);return dd<0?-1:dd<=30?1:0}
+function eqSigInit(){const cv=document.getElementById("eqsig");if(!cv||cv._init)return;cv._init=true;
+ const x=cv.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,cv.width,cv.height);x.lineWidth=2.2;x.lineCap="round";x.strokeStyle="#10131A";
+ let dr=false,last=null;
+ const pos=e=>{const r=cv.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return [(t.clientX-r.left)*cv.width/r.width,(t.clientY-r.top)*cv.height/r.height]};
+ cv.addEventListener("mousedown",e=>{dr=true;last=pos(e);cv._drawn=true;e.preventDefault()});
+ cv.addEventListener("mousemove",e=>{if(!dr)return;const p=pos(e);x.beginPath();x.moveTo(last[0],last[1]);x.lineTo(p[0],p[1]);x.stroke();last=p;e.preventDefault()});
+ window.addEventListener("mouseup",()=>dr=false);
+ cv.addEventListener("touchstart",e=>{dr=true;last=pos(e);cv._drawn=true;e.preventDefault()},{passive:false});
+ cv.addEventListener("touchmove",e=>{if(!dr)return;const p=pos(e);x.beginPath();x.moveTo(last[0],last[1]);x.lineTo(p[0],p[1]);x.stroke();last=p;e.preventDefault()},{passive:false});
+ cv.addEventListener("touchend",()=>dr=false)}
+function eqSigClear(){const cv=document.getElementById("eqsig");if(!cv)return;const x=cv.getContext("2d");x.clearRect(0,0,cv.width,cv.height);x.fillStyle="#fff";x.fillRect(0,0,cv.width,cv.height);cv._drawn=false}
+function eqSign(){const cv=document.getElementById("eqsig");
+ if(!cv||!cv._drawn){toast("<b>⛔ Draw your signature</b> — every equipment change is a signed record.","warn");return}
+ EQ.sig={img:cv.toDataURL("image/png"),name:user.full,when:new Date().toLocaleString()};render()}
+function eqSet(k,v){if(EQ.form)EQ.form[k]=v; if(EQ.act)EQ.act[k]=v}
+function eqNew(){EQ.form={id:null,item:"",cat:"Hoist & Rescue",ident:"",loc:"",svc:new Date().toISOString().slice(0,10),insp:"",notes:""};EQ.act=null;EQ.sig=null;render()}
+function eqEdit(id){const x=EQUIP.find(v=>v.id===id);EQ.form={...x};EQ.act=null;EQ.sig=null;render()}
+function eqSaveItem(){const f=EQ.form;
+ if(!f.item.trim()){toast("<b>⛔ Item name required.</b>","warn");return}
+ if(!EQ.sig){toast("<b>⛔ Signature required</b> — equipment records only change under a signed entry.","warn");return}
+ const stamp={by:user.full,when:EQ.sig.when,sig:EQ.sig.img};
+ if(f.id==null){const id=Math.max(0,...EQUIP.map(x=>x.id))+1;
+  EQUIP.unshift({id,item:f.item.trim(),cat:f.cat,ident:f.ident.trim()||"—",loc:f.loc.trim()||"—",status:"IN SERVICE",svc:f.svc,insp:f.insp,notes:f.notes.trim(),
+   hist:[{act:"PLACED IN SERVICE",...stamp}]});
+  toast("<b>✓ "+f.item+" placed in service.</b> Signed and on the books.")}
+ else{const x=EQUIP.find(v=>v.id===f.id);
+  x.hist.unshift({act:"RECORD EDITED"+(f.notes&&f.notes!==x.notes?" · "+f.notes:""),...stamp});
+  Object.assign(x,{item:f.item.trim(),cat:f.cat,ident:f.ident.trim(),loc:f.loc.trim(),svc:f.svc,insp:f.insp,notes:f.notes});
+  toast("<b>✓ Record updated & signed.</b>")}
+ if(typeof persistNow==="function")persistNow();else if(typeof persist==="function")persist();
+ EQ.form=null;EQ.sig=null;render()}
+function eqAct(id,status){EQ.act={id,status,note:""};EQ.form=null;EQ.sig=null;render()}
+function eqApply(){const a=EQ.act;if(!a)return;const x=EQUIP.find(v=>v.id===a.id);if(!x)return;
+ if(!EQ.sig){toast("<b>⛔ Signature required.</b>","warn");return}
+ x.hist.unshift({act:a.status+(a.note?" — "+a.note:""),by:user.full,when:EQ.sig.when,sig:EQ.sig.img});
+ x.status=a.status;
+ if(typeof persistNow==="function")persistNow();else if(typeof persist==="function")persist();
+ toast("<b>✓ "+x.item+" → "+a.status+".</b> Signed & timestamped.");
+ EQ.act=null;EQ.sig=null;render()}
+function pgEquip(){
+ const q=EQ.q.toLowerCase();
+ const list=EQUIP.filter(x=>!q||[x.item,x.cat,x.ident,x.loc,x.status].join(" ").toLowerCase().includes(q));
+ const counts={insv:EQUIP.filter(x=>x.status==="IN SERVICE").length,mx:EQUIP.filter(x=>x.status==="OUT FOR MAINTENANCE").length,oos:EQUIP.filter(x=>x.status==="OUT OF SERVICE").length,due:EQUIP.filter(x=>x.status!=="RETIRED"&&eqInspState(x)!==0).length};
+ const sigBlock=EQ.sig?`<div style="border:1px solid rgba(184,190,200,.3);display:inline-block;padding:6px 10px"><img src="${EQ.sig.img}" style="height:38px;background:#fff;display:block"><div style="font-size:10px"><b>${EQ.sig.name}</b> · signed ${EQ.sig.when} 🔒</div></div>`
+  :`<canvas id="eqsig" width="380" height="96" style="background:#fff;touch-action:none;max-width:100%;border:1px solid #999"></canvas>
+   <div style="margin-top:6px"><button class="btn2" onclick="eqSign()">Apply signature — ${user.full}</button> <button class="btn2" onclick="eqSigClear()">Clear</button></div>`;
+ const form=!EQ.form?"":`<div class="panel accent" style="border-left:3px solid var(--gold)"><h2>${EQ.form.id==null?"＋ Add equipment — signed entry":"✎ Edit record — signed entry"}</h2>
+  <div class="grid g3">
+   <div><label class="lab">Item *</label><input value="${EQ.form.item}" onchange="eqSet('item',this.value)" placeholder="e.g. Rescue strop"></div>
+   <div><label class="lab">Category</label><select onchange="eqSet('cat',this.value)">${["Hoist & Rescue","Medical","Flotation","PPE & Harness","Bags & Cases","Avionics support","Other"].map(c=>`<option ${EQ.form.cat===c?"selected":""}>${c}</option>`).join("")}</select></div>
+   <div><label class="lab">Serial / lot / ID</label><input value="${EQ.form.ident}" onchange="eqSet('ident',this.value)"></div>
+   <div><label class="lab">Location</label><input value="${EQ.form.loc}" onchange="eqSet('loc',this.value)" placeholder="Air 1 cabin · Rescue cage · Med locker…"></div>
+   <div><label class="lab">Placed in service</label><input type="date" value="${EQ.form.svc}" onchange="eqSet('svc',this.value)"></div>
+   <div><label class="lab">Next inspection due</label><input type="date" value="${EQ.form.insp}" onchange="eqSet('insp',this.value)"></div>
+   <div style="grid-column:1/-1"><label class="lab">Notes</label><input value="${EQ.form.notes}" onchange="eqSet('notes',this.value)"></div>
+  </div>
+  <div style="margin-top:10px">${sigBlock}</div>
+  <div style="margin-top:10px"><button class="btn" onclick="eqSaveItem()">${EQ.form.id==null?"Place in service — file signed record":"Save — file signed record"}</button> <button class="btn2" onclick="EQ.form=null;EQ.sig=null;render()">Cancel</button></div></div>`;
+ const act=!EQ.act?"":(()=>{const x=EQUIP.find(v=>v.id===EQ.act.id);
+  return `<div class="panel accent" style="border-left:3px solid var(--gold)"><h2>${x.item} → ${EQ.act.status} — signed entry</h2>
+  <div><label class="lab">Reason / note (goes on the record)</label><input value="${EQ.act.note}" onchange="eqSet('note',this.value)" placeholder="e.g. sent to vendor for repack · webbing damage found…"></div>
+  <div style="margin-top:10px">${sigBlock}</div>
+  <div style="margin-top:10px"><button class="btn" onclick="eqApply()">File signed status change</button> <button class="btn2" onclick="EQ.act=null;EQ.sig=null;render()">Cancel</button></div></div>`})();
+ return `<h1>Equipment <span>Inventory</span> <span class="chip" style="background:rgba(200,160,60,.16);color:var(--gold);border:1px solid rgba(200,160,60,.45);font-size:9px;vertical-align:middle">💎 PREMIUM ADD-ON</span></h1>
+ <div class="sub">Every piece of unit equipment — carabiners to life rafts — with where it lives, when it went into service, and a signed, timestamped record of every move: out for maintenance, out of service, back in service, retired. Accountability is the point: nothing changes hands or status without a signature.</div>
+ <div class="grid g4" style="margin-bottom:10px">
+  <div class="panel tile" style="border-top:3px solid var(--good)"><div class="lab">In service</div><div class="val">${counts.insv}</div></div>
+  <div class="panel tile" style="border-top:3px solid var(--warn)"><div class="lab">Out for maintenance</div><div class="val">${counts.mx}</div></div>
+  <div class="panel tile" style="border-top:3px solid #D03B3B"><div class="lab">Out of service</div><div class="val" style="color:${counts.oos?"#F27B7B":"var(--silver-light)"}">${counts.oos}</div></div>
+  <div class="panel tile" style="border-top:3px solid var(--gold)"><div class="lab">Inspections due / overdue</div><div class="val" style="color:${counts.due?"var(--warn)":"var(--silver-light)"}">${counts.due}</div></div>
+ </div>
+ <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+  <input value="${EQ.q}" placeholder="Search item / category / location / SN…" style="max-width:280px" oninput="EQ.q=this.value;render()">
+  <button class="btn" onclick="eqNew()">＋ Add equipment</button></div>
+ ${form}${act}
+ <div class="panel" style="padding:8px 10px"><div style="overflow-x:auto"><table style="min-width:940px;font-size:12px"><thead><tr><th>Item</th><th>Category</th><th>ID</th><th>Location</th><th>In service</th><th>Next inspection</th><th>Status</th><th></th></tr></thead><tbody>
+ ${list.map(x=>{const st=EQ_STATUS[x.status]||EQ_STATUS["IN SERVICE"];const is2=eqInspState(x);
+  return `<tr style="cursor:pointer;${x.status==="OUT OF SERVICE"?"background:rgba(208,59,59,.08)":""}" onclick="EQ.open=EQ.open===${x.id}?null:${x.id};render()">
+  <td><b style="color:var(--silver-light)">${x.item}</b>${x.notes?`<div style="font-size:10px;color:var(--muted)">${x.notes}</div>`:""}</td>
+  <td style="font-size:11px">${x.cat}</td><td style="font-size:11px;white-space:nowrap">${x.ident}</td>
+  <td style="font-size:11px">${x.loc}</td>
+  <td style="font-size:11px;white-space:nowrap">${x.svc||"—"}</td>
+  <td style="font-size:11px;white-space:nowrap">${x.insp||"—"} ${is2===-1?'<span class="chip c-crit" style="font-size:8px">OVERDUE</span>':is2===1?'<span class="chip c-warn" style="font-size:8px">DUE ≤30D</span>':""}</td>
+  <td><span class="chip ${st[0]}" style="font-size:9px">${st[1]}</span></td>
+  <td onclick="event.stopPropagation()" style="white-space:nowrap">
+   ${x.status!=="IN SERVICE"&&x.status!=="RETIRED"?`<button class="btn2" style="font-size:8px;padding:3px 6px" onclick="eqAct(${x.id},'IN SERVICE')">→ In service</button> `:""}
+   ${x.status==="IN SERVICE"?`<button class="btn2" style="font-size:8px;padding:3px 6px" onclick="eqAct(${x.id},'OUT FOR MAINTENANCE')">→ Mx</button> <button class="btn2" style="font-size:8px;padding:3px 6px" onclick="eqAct(${x.id},'OUT OF SERVICE')">→ OOS</button> `:""}
+   ${x.status!=="RETIRED"?`<button class="btn2" style="font-size:8px;padding:3px 6px" onclick="eqAct(${x.id},'RETIRED')">Retire</button> `:""}
+   <button class="btn2" style="font-size:8px;padding:3px 6px" onclick="eqEdit(${x.id})">✎</button></td></tr>
+  ${EQ.open===x.id?`<tr><td colspan="8" style="background:rgba(37,43,52,.25)"><div style="font-size:11px;padding:4px 2px"><b style="color:var(--silver-light)">Custody & status history</b>${x.hist.length?x.hist.map(h=>`<div style="display:flex;gap:10px;align-items:center;border-bottom:1px solid rgba(37,43,52,.5);padding:3px 0"><span style="color:var(--muted);white-space:nowrap">${h.when}</span><span>${h.act}</span><span style="color:var(--muted)">— ${h.by}</span>${h.sig?`<img src="${h.sig}" style="height:22px;background:#fff">🔒`:""}</div>`).join(""):'<div style="color:var(--muted)">No changes since intake.</div>'}</div></td></tr>`:""}`}).join("")}
+ </tbody></table></div></div>`}
 function pgMx(){
  const url=mxUrl();
  return `<h1>Maintenance <span>— powered by HERO Maintenance</span></h1>
@@ -4702,11 +4811,12 @@ const MODULES=[["fatigue","Fatigue & Readiness — wearables, duty status, trend
  ["currency","Currency — per-crew task currency matrix"],
  ["fleet","Fleet & Aircraft — status board, preflights, squawks"],
  ["training","Pilot Training — phase gradesheets & promotions"],
- ["maintenance","HERO Maintenance — companion app + live bridge"]];
-let PKG={fatigue:1,frat:1,flightlog:1,currency:1,fleet:1,training:1,maintenance:1},PKG_UI=false;
+ ["maintenance","HERO Maintenance — companion app + live bridge"],
+ ["equipment","Equipment Inventory — signed custody & status tracking for unit gear"]];
+let PKG={fatigue:1,frat:1,flightlog:1,currency:1,fleet:1,training:1,maintenance:1,equipment:1},PKG_UI=false;
 function pkgInit(){try{const s=JSON.parse(localStorage.getItem(PKG_KEY));if(s&&typeof s==="object")PKG=Object.assign(PKG,s)}catch(e){}}
 function pkgOn(k){return !!PKG[k]}
-const TAB_MODULE={ready:"fatigue",frat:"frat",flights:"flightlog",curr:"currency",acft:"fleet",trn:"training",mx:"maintenance"};
+const TAB_MODULE={ready:"fatigue",frat:"frat",flights:"flightlog",curr:"currency",acft:"fleet",trn:"training",mx:"maintenance",equip:"equipment"};
 function tabsAllowed(){return TABS.filter(([k])=>!TAB_MODULE[k]||pkgOn(TAB_MODULE[k]))}
 function pkgSet(k,v){PKG[k]=v?1:0;try{localStorage.setItem(PKG_KEY,JSON.stringify(PKG))}catch(e){}
  if(TAB_MODULE[tab]&&!pkgOn(TAB_MODULE[tab]))tab="dash";render()}
@@ -4743,9 +4853,10 @@ function render(){
   persist();
   if(!user){app.innerHTML=signinView();return}
   if(typeof adminApply==="function")adminApply();
-  const pages={dash:pgDash,ready:pgReady,ppl:pgPeople,acft:pgAircraft,mx:pgMx,curr:pgCurr,trn:pgTraining,frat:pgFrat,flights:pgFlights,haz:pgHaz,safety:pgSafety};
+  const pages={dash:pgDash,ready:pgReady,ppl:pgPeople,acft:pgAircraft,mx:pgMx,equip:pgEquip,curr:pgCurr,trn:pgTraining,frat:pgFrat,flights:pgFlights,haz:pgHaz,safety:pgSafety};
   if(TAB_MODULE[tab]&&!pkgOn(TAB_MODULE[tab]))tab="dash";
   app.innerHTML=shell(pages[tab]());
+  setTimeout(eqSigInit,60);
 }
 /* DEMO: preview resets on refresh — restoreLocal() intentionally not called (g-series doctrine). */
 FLIGHTS.forEach(f=>f.mxSent=true); /* seed history is already in maintenance — only NEW flights stream across the bridge */
