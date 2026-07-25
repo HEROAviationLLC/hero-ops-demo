@@ -187,7 +187,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">customer demo build g12 — 2026-07-25 · all people, aircraft &amp; records are fictional · full-platform parity with build v33</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">customer demo build g13 — 2026-07-25 · all people, aircraft &amp; records are fictional · full-platform parity with build v33</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
@@ -1016,7 +1016,7 @@ function checkinBanner(){
     </div></div>`}
 
 /* ================= PAGES ================= */
-const TABS=[["dash","Dashboard"],["ready","Readiness"],["ppl","Personnel"],["acft","Aircraft"],["curr","Currency"],["trn","Training"],["frat","FRAT"],["flights","Flight Log"],["haz","Hazards"],["safety","Safety Mgmt"]];
+const TABS=[["dash","Dashboard"],["ready","Readiness"],["ppl","Personnel"],["acft","Aircraft"],["mx","Maintenance"],["curr","Currency"],["trn","Training"],["frat","FRAT"],["flights","Flight Log"],["haz","Hazards"],["safety","Safety Mgmt"]];
 
 function shell(content){
   return `<header>
@@ -1454,6 +1454,34 @@ function mxSyncPanel(){
   ${worst.length?`<div class="banner b-crit" style="font-size:12px"><b>⚠ Coordinate before scheduling:</b> ${worst.map(f=>f.n+" ("+(f.ground?"grounding squawk":"overdue maintenance")+")").join(" · ")}. Maintenance status is informational — scheduling and airworthiness decisions remain with your maintenance provider and chain of command.</div>`:""}
   <div style="overflow-x:auto"><table style="min-width:900px;font-size:12px"><thead><tr><th>Ship</th><th>Mx status</th><th>Items</th><th>Next due (hrs/cycles)</th><th>Next calendar due</th><th>Squawks / MEL</th><th>Restrictions</th><th>Actuals as of</th></tr></thead><tbody>${rows}</tbody></table></div>
   <div style="font-size:10px;color:var(--muted);margin-top:6px">Snapshot generated ${new Date(MXSYNC.gen).toLocaleString()}${ageH>24?` — <b style="color:var(--warn)">${ageH} hrs old; re-import for current status</b>`:""} · one line per ship: worst item first, hours and calendar side-by-side so duty supervisors can slot missions around the maintenance schedule. HERO informs — it never decides.</div></div>`}
+/* ===== g13: Maintenance tab — one icon, whole platform (package-gated) ===== */
+let MX_URL_EDIT=false;
+function mxUrl(){try{return localStorage.getItem("heroDemoMxUrl")||"HERO-Maintenance-Demo.html"}catch(e){return "HERO-Maintenance-Demo.html"}}
+function mxUrlSet(v){try{localStorage.setItem("heroDemoMxUrl",(v||"").trim())}catch(e){};MX_URL_EDIT=false;toast("<b>✓ Maintenance link saved.</b>");render()}
+function mxStrip(){
+ if(!pkgOn("maintenance")||!MXSYNC)return "";
+ const worst=MXSYNC.fleet.filter(f=>f.status==="ovd"||f.ground).length;
+ const tolN=MXSYNC.fleet.filter(f=>f.status==="tol").length;
+ return `<div class="panel" style="cursor:pointer;border-left:3px solid var(--gold)" onclick="go('mx')">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+   <div style="font-size:12px"><b style="color:var(--silver-light)">🔧 Maintenance:</b> ${worst?`<span class="chip c-crit">${worst} SHIP${worst>1?"S":""} NEED ATTENTION</span>`:tolN?`<span class="chip c-warn">${tolN} IN TOLERANCE</span>`:'<span class="chip c-good">FLEET IN THE GREEN</span>'} <span style="font-size:10px;color:var(--muted)">live from HERO Maintenance</span></div>
+   <span style="font-size:10px;color:var(--gold)">Full board → Maintenance tab</span></div></div>`}
+function pgMx(){
+ const url=mxUrl();
+ return `<h1>Maintenance <span>— powered by HERO Maintenance</span></h1>
+ <div class="sub">The premium maintenance platform, reached from the same icon your crews already use: live fleet status below (it streams in automatically as maintenance works), and one tap into the full system — due lists ranked by priority, E-WorkCards with locked dual e-signatures, squawks, MEL clocks and the audit trail. Flights filed here stream into its feed with zero re-typing.</div>
+ <div class="panel accent" style="border-left:3px solid var(--gold)">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+   <div><h2 style="margin:0">Open the full maintenance system</h2>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px">Demo: opens the HERO Maintenance demo beside this app — keep both open and watch them talk to each other live.</div></div>
+   <div style="display:flex;gap:8px;align-items:center">
+    <a class="btn" style="text-decoration:none;display:inline-block" href="${url}" target="_blank" rel="noopener">🔧 Open HERO Maintenance</a>
+    ${isAdmin(user)?`<button class="btn2" style="font-size:9px" onclick="MX_URL_EDIT=!MX_URL_EDIT;render()">Change link</button>`:""}
+   </div></div>
+  ${MX_URL_EDIT&&isAdmin(user)?`<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><input id="mxurl" placeholder="HERO-Maintenance-Demo.html" value="${url}" style="max-width:420px"><button class="btn2" onclick="mxUrlSet(document.getElementById('mxurl').value)">Save</button></div>`:""}
+ </div>
+ ${mxSyncPanel()}
+ ${MXSYNC?"":'<div class="banner b-warn" style="font-size:12px">No maintenance status yet — open the HERO Maintenance demo once (button above) and its fleet status streams in automatically.</div>'}`}
 function pgAircraft(){
  if(PF)return pfForm();
   if(acView){const a=AIRCRAFT.find(x=>x.n===acView);return pgAcDetail(a)}
@@ -1474,7 +1502,7 @@ function pgAircraft(){
    ${mgr&&!acAdd?`<button class="btn" onclick="acAdd={n:'',cs:'',mk:'',base:'',tach:'',mtach:'',svc:''};render()">＋ Add aircraft</button>`:mgr?"":'<span class="lock">Add / remove aircraft is a manager function</span>'}</div>
   <div class="sub">Tap any aircraft for its complete record — preflights, flights, maintenance schedule, squawks and deferred items.</div>
   ${addForm}
-  ${mxSyncPanel()}
+  ${mxStrip()}
   <div class="panel" style="padding:8px 10px">
   <table style="font-size:12px"><thead><tr>
    <th></th><th>Ship</th><th>Last updated · by</th><th>Flt tach</th><th>Mx tach</th><th>Next inspections (hrs left)</th><th>Calendar / drop-dead</th><th>Squawks</th><th>Hoist</th>
@@ -4678,7 +4706,7 @@ const MODULES=[["fatigue","Fatigue & Readiness — wearables, duty status, trend
 let PKG={fatigue:1,frat:1,flightlog:1,currency:1,fleet:1,training:1,maintenance:1},PKG_UI=false;
 function pkgInit(){try{const s=JSON.parse(localStorage.getItem(PKG_KEY));if(s&&typeof s==="object")PKG=Object.assign(PKG,s)}catch(e){}}
 function pkgOn(k){return !!PKG[k]}
-const TAB_MODULE={ready:"fatigue",frat:"frat",flights:"flightlog",curr:"currency",acft:"fleet",trn:"training"};
+const TAB_MODULE={ready:"fatigue",frat:"frat",flights:"flightlog",curr:"currency",acft:"fleet",trn:"training",mx:"maintenance"};
 function tabsAllowed(){return TABS.filter(([k])=>!TAB_MODULE[k]||pkgOn(TAB_MODULE[k]))}
 function pkgSet(k,v){PKG[k]=v?1:0;try{localStorage.setItem(PKG_KEY,JSON.stringify(PKG))}catch(e){}
  if(TAB_MODULE[tab]&&!pkgOn(TAB_MODULE[tab]))tab="dash";render()}
@@ -4715,7 +4743,7 @@ function render(){
   persist();
   if(!user){app.innerHTML=signinView();return}
   if(typeof adminApply==="function")adminApply();
-  const pages={dash:pgDash,ready:pgReady,ppl:pgPeople,acft:pgAircraft,curr:pgCurr,trn:pgTraining,frat:pgFrat,flights:pgFlights,haz:pgHaz,safety:pgSafety};
+  const pages={dash:pgDash,ready:pgReady,ppl:pgPeople,acft:pgAircraft,mx:pgMx,curr:pgCurr,trn:pgTraining,frat:pgFrat,flights:pgFlights,haz:pgHaz,safety:pgSafety};
   if(TAB_MODULE[tab]&&!pkgOn(TAB_MODULE[tab]))tab="dash";
   app.innerHTML=shell(pages[tab]());
 }
