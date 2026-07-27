@@ -187,7 +187,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">customer demo build g15 — 2026-07-25 · mixed US fleet: AW139 · H125 · Bell 407 · Bell 429 · H135 · Bell 505 · R44 · all people, aircraft &amp; records are fictional · full-platform parity with build v33</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">customer demo build g16 — 2026-07-25 · mixed US fleet: AW139 · H125 · Bell 407 · Bell 429 · H135 · Bell 505 · R44 · all people, aircraft &amp; records are fictional · full-platform parity with build v33</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
@@ -1016,7 +1016,7 @@ function checkinBanner(){
     </div></div>`}
 
 /* ================= PAGES ================= */
-const TABS=[["dash","Dashboard"],["ready","Readiness"],["ppl","Personnel"],["acft","Aircraft"],["mx","Maintenance"],["equip","Equipment"],["curr","Currency"],["trn","Training"],["frat","FRAT"],["flights","Flight Log"],["haz","Hazards"],["safety","Safety Mgmt"]];
+const TABS=[["dash","Dashboard"],["ready","Readiness"],["ppl","Personnel"],["acft","Aircraft"],["mx","Maintenance"],["equip","Equipment"],["curr","Currency"],["trn","Training"],["frat","FRAT"],["flights","Flight Log"],["haz","Hazards"],["safety","Safety Mgmt"],["addons","Add-Ons"]];
 
 function shell(content){
   return `<header>
@@ -1037,12 +1037,12 @@ function pgDash(){
   const onDuty=PEOPLE.filter(p=>p.onDuty&&!p.display);
   return `<h1>Operations <span>Dashboard</span></h1><div class="sub">Everything on this screen is role-aware — and every tile is a door: tap it to go to the full page behind the number.</div>
   <div class="grid g4">
-    <div class="panel tile accent" style="cursor:pointer" onclick="go('ready')"><div class="lab">Collective crew readiness (on duty)</div><div class="val" style="color:${bandColor(avg)}">${avg}</div><div class="note">green ≥ 70 · yellow 50–69.9 · red < 50 →</div></div>
-    <div class="panel tile" style="cursor:pointer" onclick="acView=null;go('acft')"><div class="lab">Fleet available</div><div class="val">${ACTIVE().length} / ${AIRCRAFT.length}</div><div class="note">${AIRCRAFT.filter(a=>a.squawks).length} with open/deferred squawks →</div></div>
-    <div class="panel tile" style="cursor:pointer" onclick="go('frat')"><div class="lab">FRATs pending approval</div><div class="val">${PENDING_FRATS.length}</div><div class="note">supervisor review required ≥ ${TH.sup} →</div></div>
-    <div class="panel tile" style="cursor:pointer" onclick="CURRF={name:'',task:'',status:'EXPIRED',duty:'on'};currView='list';go('curr')"><div class="lab">Expired currencies (on-duty crew)</div><div class="val" style="color:${alertCount?'#F27B7B':'#5BC97A'}">${alertCount}</div><div class="note">red = expired under your unit’s currency rules →</div></div>
+    ${pkgOn('fatigue')?`<div class="panel tile accent" style="cursor:pointer" onclick="go('ready')"><div class="lab">Collective crew readiness (on duty)</div><div class="val" style="color:${bandColor(avg)}">${avg}</div><div class="note">green ≥ 70 · yellow 50–69.9 · red < 50 →</div></div>`:""}
+    ${pkgOn('fleet')?`<div class="panel tile" style="cursor:pointer" onclick="acView=null;go('acft')"><div class="lab">Fleet available</div><div class="val">${ACTIVE().length} / ${AIRCRAFT.length}</div><div class="note">${AIRCRAFT.filter(a=>a.squawks).length} with open/deferred squawks →</div></div>`:""}
+    ${pkgOn('frat')?`<div class="panel tile" style="cursor:pointer" onclick="go('frat')"><div class="lab">FRATs pending approval</div><div class="val">${PENDING_FRATS.length}</div><div class="note">supervisor review required ≥ ${TH.sup} →</div></div>`:""}
+    ${pkgOn('currency')?`<div class="panel tile" style="cursor:pointer" onclick="CURRF={name:'',task:'',status:'EXPIRED',duty:'on'};currView='list';go('curr')"><div class="lab">Expired currencies (on-duty crew)</div><div class="val" style="color:${alertCount?'#F27B7B':'#5BC97A'}">${alertCount}</div><div class="note">red = expired under your unit’s currency rules →</div></div>`:""}
   </div>
-  ${user.role==="SUPERVISOR"?`<div class="panel accent"><h2>On-duty crew readiness (supervisor view)</h2>
+  ${user.role==="SUPERVISOR"&&pkgOn('fatigue')?`<div class="panel accent"><h2>On-duty crew readiness (supervisor view)</h2>
     <table class="fit-table"><tbody>${onDuty.map(p=>`<tr><td style="color:var(--silver-light);font-weight:600">${lf(p)}</td><td class="hidephone">${p.pos}</td><td>${readyNum(p)}</td><td>${readyChip(p)}</td><td style="white-space:normal">${provChip(p)}</td></tr>`).join("")}</tbody></table>
     <div class="lock" style="margin-top:8px">Scores only — individual biometric detail is never visible to supervisors. Duty-day count and provenance ARE visible: they're the fatigue-exposure picture. ${PEOPLE.filter(p=>!p.display).length-onDuty.length} off-duty crew hidden.</div></div>`:""}
   ${DASH_RES?resBoard():wxPanel()}
@@ -4803,6 +4803,34 @@ function restoreLocal(){try{
  if(Array.isArray(s.ac))s.ac.forEach(sa=>{const a=AIRCRAFT.find(x=>x.n===sa.n);if(a)Object.assign(a,sa);else AIRCRAFT.push(sa)});
  PEOPLE.forEach((pp,i)=>{if(!READINESS[pp.id])READINESS[pp.id]={score:65+((i*7)%20)}});
 }catch(e){console.warn("restore failed — starting fresh",e)}}
+/* ===== g16: ADD-ONS page — every deployment carries this; features you don't own are invisible everywhere EXCEPT here ===== */
+const ADDON_CATALOG=[
+ {id:"core",n:"Core SMS",always:true,d:"The foundation every package includes: operations dashboard, personnel & roster, hazard reporting with Safety Health analytics, safety meetings, corrective actions, controlled documents & read-and-sign, and live base weather."},
+ {id:"fatigue",n:"Fatigue & Readiness",d:"Crew readiness scores from any major wearable — privacy-walled so supervisors see scores, never biometrics. Duty-status aware. Readiness stamps flow into every FRAT automatically, so fatigue is part of every launch picture without anyone filling out a form."},
+ {id:"frat",n:"FRAT — Flight Risk Assessment",d:"Self-scoring risk assessment: live route weather by sector, crew readiness and currency pulled in automatically, supervisor approval workflow, and a forensic archive. Filed FRATs prefill flight logs and post crews straight to the operational displays."},
+ {id:"flightlog",n:"Flight Log & Reports",d:"Digital flight logs with tach and crew tracking, out-of-sequence protection, edit audit trails, pilot-hour and fleet reports, and ForeFlight export. The single-entry source that feeds currencies, training records and maintenance counters — type it once, it goes everywhere."},
+ {id:"currency",n:"Crew Currencies",d:"A live currency matrix computed from the flight logs — day/night/NVG/hoist and unit-defined tasks per crew member, with expiry warnings before they bite. Nothing to maintain by hand; flying keeps it current. (Pairs with Flight Log.)"},
+ {id:"fleet",n:"Fleet & Aircraft",d:"The ops-room fleet board: every ship's status, tach times, upcoming inspections, squawks and hoist state on one screen, fed by every preflight and flight log the moment they're filed."},
+ {id:"training",n:"Pilot Training",d:"Full pilot training pipeline — phase gradesheets with task and SRM grading, signature chains, banked time, remedial tracking, automatic promotions, and printable records. Your training program's paper binder, retired."},
+ {id:"equipment",n:"Equipment Inventory",prem:true,d:"Signed, timestamped custody tracking for every piece of unit gear from carabiners to life rafts: where it lives, when it went into service, inspection dues, and out-for-maintenance / out-of-service transitions — every change under a signature, so accountability is built in, not bolted on."},
+ {id:"maintenance",n:"HERO Maintenance",prem:true,d:"The Part 145-ready maintenance platform, reached from the same icon your crews already use: due lists ranked plainest-first, component life & overhaul ledgers computed live from your actuals, E-WorkCards with locked dual e-signatures and return-to-service certification, squawks with MEL repair clocks, and a full audit trail. Flights filed in HERO Ops stream into the maintenance counters — the end of double entry."},
+ {id:"inventory",n:"Parts Inventory",prem:true,req:"HERO Maintenance",d:"Aviation-grade parts inventory inside HERO Maintenance: condition codes, bin locations, 8130-3 traceability on every airworthy part, shelf-life and reorder flags, and signed receive / issue-to-aircraft / sell / scrap movements. Removing a component from an aircraft flows it straight to the quarantine shelf."},
+ {id:"wb",n:"Aircraft Weight & Balance",soon:true,d:"COMING SOON — per-aircraft weight & balance computed from your actual configuration: crew, fuel, equipment and mission loadouts, with CG envelope checking before launch and integration into the FRAT and flight log so out-of-envelope loads get caught on the ground, not in the hover."}
+];
+function pgAddons(){
+ return `<h1>Platform <span>Add-Ons</span></h1>
+ <div class="sub">Everything the HERO platform can do — what's in your package today, and what you can add to your contract at any time. Features you haven't added stay completely invisible in your deployment until you do; this page is the one place you'll always see the full picture.</div>
+ ${ADDON_CATALOG.map(m=>{
+  const owned=m.always||(typeof pkgOn==="function"&&PKG[m.id]!==undefined&&pkgOn(m.id));
+  return `<div class="panel" style="border-left:3px solid ${m.soon?"var(--gold)":owned?"var(--good)":"var(--red)"}">
+   <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+    <h2 style="margin:0">${m.n} ${m.prem?'<span class="chip c-gold" style="font-size:8px">PREMIUM</span>':""}${m.req?`<span style="font-size:10px;color:var(--muted)"> · requires ${m.req}</span>`:""}</h2>
+    ${m.soon?'<span class="chip c-gold" style="font-size:9px">COMING SOON</span>':m.always?'<span class="chip c-good" style="font-size:9px">✓ INCLUDED IN EVERY PACKAGE</span>':owned?'<span class="chip c-good" style="font-size:9px">✓ IN YOUR PACKAGE</span>':'<span class="chip c-warn" style="font-size:9px">AVAILABLE ADD-ON</span>'}
+   </div>
+   <div style="font-size:13px;color:var(--text);margin-top:6px">${m.d}</div></div>`}).join("")}
+ <div class="panel accent" style="border-left:3px solid var(--gold)"><h2>Why the whole platform beats the pieces</h2>
+  <div style="font-size:13px;color:var(--text)">Every module feeds the others. A wearable score lands in the FRAT; the FRAT posts the crew to the status board and prefills the flight log; the flight log drives currencies, training records and the maintenance counters; maintenance status flows back to the fleet board your duty supervisor schedules against. One sign-in, one icon on every phone, one audit trail across all of it — and nobody ever types the same number twice. The more of the platform you run, the more work it does that nobody has to do.</div>
+  <div style="font-size:12px;color:var(--silver-light);margin-top:10px"><b>Adding a feature is a contract update, not a project</b> — your deployment is reconfigured and the new capability appears at the same address, same sign-in, usually same-day. Contact <b>HERO Aviation</b> (info@heroaviationusa.com) and your account manager will take it from there.</div></div>`}
 /* ============ DEMO: SUBSCRIPTION PACKAGE (paid platforms) ============ */
 const PKG_KEY="heroDemoPkg.v1";
 const MODULES=[["fatigue","Fatigue & Readiness — wearables, duty status, trends"],
@@ -4853,7 +4881,7 @@ function render(){
   persist();
   if(!user){app.innerHTML=signinView();return}
   if(typeof adminApply==="function")adminApply();
-  const pages={dash:pgDash,ready:pgReady,ppl:pgPeople,acft:pgAircraft,mx:pgMx,equip:pgEquip,curr:pgCurr,trn:pgTraining,frat:pgFrat,flights:pgFlights,haz:pgHaz,safety:pgSafety};
+  const pages={dash:pgDash,ready:pgReady,ppl:pgPeople,acft:pgAircraft,mx:pgMx,equip:pgEquip,curr:pgCurr,trn:pgTraining,frat:pgFrat,flights:pgFlights,haz:pgHaz,safety:pgSafety,addons:pgAddons};
   if(TAB_MODULE[tab]&&!pkgOn(TAB_MODULE[tab]))tab="dash";
   app.innerHTML=shell(pages[tab]());
   setTimeout(eqSigInit,60);
