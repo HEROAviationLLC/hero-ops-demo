@@ -187,7 +187,7 @@
  </div>
 </div>
 <button class="helpbtn" onclick="openWelcome()" title="How to use this demo">?</button>
-<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">customer demo build g16 — 2026-07-25 · mixed US fleet: AW139 · H125 · Bell 407 · Bell 429 · H135 · Bell 505 · R44 · all people, aircraft &amp; records are fictional · full-platform parity with build v33</b><br>
+<footer>Westridge Air Operations — powered by HERO Ops · © 2026 HERO Aviation, LLC. All rights reserved. · <b style="color:#7A8290">customer demo build g17 — 2026-07-25 · mixed US fleet: AW139 · H125 · Bell 407 · Bell 429 · H135 · Bell 505 · R44 · all people, aircraft &amp; records are fictional · full-platform parity with build v33</b><br>
 Per-operator isolated deployment · Biometric fatigue readiness · FRAT risk gating · Crew accountability</footer>
 
 <script type="text/plain" id="atiswidget">// Westridge Air Ops — KBUR Base ATIS widget (Lock Screen + Home Screen)
@@ -1263,15 +1263,15 @@ function pgReady(){
         ${mine.adj?`<div style="font-size:12px;margin-top:6px;color:${mine.adj<0?'var(--warn)':'#5BC97A'}">Oura readiness ${mine.ouraRaw} ${mine.adj<0?'− '+Math.abs(mine.adj)+' (stressful day detected)':'+ '+mine.adj+' (restored day detected)'}</div>`:""}
       </div>
       <div style="flex:1;min-width:280px"><div class="lab" style="margin:0 0 4px">14-day trend</div>${trendSvg()}</div></div>
-      <div style="font-size:10px;color:var(--muted);margin:14px 0 4px;letter-spacing:1px">THE HERO SCORE — every signal in the proprietary weighting (morning ceiling):</div>
+      <div style="font-size:10px;color:var(--muted);margin:14px 0 4px;letter-spacing:1px">THE HERO SCORE — your signals (the weighting itself is HERO-proprietary and never displayed):</div>
       <div class="grid g4">
-        <div class="metric"><div class="k">Prev night's sleep · 25%</div><div class="v">${mine.sleep}</div></div>
-        <div class="metric"><div class="k">Sleep balance · 20%</div><div class="v">${mine.sleepBal??"—"}</div></div>
-        <div class="metric"><div class="k">Sleep regularity · 15%</div><div class="v">${mine.sleepReg??"—"}</div></div>
-        <div class="metric"><div class="k">HRV balance · 15%</div><div class="v">${mine.hrv}</div></div>
-        <div class="metric"><div class="k">Recovery index · 10%</div><div class="v">${mine.recovery}</div></div>
-        <div class="metric"><div class="k">Resting HR · 10%</div><div class="v">${mine.rhr}</div></div>
-        <div class="metric"><div class="k">Body temperature · 5%</div><div class="v">${mine.tempScore??"—"}</div></div>
+        <div class="metric"><div class="k">Prev night's sleep</div><div class="v">${mine.sleep}</div></div>
+        <div class="metric"><div class="k">Sleep balance</div><div class="v">${mine.sleepBal??"—"}</div></div>
+        <div class="metric"><div class="k">Sleep regularity</div><div class="v">${mine.sleepReg??"—"}</div></div>
+        <div class="metric"><div class="k">HRV balance</div><div class="v">${mine.hrv}</div></div>
+        <div class="metric"><div class="k">Recovery index</div><div class="v">${mine.recovery}</div></div>
+        <div class="metric"><div class="k">Resting HR</div><div class="v">${mine.rhr}</div></div>
+        <div class="metric"><div class="k">Body temperature</div><div class="v">${mine.tempScore??"—"}</div></div>
         <div class="metric"><div class="k">Live shift stress</div><div class="v" style="font-size:15px"><span style="color:#F27B7B">${mine.stressedMin??"—"}m</span> / <span style="color:#5BC97A">${mine.restoredMin??"—"}m</span></div></div>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-top:8px">Today's stress state: <b style="color:var(--silver-light)">${mine.stress}</b> — the morning ceiling decays with accumulated stressed minutes and recovers with restored minutes through your 6 a.m.–6 a.m. duty day.</div>
